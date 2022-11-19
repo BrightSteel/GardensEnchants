@@ -1,0 +1,5 @@
+name: GardensEnchants
+version: 1.0.0
+author: Bright_Steel
+main: com.gardensmc.gardensenchants.GardensEnchants
+api-version: 1.19
