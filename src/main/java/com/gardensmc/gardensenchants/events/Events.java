@@ -2,17 +2,22 @@ package com.gardensmc.gardensenchants.events;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchants.BubbleHeadEnchant;
+import com.gardensmc.gardensenchants.enchants.DecapitationEnchant;
 import com.gardensmc.gardensenchants.enchants.EternalEnchant;
 import com.gardensmc.gardensenchants.enchants.VeinMinerEnchant;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
+import com.gardensmc.gardensenchants.utils.ItemUtils;
+import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTItem;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.AnvilInventory;
@@ -70,6 +75,19 @@ public class Events implements Listener {
     public void onItemDamage(PlayerItemDamageEvent e) {
         if (EnchantUtils.hasEnchantment(e.getItem(), EternalEnchant.INSTANCE)) {
             e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerKill(PlayerDeathEvent e) {
+        Player killer = e.getEntity().getKiller();
+        if (killer != null) {
+            ItemStack weapon = killer.getInventory().getItemInMainHand();
+            if (EnchantUtils.hasEnchantment(weapon, DecapitationEnchant.INSTANCE)) {
+                if (ProbabilityUtil.roll(30)) {
+                    e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
+                }
+            }
         }
     }
 }

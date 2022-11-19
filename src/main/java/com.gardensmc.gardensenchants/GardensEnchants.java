@@ -1,9 +1,6 @@
 package com.gardensmc.gardensenchants;
 
-import com.gardensmc.gardensenchants.enchants.BubbleHeadEnchant;
-import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
-import com.gardensmc.gardensenchants.enchants.EternalEnchant;
-import com.gardensmc.gardensenchants.enchants.VeinMinerEnchant;
+import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.events.Events;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.enchantments.Enchantment;
@@ -46,6 +43,7 @@ public class GardensEnchants extends JavaPlugin {
         gardensEnchants.add(BubbleHeadEnchant.INSTANCE);
         gardensEnchants.add(VeinMinerEnchant.INSTANCE);
         gardensEnchants.add(EternalEnchant.INSTANCE);
+        gardensEnchants.add(DecapitationEnchant.INSTANCE);
     }
 
     private void registerEnchantments() {
