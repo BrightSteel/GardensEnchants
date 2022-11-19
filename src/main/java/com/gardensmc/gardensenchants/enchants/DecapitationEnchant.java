@@ -31,4 +31,9 @@ public class DecapitationEnchant extends CustomEnchantment {
         String name = itemStack.getType().name();
         return name.endsWith("SWORD") || name.endsWith("AXE");
     }
+
+    @Override
+    public int getMaxLevel() {
+        return 2;
+    }
 }

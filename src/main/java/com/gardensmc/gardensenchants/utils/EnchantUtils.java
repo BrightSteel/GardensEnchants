@@ -53,6 +53,19 @@ public class EnchantUtils {
         return hasEnchant;
     }
 
+    public static int getEnchantLevel(ItemStack item, Enchantment custom_enchant) {
+        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            if (enchantment.getKey().getNamespace().equals("gardensenchants")) {
+                if (enchantment.getName().equals(custom_enchant.getName())) {
+                    return entry.getValue();
+                }
+
+            }
+        }
+        return 0;
+    }
+
     public static int getLevelFromName(ItemStack stack) {
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) return 1;

@@ -33,10 +33,8 @@ public class GardensEnchants extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
         getServer().getPluginManager().registerEvents(new Events(), this);
         PlayerSchedules.scheduleAll();
-
     }
 
     private void enlistEnchantments() {
@@ -44,6 +42,7 @@ public class GardensEnchants extends JavaPlugin {
         gardensEnchants.add(VeinMinerEnchant.INSTANCE);
         gardensEnchants.add(EternalEnchant.INSTANCE);
         gardensEnchants.add(DecapitationEnchant.INSTANCE);
+        gardensEnchants.add(TimberEnchant.INSTANCE);
     }
 
     private void registerEnchantments() {

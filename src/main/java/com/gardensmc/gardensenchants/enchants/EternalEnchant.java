@@ -30,4 +30,9 @@ public class EternalEnchant extends CustomEnchantment {
     public boolean canEnchantItem(@NotNull ItemStack itemStack) {
         return true;
     }
+
+    @Override
+    public int getMaxLevel() {
+        return 5;
+    }
 }

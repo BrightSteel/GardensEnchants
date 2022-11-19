@@ -1,10 +1,7 @@
 package com.gardensmc.gardensenchants.events;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.enchants.BubbleHeadEnchant;
-import com.gardensmc.gardensenchants.enchants.DecapitationEnchant;
-import com.gardensmc.gardensenchants.enchants.EternalEnchant;
-import com.gardensmc.gardensenchants.enchants.VeinMinerEnchant;
+import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
@@ -63,18 +60,38 @@ public class Events implements Listener {
     @EventHandler
     public void onVeinMine(PlayerVeinMineEvent e) {
         ItemStack itemStack = e.getItem();
-        if (itemStack != null && itemStack.getType().name().endsWith("PICKAXE")) {
-            if (EnchantUtils.hasEnchantment(itemStack, VeinMinerEnchant.INSTANCE)) {
-                return;
+
+        String block_name = e.getBlock().getType().name();
+        boolean isWood =  (block_name.endsWith("WOOD") || block_name.endsWith("LOG") || block_name.endsWith("ROOTS"));
+        if (itemStack != null) {
+            String item_name = itemStack.getType().name();
+            if (isWood) {
+                if (item_name.endsWith("AXE")) {
+                    if (EnchantUtils.hasEnchantment(itemStack, TimberEnchant.INSTANCE)) {
+                        return;
+                    }
+                }
             }
+            else {
+                if (item_name.endsWith("PICKAXE")) {
+                    if (EnchantUtils.hasEnchantment(itemStack, VeinMinerEnchant.INSTANCE)) {
+                        return;
+                    }
+                }
+            }
+
         }
+
         e.setCancelled(true);
     }
 
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent e) {
         if (EnchantUtils.hasEnchantment(e.getItem(), EternalEnchant.INSTANCE)) {
-            e.setCancelled(true);
+            int ench_level = EnchantUtils.getEnchantLevel(e.getItem(), EternalEnchant.INSTANCE);
+            if (ProbabilityUtil.roll((ench_level*10)*2)) {
+                e.setCancelled(true);
+            }
         }
     }
 
@@ -84,7 +101,9 @@ public class Events implements Listener {
         if (killer != null) {
             ItemStack weapon = killer.getInventory().getItemInMainHand();
             if (EnchantUtils.hasEnchantment(weapon, DecapitationEnchant.INSTANCE)) {
-                if (ProbabilityUtil.roll(30)) {
+                int ench_level = EnchantUtils.getEnchantLevel(weapon, DecapitationEnchant.INSTANCE);
+                int percent = ench_level == 1 ? 15 : 30;
+                if (ProbabilityUtil.roll(percent)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
                 }
             }
