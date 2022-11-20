@@ -37,7 +37,7 @@ public class Events implements Listener {
             CustomStack customStack = CustomStack.byItemStack(book);
             if (customStack == null) return;
 
-            Enchantment enchantment = GardensEnchants.getGardensEnchant(customStack.getNamespacedID());
+            Enchantment enchantment = CustomEnchantments.getGardensEnchant(customStack.getNamespacedID());
             if (enchantment == null) return;
 
             if (enchantment.canEnchantItem(item)) {
@@ -58,19 +58,18 @@ public class Events implements Listener {
             String item_name = itemStack.getType().name();
             if (isWood) {
                 if (item_name.endsWith("AXE")) {
-                    if (EnchantUtils.hasEnchantment(itemStack, TimberEnchant.INSTANCE)) {
+                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.TIMBER)) {
                         return;
                     }
                 }
             }
             else {
                 if (item_name.endsWith("PICKAXE")) {
-                    if (EnchantUtils.hasEnchantment(itemStack, VeinMinerEnchant.INSTANCE)) {
+                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.VEIN_MINER)) {
                         return;
                     }
                 }
             }
-
         }
 
         e.setCancelled(true);
@@ -78,8 +77,8 @@ public class Events implements Listener {
 
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent e) {
-        if (EnchantUtils.hasEnchantment(e.getItem(), EternalEnchant.INSTANCE)) {
-            int ench_level = EnchantUtils.getEnchantLevel(e.getItem(), EternalEnchant.INSTANCE);
+        if (EnchantUtils.hasEnchantment(e.getItem(), CustomEnchantments.ETERNAL)) {
+            int ench_level = EnchantUtils.getEnchantLevel(e.getItem(), CustomEnchantments.ETERNAL);
             if (ProbabilityUtil.roll((ench_level*10)*2)) {
                 e.setCancelled(true);
             }
@@ -91,8 +90,8 @@ public class Events implements Listener {
         Player killer = e.getEntity().getKiller();
         if (killer != null) {
             ItemStack weapon = killer.getInventory().getItemInMainHand();
-            if (EnchantUtils.hasEnchantment(weapon, SkullStealerEnchant.INSTANCE)) {
-                int ench_level = EnchantUtils.getEnchantLevel(weapon, SkullStealerEnchant.INSTANCE);
+            if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.SKULL_STEALER)) {
+                int ench_level = EnchantUtils.getEnchantLevel(weapon, CustomEnchantments.SKULL_STEALER);
                 int percent = ench_level == 1 ? 15 : 30;
                 if (ProbabilityUtil.roll(percent)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));

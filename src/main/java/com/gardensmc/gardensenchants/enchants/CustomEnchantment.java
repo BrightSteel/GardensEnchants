@@ -9,11 +9,13 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CustomEnchantment extends Enchantment {
 
+    private String name;
     private final String bookNamespace;
     private EnchantRarity rarity;
 
-    public CustomEnchantment(@NotNull NamespacedKey key, String bookNamespace, EnchantRarity rarity) {
+    public CustomEnchantment(String name, @NotNull NamespacedKey key, String bookNamespace, EnchantRarity rarity) {
         super(key);
+        this.name = name;
         this.bookNamespace = bookNamespace;
         this.rarity = rarity;
     }
@@ -30,6 +32,12 @@ public abstract class CustomEnchantment extends Enchantment {
         }
 
         return null;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+        return name;
     }
 
     public EnchantRarity getRarity() {

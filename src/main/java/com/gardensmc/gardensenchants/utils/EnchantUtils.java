@@ -1,15 +1,13 @@
 package com.gardensmc.gardensenchants.utils;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.enchants.BubbleHeadEnchant;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
+import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchants.EnchantRarity;
 import org.bukkit.ChatColor;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,13 +85,17 @@ public class EnchantUtils {
         return ChatUtils.translateHexColorCodes("&#", "", hex);
     }
 
+
+
+
+
     // best to call this asynchronously? although i think this will have fast performance
     public static CustomEnchantment[] generateMagicEnchants() {
 
         CustomEnchantment[] enchantments = new CustomEnchantment[3];
         for (int i = 0; i < enchantments.length; i++) {
             EnchantRarity rarity = ProbabilityUtil.rollRarity();
-            enchantments[i] = GardensEnchants.getRandomEnchant(rarity);
+            enchantments[i] = CustomEnchantments.getRandomEnchant(rarity);
         }
 
         return enchantments;

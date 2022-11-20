@@ -2,23 +2,14 @@ package com.gardensmc.gardensenchants.enchants;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class BubbleHeadEnchant extends CustomEnchantment {
+public class HelmetEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new BubbleHeadEnchant("gardens:bubble_head", EnchantRarity.ORDINARY);
-
-    public BubbleHeadEnchant(String bookNameSpace, EnchantRarity rarity) {
-        super(new NamespacedKey(GardensEnchants.plugin, "bubble_head"), bookNameSpace, rarity);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-        return "Bubble Head";
+    public HelmetEnchant(String name, String key, EnchantRarity rarity) {
+        super(name, new NamespacedKey(GardensEnchants.plugin, key), "gardens:" + key, rarity);
     }
 
     @NotNull

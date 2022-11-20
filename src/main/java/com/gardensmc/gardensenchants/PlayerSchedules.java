@@ -1,6 +1,6 @@
 package com.gardensmc.gardensenchants;
 
-import com.gardensmc.gardensenchants.enchants.BubbleHeadEnchant;
+import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -14,7 +14,7 @@ public class PlayerSchedules {
                 if (player.isInWater()) {
                     ItemStack helmet = player.getInventory().getHelmet();
 
-                    if (helmet != null && EnchantUtils.hasEnchantment(helmet, BubbleHeadEnchant.INSTANCE)) {
+                    if (helmet != null && EnchantUtils.hasEnchantment(helmet, CustomEnchantments.BUBBLE_HEAD)) {
                         player.setRemainingAir(player.getMaximumAir());
                     }
                 }

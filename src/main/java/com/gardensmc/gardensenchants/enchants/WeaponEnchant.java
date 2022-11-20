@@ -6,18 +6,10 @@ import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class TimberEnchant extends CustomEnchantment {
+public class WeaponEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new TimberEnchant("gardens:timber", EnchantRarity.ORDINARY);
-
-    public TimberEnchant(String bookNameSpace, EnchantRarity rarity) {
-        super(new NamespacedKey(GardensEnchants.plugin, "timber"), bookNameSpace, rarity);
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-        return "Timber";
+    public WeaponEnchant(String name, String key, EnchantRarity rarity) {
+        super(name, new NamespacedKey(GardensEnchants.plugin, key), "gardens:" + key, rarity);
     }
 
     @NotNull
@@ -26,9 +18,8 @@ public class TimberEnchant extends CustomEnchantment {
         return EnchantmentTarget.TOOL;
     }
 
-
     @Override
     public boolean canEnchantItem(@NotNull ItemStack itemStack) {
-        return itemStack.getType().name().endsWith("AXE");
+        return itemStack.getType().name().endsWith("SWORD") || itemStack.getType().name().endsWith("AXE");
     }
 }
