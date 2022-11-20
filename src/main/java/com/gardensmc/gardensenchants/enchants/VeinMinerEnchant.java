@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class VeinMinerEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new VeinMinerEnchant("gardens:vein_miner");
+    public static CustomEnchantment INSTANCE = new VeinMinerEnchant("gardens:vein_miner", EnchantRarity.ORDINARY);
 
-    public VeinMinerEnchant(String bookNameSpace) {
-        super(new NamespacedKey(GardensEnchants.plugin, "vein_miner"), bookNameSpace);
+    public VeinMinerEnchant(String bookNameSpace, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, "vein_miner"), bookNameSpace, rarity);
     }
 
     @NotNull

@@ -6,18 +6,18 @@ import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class DecapitationEnchant extends CustomEnchantment {
+public class SkullStealerEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new DecapitationEnchant("gardens:decapitation");
+    public static CustomEnchantment INSTANCE = new SkullStealerEnchant("gardens:skull_stealer", EnchantRarity.ORDINARY);
 
-    public DecapitationEnchant(String bookNameSpace) {
-        super(new NamespacedKey(GardensEnchants.plugin, "decapitation"), bookNameSpace);
+    public SkullStealerEnchant(String bookNameSpace, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, "skull_stealer"), bookNameSpace, rarity);
     }
 
     @NotNull
     @Override
     public String getName() {
-        return "Decapitation";
+        return "Skull Stealer";
     }
 
     @NotNull

@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class TimberEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new TimberEnchant("gardens:timber");
+    public static CustomEnchantment INSTANCE = new TimberEnchant("gardens:timber", EnchantRarity.ORDINARY);
 
-    public TimberEnchant(String bookNameSpace) {
-        super(new NamespacedKey(GardensEnchants.plugin, "timber"), bookNameSpace);
+    public TimberEnchant(String bookNameSpace, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, "timber"), bookNameSpace, rarity);
     }
 
     @NotNull

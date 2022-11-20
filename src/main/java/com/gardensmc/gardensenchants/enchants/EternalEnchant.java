@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class EternalEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new EternalEnchant("gardens:eternal");
+    public static CustomEnchantment INSTANCE = new EternalEnchant("gardens:eternal", EnchantRarity.UNIQUE);
 
-    public EternalEnchant(String bookNameSpace) {
-        super(new NamespacedKey(GardensEnchants.plugin, "eternal"), bookNameSpace);
+    public EternalEnchant(String bookNameSpace, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, "eternal"), bookNameSpace, rarity);
     }
 
     @NotNull

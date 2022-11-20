@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class BubbleHeadEnchant extends CustomEnchantment {
 
-    public static CustomEnchantment INSTANCE = new BubbleHeadEnchant("gardens:bubble_head");
+    public static CustomEnchantment INSTANCE = new BubbleHeadEnchant("gardens:bubble_head", EnchantRarity.ORDINARY);
 
-    public BubbleHeadEnchant(String bookNameSpace) {
-        super(new NamespacedKey(GardensEnchants.plugin, "bubble_head"), bookNameSpace);
+    public BubbleHeadEnchant(String bookNameSpace, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, "bubble_head"), bookNameSpace, rarity);
     }
 
     @NotNull

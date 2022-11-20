@@ -5,10 +5,7 @@ import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
-import de.tr7zw.nbtapi.NBTCompound;
-import de.tr7zw.nbtapi.NBTItem;
 import dev.lone.itemsadder.api.CustomStack;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -19,13 +16,7 @@ import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import wtf.choco.veinminer.api.event.player.PlayerVeinMineEvent;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
 
 public class Events implements Listener {
 
@@ -100,8 +91,8 @@ public class Events implements Listener {
         Player killer = e.getEntity().getKiller();
         if (killer != null) {
             ItemStack weapon = killer.getInventory().getItemInMainHand();
-            if (EnchantUtils.hasEnchantment(weapon, DecapitationEnchant.INSTANCE)) {
-                int ench_level = EnchantUtils.getEnchantLevel(weapon, DecapitationEnchant.INSTANCE);
+            if (EnchantUtils.hasEnchantment(weapon, SkullStealerEnchant.INSTANCE)) {
+                int ench_level = EnchantUtils.getEnchantLevel(weapon, SkullStealerEnchant.INSTANCE);
                 int percent = ench_level == 1 ? 15 : 30;
                 if (ProbabilityUtil.roll(percent)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
