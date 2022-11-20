@@ -1,5 +1,6 @@
 package com.gardensmc.gardensenchants.enchants;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
 import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -13,10 +14,10 @@ public abstract class CustomEnchantment extends Enchantment {
     private final String bookNamespace;
     private EnchantRarity rarity;
 
-    public CustomEnchantment(String name, @NotNull NamespacedKey key, String bookNamespace, EnchantRarity rarity) {
-        super(key);
+    public CustomEnchantment(String name, String key, EnchantRarity rarity) {
+        super(new NamespacedKey(GardensEnchants.plugin, key));
         this.name = name;
-        this.bookNamespace = bookNamespace;
+        this.bookNamespace = "gardens:" + key;
         this.rarity = rarity;
     }
 

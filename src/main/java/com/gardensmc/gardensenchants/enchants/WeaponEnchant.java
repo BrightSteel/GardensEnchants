@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class WeaponEnchant extends CustomEnchantment {
 
     public WeaponEnchant(String name, String key, EnchantRarity rarity) {
-        super(name, new NamespacedKey(GardensEnchants.plugin, key), "gardens:" + key, rarity);
+        super(name, key, rarity);
     }
 
     @NotNull

@@ -11,11 +11,11 @@ public class ToolEnchant extends CustomEnchantment {
     private String tool;
 
     public ToolEnchant(String name, String key, EnchantRarity rarity) {
-        super(name, new NamespacedKey(GardensEnchants.plugin, key), "gardens:" + key, rarity);
+        super(name, key, rarity);
     }
 
     public ToolEnchant(String name, String key, EnchantRarity rarity, String tool) {
-        super(name, new NamespacedKey(GardensEnchants.plugin, key), "gardens:" + key, rarity);
+        super(name, key, rarity);
         this.tool = tool;
     }
 
