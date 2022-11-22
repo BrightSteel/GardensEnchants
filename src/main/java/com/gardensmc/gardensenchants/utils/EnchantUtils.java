@@ -4,6 +4,7 @@ import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchants.EnchantRarity;
+import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.ChatColor;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class EnchantUtils {
 
@@ -85,10 +87,6 @@ public class EnchantUtils {
         return ChatUtils.translateHexColorCodes("&#", "", hex);
     }
 
-
-
-
-
     // best to call this asynchronously? although i think this will have fast performance
     public static CustomEnchantment[] generateMagicEnchants() {
 
@@ -99,5 +97,32 @@ public class EnchantUtils {
         }
 
         return enchantments;
+    }
+
+    public static int genRandomLevel(Enchantment enchantment) {
+        int min = enchantment.getStartLevel();
+        int max = enchantment.getMaxLevel();
+
+        return ThreadLocalRandom.current().nextInt(min, max+1);
+    }
+
+    public static String getRandomRarity(Enchantment enchantment) {
+        int level = genRandomLevel(enchantment);
+        return RomanNumber.toRoman(level);
+    }
+
+    public static ItemStack[] getRandomBooks() {
+        ItemStack[] books = new ItemStack[3];
+        CustomEnchantment[] enchants = generateMagicEnchants();
+        for (int i = 0; i < 3; i++) {
+            String rarity = getRandomRarity(enchants[i]);
+            System.out.println(enchants[i].getBookNamespace());
+            CustomStack stack = CustomStack.getInstance(enchants[i].getBookNamespace());
+            if (stack != null) {
+                stack.setDisplayName(stack.getDisplayName() + " " + rarity);
+                books[i] = stack.getItemStack();
+            }
+        }
+        return books;
     }
 }

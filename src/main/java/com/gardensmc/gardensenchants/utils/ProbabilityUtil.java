@@ -32,6 +32,7 @@ public class ProbabilityUtil {
     }
 
     public static int getRandomIndex(int length) {
+        if (length == 0) return 0;
         return ThreadLocalRandom.current().nextInt(0, length);
     }
 }

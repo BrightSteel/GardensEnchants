@@ -30,6 +30,8 @@ public class CustomEnchantments {
     public static final CustomEnchantment TIMBER = new ToolEnchant("Timber", "timber", EnchantRarity.UNIQUE, "axe");
     public static final CustomEnchantment VEIN_MINER = new ToolEnchant("Vein Miner", "vein_miner", EnchantRarity.UNIQUE, "pickaxe");
 
+    public static final CustomEnchantment SILK_TOUCH = new CustomWrapper(Enchantment.SILK_TOUCH, "silk_touch", EnchantRarity.MYSTICAL);
+
     private static void compileList() {
         customEnchantments.add(BUBBLE_HEAD);
         customEnchantments.add(ETERNAL);
@@ -37,6 +39,7 @@ public class CustomEnchantments {
         customEnchantments.add(SKULL_STEALER);
         customEnchantments.add(TIMBER);
         customEnchantments.add(VEIN_MINER);
+        customEnchantments.add(SILK_TOUCH);
     }
 
     public static void initialize() {
@@ -55,7 +58,8 @@ public class CustomEnchantments {
         }
 
         for (Enchantment enchantment : customEnchantments) {
-            Enchantment.registerEnchantment(enchantment);
+            if (!(enchantment instanceof CustomWrapper))
+                Enchantment.registerEnchantment(enchantment);
         }
 
         Enchantment.stopAcceptingRegistrations();
