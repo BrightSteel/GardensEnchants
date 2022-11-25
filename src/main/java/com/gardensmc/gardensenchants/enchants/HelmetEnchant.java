@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class HelmetEnchant extends CustomEnchantment {
 
-    public HelmetEnchant(String name, String key, EnchantRarity rarity) {
-        super(name, key, rarity);
+    public HelmetEnchant(String key, EnchantRarity rarity) {
+        super(key, rarity);
     }
 
     @NotNull

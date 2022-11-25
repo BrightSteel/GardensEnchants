@@ -10,7 +10,7 @@ public class CustomWrapper extends CustomEnchantment {
     private final Enchantment enchantment;
 
     public CustomWrapper(Enchantment enchantment, String key, EnchantRarity rarity) {
-        super(enchantment.getName(), key, rarity);
+        super(key, rarity);
         this.enchantment = enchantment;
     }
 
@@ -23,5 +23,15 @@ public class CustomWrapper extends CustomEnchantment {
     @Override
     public boolean canEnchantItem(@NotNull ItemStack itemStack) {
         return enchantment.canEnchantItem(itemStack);
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return enchantment.getMaxLevel();
+    }
+
+    @Override
+    public int getStartLevel() {
+        return enchantment.getStartLevel();
     }
 }

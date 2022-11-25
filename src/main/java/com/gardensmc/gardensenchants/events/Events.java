@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.events;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.gui.EnchantingGUI;
+import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.gui.InventoryUpdate;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
@@ -22,10 +23,10 @@ import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import wtf.choco.veinminer.api.event.player.PlayerVeinMineEvent;
 
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class Events implements Listener {
 
@@ -131,6 +132,7 @@ public class Events implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
+
             if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
                 Inventory clicked = e.getClickedInventory();
                 if (clicked != null && clicked.getType() == InventoryType.PLAYER) {
@@ -152,9 +154,26 @@ public class Events implements Listener {
                 }
             }
             else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
-                if (e.getSlot() != 1) {
+                ItemStack selection = null;
+                if (e.getSlot() != 1 && e.getWhoClicked() instanceof Player player) {
+                    if (e.getSlot() > 2 && e.getSlot() < 9) {
+                        selection = e.getInventory().getItem(8);
+                    } else if (e.getSlot() > 11 && e.getSlot() < 18) {
+                        selection = e.getInventory().getItem(17);
+
+                    } else if (e.getSlot() > 20 && e.getSlot() < 27) {
+                        selection = e.getInventory().getItem(26);
+
+                    } else if (e.getSlot() == 19) {
+                        new EnchantingMenu(player).open();
+                    }
+
+                    if (selection != null) {
+                        e.getInventory().setItem(1, selection);
+                        updateEnchantingGUI(player, e.getInventory());
+                    }
+
                     e.setCancelled(true);
-                    return;
                 }
             }
 
@@ -162,15 +181,13 @@ public class Events implements Listener {
 
         if (e.getWhoClicked() instanceof Player player) {
             if (e.getRawSlot() == 1) {
-                if (e.getAction().name().contains("PLACE")) {
-                    updateEnchantingGUI(true, player, e.getInventory());
+                if (e.getAction().name().contains("PLACE") || e.getAction().name().contains("PICKUP") || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                    updateEnchantingGUI(player, e.getInventory());
                 }
-                else if (e.getAction().name().contains("PICKUP") || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                    updateEnchantingGUI(false, player, e.getInventory());
-                }
+
             }
             else if (e.getRawSlot() >= 27 && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                updateEnchantingGUI(true, player, e.getInventory());
+                updateEnchantingGUI(player, e.getInventory());
             }
         }
 
@@ -179,15 +196,32 @@ public class Events implements Listener {
 
     }
 
-    private void updateEnchantingGUI(boolean prepareTable, Player player, Inventory inv) {
+    private void updateEnchantingGUI(Player player, Inventory inv) {
         Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
             String title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:&f\uE094");
-            if (prepareTable && itemIsEnchantable(inv.getItem(1))) {
-                String sample = FontMappings.INSTANCE.replaceAll("Bubble Head I", FontMappings.INSTANCE.fontMap1);
-                title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:&f\uE05F:offset_-190:&f" + sample);
+            if (itemIsEnchantable(inv.getItem(1))) {
+                ItemStack[] books = genBooks(inv);
+                String book[] = new String[3];
+                for (int i = 0; i < book.length; i++) {
+                    book[i] = (books[i] != null && books[i].getItemMeta() != null) ? books[i].getItemMeta().getDisplayName() : " ";
+                }
+
+                HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
+                String[] sample = new String[3];
+                for (int i = 0; i < 3; i++) {
+                     String raw = stripFormatting(book[i]);
+                     String padding = FontMappings.getPadding(raw, 100);
+                     sample[i] = FontMappings.INSTANCE.replaceAll(stripFormatting(book[i]), fontMaps[i]) + padding;
+                }
+
+                title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:&f\uE05F:offset_-195:&f" + sample[0] + "&f:offset_-100:&f" + sample[1] + "&f:offset_-100:&f" + sample[2]);
+            }
+            else {
+                removeBooks(inv);
             }
 
             InventoryUpdate.updateInventory(GardensEnchants.plugin, player, title);
+
         }, 1);
         // we placed something into an empty
 //        if (bookSlot == null) {
@@ -200,6 +234,46 @@ public class Events implements Listener {
 //
 
 //        }
+    }
+
+    // assumes we have a formatted hex code at beginning of display name
+    private String stripFormatting(String formatted) {
+        if (formatted.length() < 14) {
+            return formatted;
+        }
+        return formatted.substring(14);
+    }
+
+    private ItemStack[] genBooks(Inventory inv) {
+        ItemStack display = ItemUtils.getCustomItem("gardens:blank_item");
+        ItemStack[] books = EnchantUtils.getRandomBooks();
+        inv.setItem(8, books[0]);
+        inv.setItem(17, books[1]);
+        inv.setItem(26, books[2]);
+
+        int j = 0;
+        for (ItemStack book : books) {
+            ItemMeta displayMeta = display.getItemMeta();
+            ItemMeta bookMeta = (book != null) ? book.getItemMeta() : null;
+            if (displayMeta != null && bookMeta != null) {
+                displayMeta.setDisplayName(bookMeta.getDisplayName());
+                displayMeta.setLore(bookMeta.getLore());
+                display.setItemMeta(displayMeta);
+            }
+            for (int i = 3 + (j * 9); i < 8 + (j * 9); i++) {
+                inv.setItem(i, display);
+            }
+            j++;
+        }
+        return books;
+    }
+
+    private void removeBooks(Inventory inv) {
+        for (int j = 0; j < 3; j++) {
+            for (int i = 3; i < 9; i++) {
+                inv.setItem(i + (j * 9), null);
+            }
+        }
     }
 
     private boolean itemIsEnchantable(ItemStack item) {
@@ -215,12 +289,8 @@ public class Events implements Listener {
         }
 
         if (e.getWhoClicked() instanceof Player player) {
-            if (e.getNewItems().get(1).getType() == Material.BOOK) {
-                updateEnchantingGUI(true, player, e.getInventory());
-            }
-            else {
-                updateEnchantingGUI(false, player, e.getInventory());
-
+            if (e.getRawSlots().contains(1)) {
+                updateEnchantingGUI(player, e.getInventory());
             }
         }
 

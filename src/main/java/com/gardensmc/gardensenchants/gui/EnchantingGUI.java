@@ -68,6 +68,8 @@ public class EnchantingGUI implements InventoryHolder {
                 j++;
             }
         }
+
+        inv.setItem(19, new ItemStack(Material.PAPER));
     }
 
     private ItemStack createItem(ItemStack stack, String name, String... lore) {

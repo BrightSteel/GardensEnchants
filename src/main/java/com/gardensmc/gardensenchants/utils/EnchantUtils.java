@@ -82,9 +82,20 @@ public class EnchantUtils {
     public static String getColorFromRarity(EnchantRarity rarity) {
         String hex;
         switch (rarity) {
-            default -> hex = "&#CFD5DD";
+            default -> hex = "#CFD5DD";
+            case UNIQUE -> hex = "#FFAA00";
+            case MYSTICAL -> hex = "#FF55FF";
+            case DIVINE -> hex = "#55FFFF";
         }
-        return ChatUtils.translateHexColorCodes("&#", "", hex);
+        return ChatUtils.translateHexColorCodes("#", "", hex);
+    }
+
+    public static String getRarityTag(EnchantRarity rarity) {
+        String tag;
+        switch (rarity) {
+            default -> tag = "\uE05E";
+        }
+        return tag;
     }
 
     // best to call this asynchronously? although i think this will have fast performance
@@ -106,7 +117,7 @@ public class EnchantUtils {
         return ThreadLocalRandom.current().nextInt(min, max+1);
     }
 
-    public static String getRandomRarity(Enchantment enchantment) {
+    public static String getRandomLevel(Enchantment enchantment) {
         int level = genRandomLevel(enchantment);
         return RomanNumber.toRoman(level);
     }
@@ -115,13 +126,24 @@ public class EnchantUtils {
         ItemStack[] books = new ItemStack[3];
         CustomEnchantment[] enchants = generateMagicEnchants();
         for (int i = 0; i < 3; i++) {
-            String rarity = getRandomRarity(enchants[i]);
-            System.out.println(enchants[i].getBookNamespace());
-            CustomStack stack = CustomStack.getInstance(enchants[i].getBookNamespace());
-            if (stack != null) {
-                stack.setDisplayName(stack.getDisplayName() + " " + rarity);
-                books[i] = stack.getItemStack();
+//            System.out.println(enchants[i].getBookNamespace());
+            ItemStack book = enchants[i].getBook();
+            EnchantRarity rarity = enchants[i].getRarity();
+            if (book != null) {
+                ItemMeta meta = book.getItemMeta();
+                String level = EnchantUtils.getRandomLevel(enchants[i]);
+                if (meta != null) {
+                    meta.setDisplayName(meta.getDisplayName() + " " + level);
+                    if (meta.getLore() != null) {
+                        List<String> lore = meta.getLore();
+                        int destruction = CustomEnchantments.getRandomDestruction(rarity);
+                        lore.add(ChatUtils.translateHexColorCodes("#", "", "#FF5555") + "Destruction Chance: " + ChatUtils.translateHexColorCodes("#", "", "#AAAAAA") + destruction + "%");
+                        meta.setLore(lore);
+                    }
+                    book.setItemMeta(meta);
+                }
             }
+            books[i] = book;
         }
         return books;
     }

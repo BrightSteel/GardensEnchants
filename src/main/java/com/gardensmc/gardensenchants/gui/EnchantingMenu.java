@@ -1,0 +1,56 @@
+package com.gardensmc.gardensenchants.gui;
+
+import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
+import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
+import de.themoep.inventorygui.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
+
+public class EnchantingMenu {
+
+    private InventoryGui gui;
+    private Player viewer;
+
+    public static String[] layout = new String[]{
+            "bbbbbbbbb",
+            "bbbbbbbbb",
+            "bbbbbbbbb",
+            "   p n   "
+    };
+
+    public EnchantingMenu(Player viewer) {
+        this.gui = new InventoryGui(GardensEnchants.plugin, viewer, "&fHey", layout);
+//        gui.setOutsideAction();
+        this.viewer = viewer;
+        initializeElements();
+    }
+
+    private void initializeElements() {
+        GuiElementGroup grp = new GuiElementGroup('b');
+        List<CustomEnchantment>[] enchantLists = new List[]{CustomEnchantments.ordinaryEnchants, CustomEnchantments.uniqueEnchants, CustomEnchantments.mysticalEnchants, CustomEnchantments.divineEnchants};
+        for (List<CustomEnchantment> enchantList : enchantLists) {
+            for (CustomEnchantment enchant : enchantList) {
+                grp.addElement(new StaticGuiElement('a', new ItemStack(enchant.getBook())));
+            }
+        }
+
+        gui.addElement(grp);
+        gui.addElement(new GuiPageElement('p', new ItemStack(Material.PAPER), GuiPageElement.PageAction.PREVIOUS, "Previous"));
+        gui.addElement(new GuiPageElement('n', new ItemStack(Material.PAPER), GuiPageElement.PageAction.NEXT, "Next"));
+
+    }
+
+    public void open() {
+        gui.show(viewer);
+    }
+
+
+
+}

@@ -10,12 +10,12 @@ public class ToolEnchant extends CustomEnchantment {
 
     private String tool;
 
-    public ToolEnchant(String name, String key, EnchantRarity rarity) {
-        super(name, key, rarity);
+    public ToolEnchant(String key, EnchantRarity rarity) {
+        super(key, rarity);
     }
 
-    public ToolEnchant(String name, String key, EnchantRarity rarity, String tool) {
-        super(name, key, rarity);
+    public ToolEnchant(String key, EnchantRarity rarity, String tool) {
+        super(key, rarity);
         this.tool = tool;
     }
 
