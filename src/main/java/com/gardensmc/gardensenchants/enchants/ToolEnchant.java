@@ -6,16 +6,18 @@ import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class ToolEnchant extends CustomEnchantment {
 
     private String tool;
 
-    public ToolEnchant(String key, EnchantRarity rarity) {
-        super(key, rarity);
+    public ToolEnchant(String key, String display_name, EnchantRarity rarity) {
+        super(key, display_name, rarity);
     }
 
-    public ToolEnchant(String key, EnchantRarity rarity, String tool) {
-        super(key, rarity);
+    public ToolEnchant(String key, String display_name, EnchantRarity rarity, String tool) {
+        super(key, display_name, rarity);
         this.tool = tool;
     }
 
@@ -30,6 +32,11 @@ public class ToolEnchant extends CustomEnchantment {
         if (tool != null) {
             return itemStack.getType().name().endsWith(tool.toUpperCase());
         }
-        return true;
+        else {
+            String[] tools = new String[]{"SWORD", "AXE", "HOE", "SHOVEL", "TRIDENT"};
+            String name = itemStack.getType().name();
+            return Arrays.stream(tools).anyMatch(name::endsWith);
+        }
+
     }
 }

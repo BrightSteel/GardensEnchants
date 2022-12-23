@@ -1,11 +1,15 @@
 package com.gardensmc.gardensenchants.gui;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.cache.EnchantCache;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
+import com.gardensmc.gardensenchants.enchants.EnchantRarity;
 import com.gardensmc.gardensenchants.enchants.FontMappings;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import de.themoep.inventorygui.InventoryGui;
+import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -20,16 +24,25 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class EnchantingGUI implements InventoryHolder {
+
+    private Player player;
 
     private String title;
     private ItemStack book;
 
-    public EnchantingGUI() {
+    public EnchantingGUI(Player player) {
         title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:\uE094&f");
-
+        this.player = player;
     }
 
     public EnchantingGUI(ItemStack book) {
@@ -41,13 +54,16 @@ public class EnchantingGUI implements InventoryHolder {
 
     private void initializeItems(Inventory inv) {
         ItemStack blankItem = ItemUtils.getCustomItem("gardens:blank_item");
-        int[] blanks = new int[]{0, 2, 9, 10, 11, 18, 20};
+//        int[] blanks = new int[]{0, 2, 9, 10, 11, 18, 20};
+        int[] blanks = new int[]{0, 2};
         for (int blank : blanks) {
             inv.setItem(blank, blankItem);
         }
 
         if (book != null) {
-            ItemStack[] books = EnchantUtils.getRandomBooks();
+            // btw this does nothing, only run on initial opening...
+            ItemStack[] books = EnchantUtils.getRandomBooks(player.getUniqueId());
+
             inv.setItem(8, books[0]);
             inv.setItem(17, books[1]);
             inv.setItem(26, books[2]);
@@ -69,7 +85,24 @@ public class EnchantingGUI implements InventoryHolder {
             }
         }
 
-        inv.setItem(19, new ItemStack(Material.PAPER));
+        ItemStack stack = ItemUtils.getBlankItem();
+        ItemMeta meta = stack.getItemMeta();
+        EnchantCache cache = new EnchantCache(player.getUniqueId());
+        LocalDateTime expiration = cache.getExpiration();
+        long duration = Duration.between(LocalDateTime.now(Clock.systemUTC()), expiration).toMillis();
+
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.GOLD + "View Enchants");
+            List<String> lore = new ArrayList<>();
+//            if (lore != null) {
+                lore.add("");
+                lore.add(ChatColor.WHITE + "Current table changes in ");
+                lore.add(ChatColor.LIGHT_PURPLE + "" + TimeUnit.MILLISECONDS.toHours(duration) + " hr");
+                meta.setLore(lore);
+//            }
+            stack.setItemMeta(meta);
+        }
+        inv.setItem(19, stack);
     }
 
     private ItemStack createItem(ItemStack stack, String name, String... lore) {

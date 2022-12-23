@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.gui;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
+import com.gardensmc.gardensenchants.utils.RomanNumber;
 import de.themoep.inventorygui.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -10,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
 
@@ -37,7 +39,20 @@ public class EnchantingMenu {
         List<CustomEnchantment>[] enchantLists = new List[]{CustomEnchantments.ordinaryEnchants, CustomEnchantments.uniqueEnchants, CustomEnchantments.mysticalEnchants, CustomEnchantments.divineEnchants};
         for (List<CustomEnchantment> enchantList : enchantLists) {
             for (CustomEnchantment enchant : enchantList) {
-                grp.addElement(new StaticGuiElement('a', new ItemStack(enchant.getBook())));
+                ItemStack book = enchant.getBook();
+                ItemMeta meta = book.getItemMeta();
+                String minLvl = RomanNumber.toRoman(enchant.getStartLevel());
+                String maxLvl = RomanNumber.toRoman(enchant.getMaxLevel());
+                if (meta != null) {
+                    if (minLvl.equals(maxLvl)) {
+                        meta.setDisplayName(meta.getDisplayName() + " (" + minLvl + ")");
+                    }
+                    else {
+                        meta.setDisplayName(meta.getDisplayName() + " (" + minLvl + "-" + maxLvl + ")");
+                    }
+                    book.setItemMeta(meta);
+                }
+                grp.addElement(new StaticGuiElement('a', book));
             }
         }
 

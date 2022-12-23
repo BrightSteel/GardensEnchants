@@ -7,10 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class CustomWrapper extends CustomEnchantment {
 
-    private final Enchantment enchantment;
+    public final Enchantment enchantment;
 
-    public CustomWrapper(Enchantment enchantment, String key, EnchantRarity rarity) {
-        super(key, rarity);
+    public CustomWrapper(Enchantment enchantment, String key, String display_name, EnchantRarity rarity) {
+        super(key, display_name, rarity);
         this.enchantment = enchantment;
     }
 

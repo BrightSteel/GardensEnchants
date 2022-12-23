@@ -13,19 +13,19 @@ public class ProbabilityUtil {
     public static EnchantRarity rollRarity() {
         // number between 0 and 1 exclusive
         double num = ThreadLocalRandom.current().nextDouble();
-        // 69% chance
-        if (num <= 0.67) {
+        // 78% chance
+        if (num <= 0.78) {
             return EnchantRarity.ORDINARY;
         }
-        // 18% chance
-        else if (num <= 0.87) {
+        // 15% chance
+        else if (num <= 0.93) {
             return EnchantRarity.UNIQUE;
         }
-        // 9% chance
-        else if (num <= 0.96) {
+        // 5% chance
+        else if (num <= 0.98) {
             return EnchantRarity.MYSTICAL;
         }
-        // 3% chance
+        // 1% chance
         else {
             return EnchantRarity.DIVINE;
         }

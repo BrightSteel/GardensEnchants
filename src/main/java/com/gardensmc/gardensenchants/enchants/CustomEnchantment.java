@@ -18,13 +18,26 @@ import java.util.List;
 
 public abstract class CustomEnchantment extends Enchantment {
 
+    private String display_name;
+
+    private int max_level;
     private final String bookNamespace;
     private EnchantRarity rarity;
 
-    public CustomEnchantment(String key, EnchantRarity rarity) {
+    public CustomEnchantment(String key, String display_name, EnchantRarity rarity) {
         super(new NamespacedKey(GardensEnchants.plugin, key));
         this.bookNamespace = "gardens:" + key;
         this.rarity = rarity;
+        this.display_name = display_name;
+        this.max_level = 1;
+    }
+
+    public CustomEnchantment(String key, String display_name, EnchantRarity rarity, int max_level) {
+        super(new NamespacedKey(GardensEnchants.plugin, key));
+        this.bookNamespace = "gardens:" + key;
+        this.rarity = rarity;
+        this.display_name = display_name;
+        this.max_level = max_level;
     }
 
     public String getBookNamespace() {
@@ -43,8 +56,12 @@ public abstract class CustomEnchantment extends Enchantment {
 
         ItemMeta meta = book.getItemMeta();
         String colorPrefix = EnchantUtils.getColorFromRarity(rarity);
-
-        meta.setDisplayName(colorPrefix + meta.getDisplayName().substring(2));
+        if (meta.getDisplayName().length() > 1) {
+            meta.setDisplayName(colorPrefix + meta.getDisplayName().substring(2));
+        }
+        else {
+            meta.setDisplayName(colorPrefix + meta.getDisplayName());
+        }
 
         List<String> lore = new ArrayList<>();
         lore.add(ChatColor.WHITE + EnchantUtils.getRarityTag(rarity));
@@ -76,7 +93,7 @@ public abstract class CustomEnchantment extends Enchantment {
 
     @Override
     public int getMaxLevel() {
-        return 1;
+        return max_level;
     }
 
     @Override
@@ -93,5 +110,10 @@ public abstract class CustomEnchantment extends Enchantment {
     @Override
     public String getName() {
         return bookNamespace;
+    }
+
+    // used for applying an enchant to lore
+    public String getDisplayName() {
+        return display_name;
     }
 }

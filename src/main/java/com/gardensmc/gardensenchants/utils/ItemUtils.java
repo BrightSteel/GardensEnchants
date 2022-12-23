@@ -27,4 +27,10 @@ public class ItemUtils {
         }
         return stack;
     }
+
+    public static ItemStack getBlankItem() {
+        return getCustomItem("gardens:blank_item");
+    }
+
+
 }

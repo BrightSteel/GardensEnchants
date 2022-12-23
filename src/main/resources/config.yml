@@ -1,0 +1,6 @@
+database:
+  host: localhost
+  port: 3306
+  databaseName: 's8479_gardensplayers'
+  username: 'u8479_ThKL00tkxB'
+  password: 'CHANGE_ME'
