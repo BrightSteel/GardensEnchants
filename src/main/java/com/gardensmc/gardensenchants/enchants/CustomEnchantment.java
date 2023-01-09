@@ -3,7 +3,7 @@ package com.gardensmc.gardensenchants.enchants;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.utils.ChatUtils;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
-import dev.lone.itemsadder.api.CustomStack;
+import com.gardensmc.gardensfurniture.register.CustomRegister;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -26,7 +26,7 @@ public abstract class CustomEnchantment extends Enchantment {
 
     public CustomEnchantment(String key, String display_name, EnchantRarity rarity) {
         super(new NamespacedKey(GardensEnchants.plugin, key));
-        this.bookNamespace = "gardens:" + key;
+        this.bookNamespace = key;
         this.rarity = rarity;
         this.display_name = display_name;
         this.max_level = 1;
@@ -34,7 +34,8 @@ public abstract class CustomEnchantment extends Enchantment {
 
     public CustomEnchantment(String key, String display_name, EnchantRarity rarity, int max_level) {
         super(new NamespacedKey(GardensEnchants.plugin, key));
-        this.bookNamespace = "gardens:" + key;
+        this.bookNamespace = key;
+//        this.bookNamespace = "gardens:" + key;
         this.rarity = rarity;
         this.display_name = display_name;
         this.max_level = max_level;
@@ -45,10 +46,12 @@ public abstract class CustomEnchantment extends Enchantment {
     }
 
     public ItemStack getBook() {
-        CustomStack customStack = CustomStack.getInstance(bookNamespace);
+        ItemStack customItem = CustomRegister.INSTANCE.itemRegistry.buildItem(bookNamespace);
+//        ItemBuilder itemBuilder = OraxenItems.getItemById(bookNamespace);
+//        CustomStack customStack = CustomStack.getInstance(bookNamespace);
         ItemStack book;
-        if (customStack != null) {
-            book = customStack.getItemStack();
+        if (customItem != null) {
+            book = customItem;
         }
         else {
             book = new ItemStack(Material.ENCHANTED_BOOK);

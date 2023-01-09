@@ -7,16 +7,17 @@ import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchants.EnchantRarity;
-import de.dustplanet.util.SilkUtil;
 import de.tr7zw.nbtapi.NBTItem;
-import dev.lone.itemsadder.api.CustomStack;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -45,7 +46,7 @@ public class EnchantUtils {
         for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
             Enchantment enchantment = entry.getKey();
             int level = entry.getValue();
-            CustomEnchantment c = CustomEnchantments.getCustomEnchant("gardens:" + enchantment.getKey().getKey());
+            CustomEnchantment c = CustomEnchantments.getCustomEnchant(enchantment.getKey().getKey());
 
             enchantQueue.add(new AbstractMap.SimpleEntry<>(c, level));
         }
@@ -90,14 +91,70 @@ public class EnchantUtils {
         boolean hasEnchant = false;
         for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
             Enchantment enchantment = entry.getKey();
-            if (enchantment.getKey().getNamespace().equals("gardensenchants")) {
+//            if (enchantment.getKey().getNamespace().equals("gardensenchants")) {
                 if (enchantment.getName().equals(custom_enchant.getName())) {
                     hasEnchant = true;
                 }
 
-            }
+//            }
         }
         return hasEnchant;
+    }
+
+    /**
+     * Called on join to refresh user enchants and apply where needed
+     * @param player
+     */
+    public static void refreshEnchants(Player player) {
+        ItemStack helmet = player.getInventory().getHelmet();
+        if (helmet != null && helmet.getType() != Material.AIR) {
+            refreshHelmetEnchants(player, helmet);
+        }
+
+        ItemStack boots = player.getInventory().getBoots();
+        if (boots != null && boots.getType() != Material.AIR) {
+            refreshBootsEnchants(player, boots);
+        }
+    }
+
+    private static void refreshHelmetEnchants(Player player, ItemStack helmet) {
+
+        boolean appliedNightVision = false;
+        for (Map.Entry<Enchantment, Integer> entry : helmet.getEnchantments().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            int level = entry.getValue();
+
+            String key = enchantment.getKey().getKey().toLowerCase();
+            if (key.equals("night_vision")) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
+                appliedNightVision = true;
+            }
+        }
+
+        PotionEffect nightVision = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
+        if (!appliedNightVision && nightVision != null && nightVision.getDuration() > 9500) {
+            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        }
+    }
+
+    private static void refreshBootsEnchants(Player player, ItemStack boots) {
+
+        boolean appliedSpeedy = false;
+        for (Map.Entry<Enchantment, Integer> entry : boots.getEnchantments().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            int level = entry.getValue();
+
+            String key = enchantment.getKey().getKey().toLowerCase();
+            if (key.equals("speedy")) {
+                float newSpeed = 0.2f + (level * 0.025f);
+                player.setWalkSpeed(newSpeed);
+                appliedSpeedy = true;
+            }
+        }
+
+        if (!appliedSpeedy && player.getWalkSpeed() > 0.20f) {
+            player.setWalkSpeed(0.20f);
+        }
     }
 
 //    public static boolean getEnchantmentLevel(ItemStack item, Enchantment custom_enchant) {
@@ -132,9 +189,11 @@ public class EnchantUtils {
                 newMeta.setCustomModelData(meta.getCustomModelData());
             }
         }
-       item.setItemMeta(newMeta);
+
+        ItemStack copy = item.clone();
+        item.setItemMeta(newMeta);
         // re-add all enchants except for the one we are removing
-        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
+        for (Map.Entry<Enchantment, Integer> entry : copy.getEnchantments().entrySet()) {
             Enchantment enchantment = entry.getKey();
             if (!enchantment.getName().equals(custom_enchant.getName())) {
                 item.addEnchantment(enchantment, entry.getValue());
@@ -269,16 +328,18 @@ public class EnchantUtils {
 
         CustomEnchantment[] enchantments = new CustomEnchantment[3];
         String[] levels = new String[3];
+        Integer[] destructions = new Integer[3];
         for (int i = 0; i < enchantments.length; i++) {
             EnchantRarity rarity = ProbabilityUtil.rollRarity();
             enchantments[i] = CustomEnchantments.getRandomEnchant(rarity);
             levels[i] = EnchantUtils.getRandomLevel(enchantments[i]);
+            destructions[i] = CustomEnchantments.getRandomDestruction(rarity);
         }
 
         LocalDateTime current = LocalDateTime.now(Clock.systemUTC());
         LocalDateTime expiration = current.plusDays(1);
 
-        return new EnchantEntry(enchantments, levels, expiration);
+        return new EnchantEntry(enchantments, levels, destructions, expiration);
     }
 
     public static int genRandomLevel(Enchantment enchantment) {
@@ -359,10 +420,10 @@ public class EnchantUtils {
         EnchantCache enchantCache = new EnchantCache(uuid);
         CustomEnchantment[] enchants = enchantCache.getEnchants();
         String[] levels = enchantCache.getLevels();
+        Integer[] destructions = enchantCache.getDestructions();
         for (int i = 0; i < 3; i++) {
             ItemStack book = enchants[i].getBook();
-            EnchantRarity rarity = enchants[i].getRarity();
-            int destruction = CustomEnchantments.getRandomDestruction(rarity);
+            int destruction = destructions[i];
             if (book != null) {
                 ItemMeta meta = book.getItemMeta();
                 if (meta != null) {

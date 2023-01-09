@@ -52,7 +52,8 @@
                             <exclude>com.comphenix.protocol:*</exclude>
                             <exclude>net.momirealms.customcrops:*</exclude>
                             <exclude>me.casperge.realisticseasons:*</exclude>
-
+                            <exclude>com.gardensmc.gardensplayers:*</exclude>
+                            <exclude>com.gardensmc.gardensfurniture:*</exclude>
                         </excludes>
                     </artifactSet>
                 </configuration>
@@ -142,6 +143,27 @@
             <systemPath>${project.basedir}/dependencies/VeinMiner-Bukkit-2.0.0.jar</systemPath>
         </dependency>
         <dependency>
+            <groupId>com.gardensmc.GardensPlayers</groupId>
+            <artifactId>GardensPlayers</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dependencies/GardensPlayers.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.gardensmc.gardensfurniture</groupId>
+            <artifactId>GardensFurniture</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dependencies/GardensFurniture.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.codingforcookies.armorequip</groupId>
+            <artifactId>ArmorEquipEvent</artifactId>
+            <version>1.7.6-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dependencies/ArmorEquipEvent-1.7.6.jar</systemPath>
+        </dependency>
+        <dependency>
             <groupId>de.themoep</groupId>
             <artifactId>inventorygui</artifactId>
             <!--The following version may not be the latest. Check it before using.-->
@@ -175,12 +197,6 @@
             <groupId>io.lumine</groupId>
             <artifactId>Mythic-Dist</artifactId>
             <version>5.0.3-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.LoneDev6</groupId>
-            <artifactId>api-itemsadder</artifactId>
-            <version>3.2.3-r8</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -223,17 +239,6 @@
             <artifactId>VaultAPI</artifactId>
             <version>1.7.1</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.dustplanet</groupId>
-            <artifactId>silkspawners</artifactId>
-            <version>7.3.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 

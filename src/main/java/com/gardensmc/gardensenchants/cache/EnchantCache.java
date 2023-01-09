@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.cache;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.database.EnchantEntry;
 import com.gardensmc.gardensenchants.database.EnchantTable;
+import com.gardensmc.gardensenchants.database.PlayerTable;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.google.common.io.ByteArrayDataOutput;
@@ -20,6 +21,7 @@ public class EnchantCache {
 
     private UUID uuid;
 
+
     /**
      * Accessible via player's uuid
      * @param uuid
@@ -34,6 +36,10 @@ public class EnchantCache {
 
     public String[] getLevels() {
         return getCache().getLevels();
+    }
+
+    public Integer[] getDestructions() {
+        return getCache().getDestructions();
     }
 
     private EnchantEntry getCache() {

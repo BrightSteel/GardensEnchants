@@ -26,4 +26,28 @@ public class PlayerTable {
         con.close();
         return username;
     }
+
+    /**
+     * Using Optifine, used for modified gui offsets
+     * @param uuid
+     * @return 0 if false, 1 if true
+     * @throws SQLException
+     */
+    public static int usingOptifine(String uuid) throws SQLException {
+        String query = "SELECT Optifine FROM players WHERE UUID = ?";
+        Connection con = DatabaseConnector.INSTANCE.getConnection();
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setString(1, uuid);
+
+        int optifine = 0;
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            optifine = rs.getInt(1);
+        }
+
+        rs.close();
+        ps.close();
+        con.close();
+        return optifine;
+    }
 }

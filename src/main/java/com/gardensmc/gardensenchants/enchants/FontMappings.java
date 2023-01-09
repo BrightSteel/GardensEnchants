@@ -1,5 +1,8 @@
 package com.gardensmc.gardensenchants.enchants;
 
+import com.gardensmc.gardensenchants.utils.OraxenShift;
+import org.bukkit.Bukkit;
+
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -215,10 +218,15 @@ public class FontMappings {
         return pixels;
     }
 
-    public static String getPadding(String s, int width) {
+    public static String getPadding(String s) {
+//        System.out.println("Filling this to " + s);
         int pixels = getPixels(s);
-        int pad = width - pixels;
-        return ":offset_" + pad + ":";
+//        int pad = width - pixels;
+//        boolean neg = (pad < 0);
+//        System.out.println("Getting pad for " + pad);
+        String shift = OraxenShift.INSTANCE.getShift(pixels, true);
+        return shift;
+//        return ":offset_" + pad + ":";
     }
 
 }

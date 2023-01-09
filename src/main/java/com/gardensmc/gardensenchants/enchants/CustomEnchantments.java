@@ -18,6 +18,9 @@ public class CustomEnchantments {
     // book_namespace -> custom_enchantment, for anvil usage
     private static final HashMap<String, CustomEnchantment> gardensEnchantsMap = new HashMap<>();
 
+    // model_data -> book_namespace for using old itemsadder books
+    public static HashMap<Integer, String> conversionMap = new HashMap<>();
+
     public static final List<CustomEnchantment>
             ordinaryEnchants = new ArrayList<>(),
             uniqueEnchants = new ArrayList<>(),
@@ -33,7 +36,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment UNBREAKING = new CustomWrapper(Enchantment.DURABILITY, "unbreaking", "Unbreaking", EnchantRarity.ORDINARY);
     public static final CustomEnchantment EFFICIENCY = new CustomWrapper(Enchantment.DIG_SPEED, "efficiency", "Efficiency", EnchantRarity.ORDINARY);
     public static final CustomEnchantment SHARPNESS = new CustomWrapper(Enchantment.DAMAGE_ALL, "sharpness", "Sharpness", EnchantRarity.ORDINARY);
-    public static final CustomEnchantment SWEEPING_EDGE = new CustomWrapper(Enchantment.SWEEPING_EDGE, "sweeping_edge", "Sweeping Edge", EnchantRarity.ORDINARY);
+    public static final CustomEnchantment SWEEPING_EDGE = new CustomWrapper(Enchantment.SWEEPING_EDGE, "sweeping", "Sweeping Edge", EnchantRarity.ORDINARY);
     public static final CustomEnchantment FIRE_ASPECT = new CustomWrapper(Enchantment.FIRE_ASPECT, "fire_aspect", "Fire Aspect", EnchantRarity.ORDINARY);
     public static final CustomEnchantment KNOCKBACK = new CustomWrapper(Enchantment.KNOCKBACK, "knockback", "Knockback", EnchantRarity.ORDINARY);
     public static final CustomEnchantment LOYALTY = new CustomWrapper(Enchantment.LOYALTY, "loyalty", "Loyalty", EnchantRarity.ORDINARY);
@@ -61,13 +64,15 @@ public class CustomEnchantments {
     public static final CustomEnchantment BANE_OF_ARTHROPODS = new CustomWrapper(Enchantment.DAMAGE_ARTHROPODS,"bane_of_arthropods", "Bane of Spiders", EnchantRarity.UNIQUE);
     public static final CustomEnchantment LOOTING = new CustomWrapper(Enchantment.LOOT_BONUS_MOBS,"looting", "Looting", EnchantRarity.UNIQUE);
     public static final CustomEnchantment IMPALING = new CustomWrapper(Enchantment.IMPALING,"impaling", "Impaling", EnchantRarity.UNIQUE);
-    public static final CustomEnchantment RIPTIDE = new CustomWrapper(Enchantment.RIPTIDE,"riptide", "Riptide", EnchantRarity.UNIQUE);
+//    public static final CustomEnchantment RIPTIDE = new CustomWrapper(Enchantment.RIPTIDE,"riptide", "Riptide", EnchantRarity.UNIQUE);
     public static final CustomEnchantment PIERCING = new CustomWrapper(Enchantment.PIERCING,"piercing", "Piercing", EnchantRarity.UNIQUE);
     public static final CustomEnchantment FEATHER_FALLING = new CustomWrapper(Enchantment.PROTECTION_FALL,"feather_falling", "Feather Falling", EnchantRarity.UNIQUE);
     public static final CustomEnchantment FROST_WALKER = new CustomWrapper(Enchantment.FROST_WALKER,"frost_walker", "Frost Walker", EnchantRarity.UNIQUE);
     public static final CustomEnchantment BLAST_PROTECTION = new CustomWrapper(Enchantment.LUCK,"blast_protection", "Blast Defense", EnchantRarity.UNIQUE);
     public static final CustomEnchantment PROJECTILE_PROTECTION = new CustomWrapper(Enchantment.PROTECTION_PROJECTILE, "projectile_protection", "Arrow Defense", EnchantRarity.UNIQUE);
     public static final CustomEnchantment INFINITY = new CustomWrapper(Enchantment.ARROW_INFINITE, "infinity", "Infinity", EnchantRarity.UNIQUE);
+
+    public static final CustomEnchantment MULTISHOT = new CustomWrapper(Enchantment.MULTISHOT, "multishot", "Multishot", EnchantRarity.UNIQUE);
 
     /**
      * Mystical
@@ -87,7 +92,7 @@ public class CustomEnchantments {
     /**
      * Divine
      */
-    public static final CustomEnchantment ETERNAL = new ToolEnchant( "eternal", "Eternal", EnchantRarity.DIVINE);
+    public static final CustomEnchantment ETERNAL = new UniversalEnchant( "eternal", "Eternal", EnchantRarity.DIVINE);
 
     public static final CustomEnchantment NETHERLING = new ToolEnchant("netherling", "Netherling", EnchantRarity.DIVINE, "sword");
 
@@ -128,7 +133,7 @@ public class CustomEnchantments {
         customEnchantments.add(BANE_OF_ARTHROPODS);
         customEnchantments.add(LOOTING);
         customEnchantments.add(IMPALING);
-        customEnchantments.add(RIPTIDE);
+//        customEnchantments.add(RIPTIDE);
         customEnchantments.add(PIERCING);
         customEnchantments.add(FEATHER_FALLING);
         customEnchantments.add(FROST_WALKER);
@@ -148,12 +153,66 @@ public class CustomEnchantments {
         customEnchantments.add(SPEEDY);
         customEnchantments.add(NIGHT_VISION);
         customEnchantments.add(JELLY_LEGS);
+        customEnchantments.add(MULTISHOT);
+    }
+
+    public static void mapConversions() {
+        conversionMap.put(10000, "bubble_head");
+        conversionMap.put(10001, "vein_miner");
+        conversionMap.put(10002, "eternal");
+        conversionMap.put(10003, "life_steal");
+        conversionMap.put(10004, "skull_stealer");
+        conversionMap.put(10005, "timber");
+        conversionMap.put(10006, "aqua_affinity");
+        conversionMap.put(10007, "bane_of_arthropods");
+        conversionMap.put(10008, "blast_protection");
+        conversionMap.put(10009, "channeling");
+        conversionMap.put(10010, "depth_strider");
+        conversionMap.put(10011, "efficiency");
+        conversionMap.put(10012, "feather_falling");
+        conversionMap.put(10013, "fire_aspect");
+        conversionMap.put(10014, "fire_protection");
+        conversionMap.put(10015, "flame");
+        conversionMap.put(10016, "fortune");
+        conversionMap.put(10017, "frost_walker");
+        conversionMap.put(10018, "impaling");
+        conversionMap.put(10019, "infinity");
+        conversionMap.put(10020, "knockback");
+        conversionMap.put(10021, "looting");
+        conversionMap.put(10022, "loyalty");
+        conversionMap.put(10023, "luck_of_the_sea");
+        conversionMap.put(10024, "lure");
+        conversionMap.put(10025, "mending");
+        conversionMap.put(10026, "multishot");
+        conversionMap.put(10027, "piercing");
+        conversionMap.put(10028, "power");
+        conversionMap.put(10029, "projectile_protection");
+        conversionMap.put(10030, "protection");
+        conversionMap.put(10031, "punch");
+        conversionMap.put(10032, "quick_charge");
+        conversionMap.put(10033, "respiration");
+        conversionMap.put(10034, "riptide");
+        conversionMap.put(10035, "sharpness");
+        conversionMap.put(10036, "silk_touch");
+        conversionMap.put(10037, "smite");
+        conversionMap.put(10038, "soul_speed");
+        conversionMap.put(10039, "sweeping_edge");
+        conversionMap.put(10040, "swift_sneak");
+        conversionMap.put(10041, "thorns");
+        conversionMap.put(10042, "unbreaking");
+        conversionMap.put(10043, "silk_touch_spawner");
+        conversionMap.put(10044, "netherling");
+        conversionMap.put(10045, "double_strike");
+        conversionMap.put(10046, "speedy");
+        conversionMap.put(10047, "night_vision");
+        conversionMap.put(10048, "jelly_legs");
     }
 
     public static void initialize() {
         compileList();
         registerEnchantments();
         mapEnchants();
+        mapConversions();
     }
 
     private static void registerEnchantments() {

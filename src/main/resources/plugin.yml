@@ -10,4 +10,5 @@ commands:
 depend:
   - Vault
   - GardensPlayers
-  - SilkSpawners
+  - ArmorEquipEvent
+  - GardensFurniture

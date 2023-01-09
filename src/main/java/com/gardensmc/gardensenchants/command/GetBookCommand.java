@@ -45,7 +45,7 @@ public class GetBookCommand implements TabExecutor {
 
         for (Enchantment enchantment : Enchantment.values()) {
             String key = enchantment.getKey().getKey();
-            values.add("gardens:" + key);
+            values.add(key);
         }
 
         return values;

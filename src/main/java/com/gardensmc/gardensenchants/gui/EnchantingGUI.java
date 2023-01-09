@@ -2,11 +2,13 @@ package com.gardensmc.gardensenchants.gui;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.cache.EnchantCache;
+import com.gardensmc.gardensenchants.database.PlayerTable;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchants.EnchantRarity;
 import com.gardensmc.gardensenchants.enchants.FontMappings;
 import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
+import com.gardensmc.gardensenchants.utils.OraxenShift;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import de.themoep.inventorygui.InventoryGui;
 import de.tr7zw.nbtapi.NBTItem;
@@ -40,20 +42,22 @@ public class EnchantingGUI implements InventoryHolder {
     private String title;
     private ItemStack book;
 
+
     public EnchantingGUI(Player player) {
-        title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:\uE094&f");
+        title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094&f");
         this.player = player;
     }
 
     public EnchantingGUI(ItemStack book) {
         this.book = book;
         String sample = FontMappings.INSTANCE.replaceAll("Bubble Head I", FontMappings.INSTANCE.fontMap1);
-        title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:\uE05F:offset_-190:" + sample);
+        String ninty = OraxenShift.INSTANCE.getShift(90, true);
+        title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F&f" + ninty + sample);
 
     }
 
     private void initializeItems(Inventory inv) {
-        ItemStack blankItem = ItemUtils.getCustomItem("gardens:blank_item");
+        ItemStack blankItem = ItemUtils.getBlankItem();
 //        int[] blanks = new int[]{0, 2, 9, 10, 11, 18, 20};
         int[] blanks = new int[]{0, 2};
         for (int blank : blanks) {
