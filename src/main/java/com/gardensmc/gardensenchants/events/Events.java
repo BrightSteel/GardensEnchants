@@ -54,6 +54,14 @@ public class Events implements Listener {
                     float newSpeed = 0.2f + (lvl * 0.025f);
                     e.getPlayer().setWalkSpeed(newSpeed);
                 }
+                if (EnchantUtils.hasEnchantment(e.getNewArmorPiece(), CustomEnchantments.WINGED_BOOTS)) {
+                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
+                    if (nbtItem.hasKey("charge")) {
+                        if (nbtItem.getInteger("charge") > 0) {
+                            e.getPlayer().setAllowFlight(true);
+                        }
+                    }
+                }
 
             }
             else if (e.getType() == ArmorType.HELMET) {
@@ -69,6 +77,18 @@ public class Events implements Listener {
             if (e.getType() == ArmorType.BOOTS) {
                 if (e.getPlayer().getWalkSpeed() > 0.2f) {
                     e.getPlayer().setWalkSpeed(0.2f);
+                }
+                if (e.getPlayer().getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
+                    String[] anywhere_req = new String[]{
+                            "resource_world",
+                            "nether",
+                            "end"
+                    };
+                    if (Arrays.asList(anywhere_req).contains(e.getPlayer().getWorld().getName().toLowerCase()) || !e.getPlayer().hasPermission("gardens.fly")) {
+                        e.getPlayer().setFlying(false);
+                        e.getPlayer().setAllowFlight(false);
+                    }
+
                 }
             }
             else if (e.getType() == ArmorType.HELMET) {
@@ -165,6 +185,35 @@ public class Events implements Listener {
     @EventHandler
     public void onDisconnect(PlayerQuitEvent e) {
         EnchantCache.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public static void onApplyRune(PrepareAnvilEvent e) {
+        AnvilInventory inv = e.getInventory();
+        ItemStack[] contents = inv.getContents();
+
+        ItemStack item = contents[0];
+        ItemStack rune = contents[1];
+        if (item != null && rune != null) {
+            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
+            if (customItem == null || (!customItem.getIdentifier().equalsIgnoreCase("amber") && rune.getAmount() != 1)) return;
+//            if (rune.getAmount() != 1) return;
+            // attempt to get rune
+//            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
+//            if (customItem != null) {
+            ItemStack result = null;
+                switch (customItem.getIdentifier()) {
+                    case "slot_increaser_rune" -> result = RuneUtil.getRuneResult(Rune.SLOT_INCREASER, item);
+                    case "power_up_rune" -> {}
+                    case "restoration_rune" -> result = RuneUtil.getRuneResult(Rune.RESTORATION, item);
+                    case "amber" -> result = RuneUtil.amberUpgrade(item, rune);
+                }
+                if (result != null) {
+                    inv.setRepairCost(3);
+                    e.setResult(result);
+                }
+//            }
+        }
     }
 
     @EventHandler
@@ -284,7 +333,7 @@ public class Events implements Listener {
             Enchantment enchantment = CustomEnchantments.getGardensEnchant(item_id);
             if (enchantment == null) return;
 
-            if (enchantment.canEnchantItem(item)) {
+            if (enchantment.canEnchantItem(item) && !hasConflicts(enchantment, item)) {
 
                 NBTItem nbtItem = new NBTItem(item);
                 if (!nbtItem.hasKey("slots")) {
@@ -316,6 +365,15 @@ public class Events implements Listener {
                 }
             }
         }
+    }
+
+    public static boolean hasConflicts(Enchantment enchantment, ItemStack item) {
+        for (Enchantment ench : item.getEnchantments().keySet()) {
+            if (ench.conflictsWith(enchantment)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 //    @EventHandler
@@ -423,19 +481,20 @@ public class Events implements Listener {
 
                         if (ProbabilityUtil.roll(destruction)) {
                             String enchant = nbtItem.getString("destroy_enchant");
+                            System.out.println("destroy enchant: " + enchant);
+
                             Enchantment customEnchantment = CustomEnchantments.getCustomEnchant(enchant);
 //                            if (customEnchantment instanceof CustomWrapper w) {
 //                                customEnchantment = w.enchantment;
 //                                currentItem.removeEnchantment(customEnchantment);
 //                            }
 //                            else {
-                                EnchantUtils.removeEnchant(currentItem, customEnchantment);
+                            ItemStack fresh_clone = EnchantUtils.removeEnchant(currentItem, customEnchantment);
 //                            }
-
-                            EnchantUtils.updateLore(currentItem);
+                            EnchantUtils.updateLore(fresh_clone);
 
                             // send to their inventory directly
-                            e.getWhoClicked().getInventory().addItem(currentItem);
+                            e.getWhoClicked().getInventory().addItem(fresh_clone);
                             ItemStack air = new ItemStack(Material.AIR);
                             e.setCurrentItem(air);
                             for (int i = 0; i < 3; i++) {
@@ -445,6 +504,43 @@ public class Events implements Listener {
                             e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
 //                            e.getWhoClicked().sendMessage(ChatColor.RED + "Attempted removal of " + customEnchantment.getKey() + " found using " + enchant);
 
+                        }
+                    }
+                    else if (book.getType() == Material.PAPER) {
+                        CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(book);
+                        if (customItem != null && customItem.getIdentifier().equalsIgnoreCase("amber")) {
+                            // 50 percent chance failure
+                            if (ProbabilityUtil.roll(50)) {
+
+//                            if (customEnchantment instanceof CustomWrapper w) {
+//                                customEnchantment = w.enchantment;
+//                                currentItem.removeEnchantment(customEnchantment);
+//                            }
+//                            else {
+                                ItemStack fresh_clone = EnchantUtils.removeEnchant(currentItem, CustomEnchantments.WINGED_BOOTS);
+//                            }
+                                EnchantUtils.updateLore(fresh_clone);
+
+                                // send to their inventory directly
+                                e.getWhoClicked().getInventory().addItem(fresh_clone);
+                                ItemStack air = new ItemStack(Material.AIR);
+                                e.setCurrentItem(air);
+                                for (int i = 0; i < 3; i++) {
+                                    e.getInventory().setItem(i, air);
+                                }
+
+                                e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
+//                            e.getWhoClicked().sendMessage(ChatColor.RED + "Attempted removal of " + customEnchantment.getKey() + " found using " + enchant);
+
+                            }
+                            int excess_amber = book.getAmount() - 24;
+                            if (excess_amber > 0) {
+                                ItemStack amber = CustomRegister.INSTANCE.itemRegistry.buildItem("amber");
+                                if (amber != null) {
+                                    amber.setAmount(excess_amber);
+                                    e.getWhoClicked().getInventory().addItem(amber);
+                                }
+                            }
                         }
                     }
                 }

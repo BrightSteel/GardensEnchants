@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 public class SwordFixWrapper extends CustomWrapper {
 
 
-    public SwordFixWrapper(Enchantment enchantment, String key, String display_name, EnchantRarity rarity) {
-        super(enchantment, key, display_name, rarity);
+    public SwordFixWrapper(Enchantment enchantment, String display_name, EnchantRarity rarity) {
+        super(enchantment, display_name, rarity);
     }
 
     @NotNull

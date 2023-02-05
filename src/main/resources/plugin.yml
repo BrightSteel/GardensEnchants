@@ -7,6 +7,12 @@ commands:
   getbook:
     description: Get enchanting book
     usage: /<command>
+  givebook:
+    description: Give enchanting book
+    usage: /<command>
+  enchant:
+    description: Enchant item you are holding
+    usage: /<command>
 depend:
   - Vault
   - GardensPlayers

@@ -32,6 +32,14 @@ public abstract class CustomEnchantment extends Enchantment {
         this.max_level = 1;
     }
 
+    public CustomEnchantment(NamespacedKey key, String display_name, EnchantRarity rarity) {
+        super(key);
+        this.bookNamespace = key.getKey();
+        this.rarity = rarity;
+        this.display_name = display_name;
+        this.max_level = 1;
+    }
+
     public CustomEnchantment(String key, String display_name, EnchantRarity rarity, int max_level) {
         super(new NamespacedKey(GardensEnchants.plugin, key));
         this.bookNamespace = key;

@@ -9,8 +9,8 @@ public class CustomWrapper extends CustomEnchantment {
 
     public final Enchantment enchantment;
 
-    public CustomWrapper(Enchantment enchantment, String key, String display_name, EnchantRarity rarity) {
-        super(key, display_name, rarity);
+    public CustomWrapper(Enchantment enchantment, String display_name, EnchantRarity rarity) {
+        super(enchantment.getKey(), display_name, rarity);
         this.enchantment = enchantment;
     }
 

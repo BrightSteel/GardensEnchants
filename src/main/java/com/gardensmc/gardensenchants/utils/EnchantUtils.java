@@ -19,6 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.text.DecimalFormat;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -57,11 +58,25 @@ public class EnchantUtils {
 //        ItemStack item = nbtItem.getItem();
         List<String> lore = new ArrayList<>();
         int num = 0;
+        NBTItem nbtItem = new NBTItem(item);
         for (Map.Entry<CustomEnchantment, Integer> entry : enchantQueue) {
             CustomEnchantment c = entry.getKey();
             int level = entry.getValue();
 
-            lore.add(getColorFromRarity(c.getRarity()) + c.getDisplayName() + " " + RomanNumber.toRoman(level));
+            if (c == CustomEnchantments.WINGED_BOOTS) {
+//                NBTItem nbtItem = new NBTItem(item);
+                int charge = 3600;
+                if (nbtItem.hasKey("charge")) {
+                    charge = nbtItem.getInteger("charge");
+                }
+                int min = charge/60;
+//                System.out.println("Updating lore: " + min);
+
+                lore.add(getColorFromRarity(c.getRarity()) + c.getDisplayName() + " " + RomanNumber.toRoman(level) + " " + ChatColor.GRAY  + min + " min");
+            }
+            else {
+                lore.add(getColorFromRarity(c.getRarity()) + c.getDisplayName() + " " + RomanNumber.toRoman(level));
+            }
             num++;
         }
 //        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
@@ -74,7 +89,7 @@ public class EnchantUtils {
 ////            }
 //        }
 
-        NBTItem nbtItem = new NBTItem(item);
+//        NBTItem nbtItem = new NBTItem(item);
         int slots = nbtItem.getInteger("slots");
 
         lore.add("");
@@ -92,7 +107,7 @@ public class EnchantUtils {
         for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
             Enchantment enchantment = entry.getKey();
 //            if (enchantment.getKey().getNamespace().equals("gardensenchants")) {
-                if (enchantment.getName().equals(custom_enchant.getName())) {
+                if (enchantment.equals(custom_enchant)) {
                     hasEnchant = true;
                 }
 
@@ -114,6 +129,7 @@ public class EnchantUtils {
         ItemStack boots = player.getInventory().getBoots();
         if (boots != null && boots.getType() != Material.AIR) {
             refreshBootsEnchants(player, boots);
+            refreshWingedBoots(player, boots);
         }
     }
 
@@ -124,8 +140,9 @@ public class EnchantUtils {
             Enchantment enchantment = entry.getKey();
             int level = entry.getValue();
 
-            String key = enchantment.getKey().getKey().toLowerCase();
-            if (key.equals("night_vision")) {
+//            String key = enchantment.getKey().getKey().toLowerCase();
+//            if (key.equals("night_vision")) {
+            if (enchantment.equals(CustomEnchantments.NIGHT_VISION)) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
                 appliedNightVision = true;
             }
@@ -144,8 +161,7 @@ public class EnchantUtils {
             Enchantment enchantment = entry.getKey();
             int level = entry.getValue();
 
-            String key = enchantment.getKey().getKey().toLowerCase();
-            if (key.equals("speedy")) {
+            if (enchantment.equals(CustomEnchantments.SPEEDY)) {
                 float newSpeed = 0.2f + (level * 0.025f);
                 player.setWalkSpeed(newSpeed);
                 appliedSpeedy = true;
@@ -154,6 +170,46 @@ public class EnchantUtils {
 
         if (!appliedSpeedy && player.getWalkSpeed() > 0.20f) {
             player.setWalkSpeed(0.20f);
+        }
+    }
+
+    public static void refreshWingedBoots(Player player, ItemStack boots) {
+        if (!player.hasPermission("gardens.fly.anywhere")) {
+            String[] anywhere_req = new String[]{
+                    "resource_world",
+                    "nether",
+                    "end"
+            };
+            if (Arrays.asList(anywhere_req).contains(player.getWorld().getName().toLowerCase()) || !player.hasPermission("gardens.fly")) {
+                refreshWinged(player, boots);
+            }
+
+        }
+    }
+
+    private static void refreshWinged(Player player, ItemStack boots) {
+        boolean applied = false;
+        for (Map.Entry<Enchantment, Integer> entry : boots.getEnchantments().entrySet()) {
+            Enchantment enchantment = entry.getKey();
+
+            if (enchantment.equals(CustomEnchantments.WINGED_BOOTS)) {
+                NBTItem nbtItem = new NBTItem(boots);
+                if (nbtItem.hasKey("charge")) {
+                    int charge = nbtItem.getInteger("charge");
+                    if (charge > 0) {
+                        player.setAllowFlight(true);
+                        applied = true;
+                        if (player.getLocation().getBlock().getRelative(0, -1, 0).getType() == Material.AIR) {
+                            player.setFlying(true);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!applied && player.getAllowFlight()) {
+            player.setAllowFlight(false);
+            player.setFlying(false);
         }
     }
 
@@ -170,35 +226,50 @@ public class EnchantUtils {
 //        return hasEnchant;
 //    }
 
-    public static void removeEnchant(ItemStack item, Enchantment custom_enchant) {
-        ItemStack tempStack = new ItemStack(item.getType());
-        ItemMeta newMeta = tempStack.getItemMeta();
-        ItemMeta meta = item.getItemMeta();
+    /**
+     *
+     * @param item
+     * @param destructed_enchant
+     * @return cloned itemstack with destructed enchant removed
+     */
+    public static ItemStack removeEnchant(ItemStack item, Enchantment destructed_enchant) {
+        ItemStack fresh_clone = new ItemStack(item.getType());
+        ItemMeta clone_meta = fresh_clone.getItemMeta();
+        ItemMeta prev_meta = item.getItemMeta();
 
-        if (newMeta != null && meta != null) {
-            if (meta.hasLore())
-                newMeta.setLore(meta.getLore());
+        if (clone_meta != null && prev_meta != null) {
+//            if (meta.hasLore())
+//                newMeta.setLore(meta.getLore());
 
-            if (meta.hasDisplayName())
-                newMeta.setDisplayName(meta.getDisplayName());
+            if (prev_meta.hasDisplayName())
+                clone_meta.setDisplayName(prev_meta.getDisplayName());
 
-            if (meta.hasLocalizedName())
-                newMeta.setLocalizedName(meta.getLocalizedName());
+            if (prev_meta.hasLocalizedName())
+                clone_meta.setLocalizedName(prev_meta.getLocalizedName());
 
-            if (meta.hasCustomModelData()) {
-                newMeta.setCustomModelData(meta.getCustomModelData());
+            if (prev_meta.hasCustomModelData()) {
+                clone_meta.setCustomModelData(prev_meta.getCustomModelData());
             }
         }
 
-        ItemStack copy = item.clone();
-        item.setItemMeta(newMeta);
+        fresh_clone.setItemMeta(clone_meta);
         // re-add all enchants except for the one we are removing
-        for (Map.Entry<Enchantment, Integer> entry : copy.getEnchantments().entrySet()) {
+        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
             Enchantment enchantment = entry.getKey();
-            if (!enchantment.getName().equals(custom_enchant.getName())) {
-                item.addEnchantment(enchantment, entry.getValue());
+//            System.out.println("Comparing " + enchantment.getKey() + " with " + destructed_enchant.getKey());
+            if (!enchantment.equals(destructed_enchant)) {
+                fresh_clone.addEnchantment(enchantment, entry.getValue());
             }
         }
+
+        // replace nbt data
+        NBTItem old_nbt = new NBTItem(item);
+        NBTItem fresh_nbt = new NBTItem(fresh_clone);
+        if (old_nbt.hasKey("slots")) {
+            fresh_nbt.setInteger("slots", old_nbt.getInteger("slots"));
+        }
+
+        return fresh_nbt.getItem();
     }
 
     public static int getEnchantLevel(ItemStack item, Enchantment custom_enchant) {
@@ -362,6 +433,35 @@ public class EnchantUtils {
 
         ItemStack book = enchant.getBook();
         int destruction = CustomEnchantments.getRandomDestruction(enchant.getRarity());
+        if (book != null) {
+            ItemMeta meta = book.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(meta.getDisplayName() + " " + level);
+                if (meta.getLore() != null) {
+                    List<String> lore = meta.getLore();
+                    lore.add(ChatUtils.translateHexColorCodes("#", "", "#FF5555") + "Destruction Chance: " + ChatUtils.translateHexColorCodes("#", "", "#AAAAAA") + destruction + "%");
+                    meta.setLore(lore);
+                }
+                book.setItemMeta(meta);
+            }
+            NBTItem nbtItem = new NBTItem(book);
+            nbtItem.setInteger("destruction", destruction);
+            nbtItem.setString("destroy_enchant", enchant.getBookNamespace());
+            nbtItem.setInteger("level", RomanNumber.toNumber(level));
+            book = nbtItem.getItem();
+        }
+
+        return book;
+
+    }
+
+    public static ItemStack getEnchantBook(String bookNamespace, int destruction) {
+        CustomEnchantment enchant = CustomEnchantments.getCustomEnchant(bookNamespace);
+        if (enchant == null) return null;
+
+        String level = EnchantUtils.getRandomLevel(enchant);
+
+        ItemStack book = enchant.getBook();
         if (book != null) {
             ItemMeta meta = book.getItemMeta();
             if (meta != null) {
