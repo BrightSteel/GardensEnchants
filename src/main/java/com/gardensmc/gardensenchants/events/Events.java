@@ -6,18 +6,33 @@ import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.cache.EnchantCache;
 import com.gardensmc.gardensfurniture.custom.CustomItem;
 import com.gardensmc.gardensfurniture.register.CustomRegister;
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.player.PlayerCache;
 import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.gui.EnchantingGUI;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.gui.InventoryUpdate;
 import com.gardensmc.gardensenchants.utils.*;
+import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.bukkit.event.block.BreakBlockEvent;
+import com.sk89q.worldguard.protection.flags.Flags;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
 import de.tr7zw.nbtapi.NBTItem;
 
+import net.minecraft.core.BlockPosition;
+import net.minecraft.server.level.EntityPlayer;
+import net.minecraft.server.level.PlayerInteractManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -27,6 +42,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.*;
+import org.bukkit.event.player.PlayerHarvestBlockEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -35,11 +51,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import wtf.choco.veinminer.api.event.player.PlayerVeinMineEvent;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Events implements Listener {
 
@@ -386,6 +404,97 @@ public class Events implements Listener {
 //        }
 //    }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onSmeltMineBlock(BlockBreakEvent e) {
+        Player player = e.getPlayer();
+        String block_name = e.getBlock().getType().toString().toUpperCase();
+        if (block_name.endsWith("ORE")) {
+            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SMELTER)) {
+                return;
+            }
+            int fortune = EnchantUtils.getEnchantLevel(player.getInventory().getItemInMainHand(), CustomEnchantments.FORTUNE);
+            Material drop = null;
+            int amount = 1 + ThreadLocalRandom.current().nextInt(0, fortune + 1);
+
+            switch (e.getBlock().getType()) {
+                case IRON_ORE, DEEPSLATE_IRON_ORE ->
+                    drop = Material.IRON_INGOT;
+                case GOLD_ORE, DEEPSLATE_GOLD_ORE ->
+                    drop = Material.GOLD_INGOT;
+                case DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE ->
+                    drop = Material.DIAMOND;
+                case COPPER_ORE, DEEPSLATE_COPPER_ORE -> {
+                    drop = Material.COPPER_INGOT;
+                    amount = ThreadLocalRandom.current().nextInt(2, 6) + (ThreadLocalRandom.current().nextInt(2, 6) * fortune);
+                }
+            }
+            if (drop != null) {
+                e.setDropItems(false);
+                e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), new ItemStack(drop, amount));
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMineBlock(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Super_Breaker_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        String block_name = e.getBlock().getType().toString().toUpperCase();
+        if (block_name.endsWith("ORE") || block_name.endsWith("STONE")) {
+            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
+                return;
+            }
+            BlockFace facing = PlayerUtils.getBlockFaceLooking(player);
+            if (facing == null) {
+                return;
+            }
+
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    if (i == 0 && j == 0) continue;
+                    Block target = null;
+                    String face = facing.toString();
+                    if (face.startsWith("NORTH") || face.startsWith("SOUTH")) { // X, Y area
+                        target = e.getBlock().getRelative(i, j, 0);
+                    }
+                    else if (face.startsWith("EAST") || face.startsWith("WEST")) {
+                        target = e.getBlock().getRelative(0, j, i);
+                    }
+                    else if (face.startsWith("UP") || face.startsWith("DOWN")) {
+                        target = e.getBlock().getRelative(i, 0, j);
+                    }
+
+                    if (target != null) {
+                        // give metadata so we can avoid calling this event on this block again
+                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
+                        breakIfAble(player, target);
+                    }
+                }
+            }
+        }
+    }
+
+    private void breakIfAble(Player player, Block target) {
+
+        LocalPlayer  lp = WorldGuardPlugin.inst().wrapPlayer(player);
+        Location loc = new Location(lp.getWorld(), target.getX(), target.getY(), target.getZ());
+        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        RegionQuery query = container.createQuery();
+        if (query.testBuild(loc, lp)) {
+            EntityPlayer human = ((CraftPlayer) player).getHandle();
+            BlockPosition blockPosition = new BlockPosition(target.getX(), target.getY(), target.getZ());
+
+            // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
+            // which we do by giving it metadata to mark it as such
+            new PlayerInteractManager(human).a(blockPosition);
+
+//            target.breakNaturally(player.getInventory().getItemInMainHand());
+        }
+        target.removeMetadata("Super_Breaker_TBD", GardensPlayers.plugin);
+    }
 
     @EventHandler
     public void onVeinMine(PlayerVeinMineEvent e) {

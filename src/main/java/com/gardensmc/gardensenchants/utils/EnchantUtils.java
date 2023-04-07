@@ -108,6 +108,9 @@ public class EnchantUtils {
             Enchantment enchantment = entry.getKey();
 //            if (enchantment.getKey().getNamespace().equals("gardensenchants")) {
                 if (enchantment.equals(custom_enchant)) {
+//                    System.out.println("want: " + enchantment.getKey());
+//                    System.out.println("has: " + custom_enchant.getKey());
+
                     hasEnchant = true;
                 }
 

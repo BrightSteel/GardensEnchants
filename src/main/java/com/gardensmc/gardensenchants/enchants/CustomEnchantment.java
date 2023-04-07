@@ -24,6 +24,8 @@ public abstract class CustomEnchantment extends Enchantment {
     private final String bookNamespace;
     private EnchantRarity rarity;
 
+    boolean availableThroughTable = true;
+
     public CustomEnchantment(String key, String display_name, EnchantRarity rarity) {
         super(new NamespacedKey(GardensEnchants.plugin, key));
         this.bookNamespace = key;
@@ -126,5 +128,13 @@ public abstract class CustomEnchantment extends Enchantment {
     // used for applying an enchant to lore
     public String getDisplayName() {
         return display_name;
+    }
+
+    public void setAvailableThroughTable(boolean availableThroughTable) {
+        this.availableThroughTable = availableThroughTable;
+    }
+
+    public boolean isAvailableThroughTable() {
+        return availableThroughTable;
     }
 }

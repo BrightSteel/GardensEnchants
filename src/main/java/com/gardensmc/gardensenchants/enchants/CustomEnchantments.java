@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public class CustomEnchantments {
 
@@ -89,6 +90,10 @@ public class CustomEnchantments {
 
     public static final CustomEnchantment JELLY_LEGS = new BootsEnchant("jelly_legs", "Jelly Legs", EnchantRarity.MYSTICAL, 5);
 
+    public static final CustomEnchantment SUPER_BREAKER = new ToolEnchant("super_breaker", "Super Breaker", EnchantRarity.MYSTICAL, "pickaxe");
+    public static final CustomEnchantment SMELTER = new ToolEnchant("smelter", "Smelter", EnchantRarity.MYSTICAL, "pickaxe");
+
+
     /**
      * Divine
      */
@@ -104,6 +109,8 @@ public class CustomEnchantments {
 
 
     private static void compileList() {
+        WINGED_BOOTS.setAvailableThroughTable(false);
+
         customEnchantments.add(ETERNAL);
         customEnchantments.add(SKULL_STEALER);
         customEnchantments.add(TIMBER);
@@ -149,6 +156,8 @@ public class CustomEnchantments {
         customEnchantments.add(SOUL_SPEED);
         customEnchantments.add(SWIFT_SNEAK);
         customEnchantments.add(MENDING);
+        customEnchantments.add(SUPER_BREAKER);
+        customEnchantments.add(SMELTER);
 
         customEnchantments.add(NETHERLING);
         customEnchantments.add(SILK_TOUCH_SPAWNER);
@@ -280,7 +289,8 @@ public class CustomEnchantments {
     }
 
     private static CustomEnchantment randEnchantGrabber(List<CustomEnchantment> list) {
-        return list.get(ProbabilityUtil.getRandomIndex(list.size()));
+        List<CustomEnchantment> available = list.stream().filter(CustomEnchantment::isAvailableThroughTable).toList();
+        return available.get(ProbabilityUtil.getRandomIndex(available.size()));
     }
 
     public static Enchantment getGardensEnchant(String bookNamespace) {
