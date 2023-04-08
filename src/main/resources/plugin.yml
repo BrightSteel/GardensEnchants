@@ -13,6 +13,9 @@ commands:
   enchant:
     description: Enchant item you are holding
     usage: /<command>
+  mobhead:
+    description: Get a mob head
+    usage: /<command>
 depend:
   - Vault
   - GardensPlayers

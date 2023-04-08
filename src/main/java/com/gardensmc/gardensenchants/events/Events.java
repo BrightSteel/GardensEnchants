@@ -40,6 +40,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerHarvestBlockEvent;
@@ -549,7 +550,7 @@ public class Events implements Listener {
 
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE")) {
+        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE") || block_name.endsWith("NETHERRACK")) {
             if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
                 return;
             }
@@ -654,8 +655,8 @@ public class Events implements Listener {
             ItemStack weapon = killer.getInventory().getItemInMainHand();
             if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.SKULL_STEALER)) {
                 int ench_level = EnchantUtils.getEnchantLevel(weapon, CustomEnchantments.SKULL_STEALER);
-                int percent = ench_level == 1 ? 15 : 15 * ench_level;
-                if (ProbabilityUtil.roll(percent)) {
+//                int percent = ench_level == 1 ? 15 : 15 * ench_level;
+                if (ProbabilityUtil.roll(25)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
 
                     killer.sendMessage(ChatColor.YELLOW + "Dropped " + e.getEntity().getName() + "'s head");
@@ -1043,6 +1044,63 @@ public class Events implements Listener {
         if (item != null) {
             e.getPlayer().getInventory().addItem(item);
         }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onMobDeath(EntityDeathEvent e) {
+        Player player = e.getEntity().getKiller();
+        if (player == null) return;
+
+        if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SKULL_STEALER)) {
+            return;
+        }
+
+        if (ProbabilityUtil.roll(25)) {
+            String typeEncoder = getEntityTypeVariant(e.getEntity(), e.getEntityType().toString().toLowerCase());
+            ItemStack head = ItemUtils.getMobHead(typeEncoder);
+            if (head != null) {
+                e.getDrops().add(head);
+            }
+        }
+    }
+
+    private String getEntityTypeVariant(Entity entity, String type) {
+        String variant = "";
+        if (entity instanceof Axolotl axolotl) {
+            variant =  axolotl.getVariant().toString().toLowerCase();
+        }
+        else if (entity instanceof Sheep sheep) {
+            if (sheep.getColor() != null) {
+                variant = sheep.getColor().toString().toLowerCase();
+            }
+        }
+        else if (entity instanceof Villager villager) {
+            variant = villager.getProfession().toString().toLowerCase();
+        }
+        else if (entity instanceof Cat cat) {
+            variant = cat.getCatType().toString().toLowerCase();
+        }
+        else if (entity instanceof MushroomCow mushroomCow) {
+            variant = mushroomCow.getVariant().toString().toLowerCase();
+        }
+        else if (entity instanceof Fox fox) {
+            variant = fox.getFoxType().toString().toLowerCase();
+        }
+        else if (entity instanceof Frog frog) {
+            variant = frog.getVariant().toString().toLowerCase();
+        }
+        else if (entity instanceof Horse horse) {
+            variant = horse.getColor().toString().toLowerCase();
+        }
+        else if (entity instanceof Rabbit rabbit) {
+            variant = rabbit.getRabbitType().toString().toLowerCase();
+        }
+
+        if (!variant.isEmpty()) {
+            variant += "_";
+        }
+
+        return variant + type;
     }
 
 
