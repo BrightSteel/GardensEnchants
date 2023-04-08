@@ -90,7 +90,7 @@ public class CustomEnchantments {
 
     public static final CustomEnchantment JELLY_LEGS = new BootsEnchant("jelly_legs", "Jelly Legs", EnchantRarity.MYSTICAL, 5);
 
-    public static final CustomEnchantment SUPER_BREAKER = new ToolEnchant("super_breaker", "Super Breaker", EnchantRarity.MYSTICAL, "pickaxe");
+    public static final CustomEnchantment SUPER_BREAKER = new ToolEnchant("super_breaker", "Super Breaker", EnchantRarity.DIVINE, "pickaxe");
     public static final CustomEnchantment SMELTER = new ToolEnchant("smelter", "Smelter", EnchantRarity.MYSTICAL, "pickaxe");
 
 

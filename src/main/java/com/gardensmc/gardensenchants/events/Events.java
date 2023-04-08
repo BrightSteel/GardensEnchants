@@ -54,7 +54,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import wtf.choco.veinminer.api.event.player.PlayerVeinMineEvent;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -405,6 +404,113 @@ public class Events implements Listener {
 //    }
 
     @EventHandler(ignoreCancelled = true)
+    public void onTimber(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Timber_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        if (!player.isSneaking()) {
+            return;
+        }
+
+        String block_name = e.getBlock().getType().toString().toUpperCase();
+        if (block_name.endsWith("LOG") || block_name.endsWith("ROOTS") || block_name.endsWith("STEM") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE")) {
+            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.TIMBER)) {
+                return;
+            }
+
+            List<Block> blocks = new ArrayList<>();
+            blocks.add(e.getBlock());
+
+            List<Block> destroy = new ArrayList<>();
+            destroy.add(e.getBlock());
+
+            BlockFace[] faces = new BlockFace[]{
+                    BlockFace.NORTH,
+                    BlockFace.EAST,
+                    BlockFace.SOUTH,
+                    BlockFace.WEST,
+                    BlockFace.UP,
+                    BlockFace.DOWN
+            };
+
+            for (int i = 0; i < blocks.size(); i++) {
+                if (i >= 30) break;
+                Block curr = blocks.get(i);
+                for (BlockFace blockFace : faces) {
+                    for (int j = -1; j < 2; j++) {
+                        for (int l = -1; l < 2; l++) {
+                            Block potential = curr.getRelative(blockFace);
+                            potential = potential.getRelative(j, 0, l);
+                            Block finalPotential = potential;
+                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
+                                blocks.add(potential);
+                                destroy.add(potential);
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            // do block breaking
+            for (Block block : destroy) {
+                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
+                breakIfAble(player, block);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onVeinMiner(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        String block_name = e.getBlock().getType().toString().toUpperCase();
+        if (block_name.endsWith("ORE")) {
+            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.VEIN_MINER)) {
+                return;
+            }
+
+            List<Block> blocks = new ArrayList<>();
+            blocks.add(e.getBlock());
+
+            List<Block> destroy = new ArrayList<>();
+            destroy.add(e.getBlock());
+
+            BlockFace[] faces = new BlockFace[]{
+                    BlockFace.NORTH,
+                    BlockFace.EAST,
+                    BlockFace.SOUTH,
+                    BlockFace.WEST,
+                    BlockFace.UP,
+                    BlockFace.DOWN
+            };
+
+            for (int i = 0; i < blocks.size(); i++) {
+                if (i >= 12) break;
+                Block curr = blocks.get(i);
+                for (BlockFace blockFace : faces) {
+                    Block potential = curr.getRelative(blockFace);
+                    if (potential.getType() == e.getBlock().getType()) {
+                        blocks.add(potential);
+                        destroy.add(potential);
+                    }
+                }
+            }
+
+            // do block breaking
+            for (Block block : destroy) {
+                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
+                breakIfAble(player, block);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onSmeltMineBlock(BlockBreakEvent e) {
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
@@ -437,13 +543,13 @@ public class Events implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMineBlock(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Super_Breaker_TBD")) {
+        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
             return;
         }
 
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("ORE") || block_name.endsWith("STONE")) {
+        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE")) {
             if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
                 return;
             }
@@ -493,35 +599,43 @@ public class Events implements Listener {
 
 //            target.breakNaturally(player.getInventory().getItemInMainHand());
         }
-        target.removeMetadata("Super_Breaker_TBD", GardensPlayers.plugin);
-    }
-
-    @EventHandler
-    public void onVeinMine(PlayerVeinMineEvent e) {
-        ItemStack itemStack = e.getItem();
-
-        String block_name = e.getBlock().getType().name();
-        boolean isWood =  (block_name.endsWith("WOOD") || block_name.endsWith("LOG") || block_name.endsWith("ROOTS"));
-        if (itemStack != null) {
-            String item_name = itemStack.getType().name();
-            if (isWood) {
-                if (item_name.endsWith("AXE")) {
-                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.TIMBER)) {
-                        return;
-                    }
-                }
-            }
-            else {
-                if (item_name.endsWith("PICKAXE")) {
-                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.VEIN_MINER)) {
-                        return;
-                    }
-                }
-            }
+        if (target.hasMetadata("Super_Breaker_TBD")) {
+            target.removeMetadata("Super_Breaker_TBD", GardensPlayers.plugin);
         }
-
-        e.setCancelled(true);
+        if (target.hasMetadata("Vein_Miner_TBD")) {
+            target.removeMetadata("Vein_Miner_TBD", GardensPlayers.plugin);
+        }
+        if (target.hasMetadata("Timber_TBD")) {
+            target.removeMetadata("Timber_TBD", GardensPlayers.plugin);
+        }
     }
+
+//    @EventHandler
+//    public void onVeinMine(PlayerVeinMineEvent e) {
+//        ItemStack itemStack = e.getItem();
+//
+//        String block_name = e.getBlock().getType().name();
+//        boolean isWood =  (block_name.endsWith("WOOD") || block_name.endsWith("LOG") || block_name.endsWith("ROOTS"));
+//        if (itemStack != null) {
+//            String item_name = itemStack.getType().name();
+//            if (isWood) {
+//                if (item_name.endsWith("AXE")) {
+//                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.TIMBER)) {
+//                        return;
+//                    }
+//                }
+//            }
+//            else {
+//                if (item_name.endsWith("PICKAXE")) {
+//                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.VEIN_MINER)) {
+//                        return;
+//                    }
+//                }
+//            }
+//        }
+//
+//        e.setCancelled(true);
+//    }
 
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent e) {
