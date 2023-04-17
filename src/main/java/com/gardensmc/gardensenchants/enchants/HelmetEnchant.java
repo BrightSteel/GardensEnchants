@@ -3,8 +3,11 @@ package com.gardensmc.gardensenchants.enchants;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.EnchantmentTarget;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class HelmetEnchant extends CustomEnchantment {
 
@@ -22,4 +25,6 @@ public class HelmetEnchant extends CustomEnchantment {
     public boolean canEnchantItem(@NotNull ItemStack itemStack) {
         return itemStack.getType().name().endsWith("HELMET");
     }
+
+
 }

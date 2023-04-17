@@ -3,10 +3,7 @@ package com.gardensmc.gardensenchants;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.gardensmc.gardensenchants.cache.EnchantCache;
-import com.gardensmc.gardensenchants.command.EnchantCommand;
-import com.gardensmc.gardensenchants.command.GetBookCommand;
-import com.gardensmc.gardensenchants.command.GiveBookCommand;
-import com.gardensmc.gardensenchants.command.MobHeadCommand;
+import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.enchants.*;
 import com.gardensmc.gardensenchants.events.Events;
@@ -60,6 +57,8 @@ public class GardensEnchants extends JavaPlugin implements PluginMessageListener
         Objects.requireNonNull(Bukkit.getPluginCommand("givebook")).setExecutor(new GiveBookCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("enchant")).setExecutor(new EnchantCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("mobhead")).setExecutor(new MobHeadCommand());
+        Objects.requireNonNull(Bukkit.getPluginCommand("disenchant")).setExecutor(new DisenchantCommand());
+
     }
 
     @Override

@@ -3,12 +3,14 @@ package com.gardensmc.gardensenchants.utils;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class RuneUtil {
 
@@ -61,6 +63,23 @@ public class RuneUtil {
                 updateDestructionLore(nbtItem.getItem(), restorations, newDestruction);
 
                 return nbtItem.getItem();
+            }
+            case POWER_UP -> {
+                if (item.getEnchantments().isEmpty()) return null;
+                ItemStack clone = nbtItem.getItem();
+
+                boolean changed = false;
+                for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
+                    if (entry.getValue() < entry.getKey().getMaxLevel()) {
+                        clone.addEnchantment(entry.getKey(), entry.getValue() + 1);
+                        changed = true;
+                    }
+                }
+
+                if (!changed) return null;
+
+                EnchantUtils.updateLore(clone);
+                return clone;
             }
         }
         return null;

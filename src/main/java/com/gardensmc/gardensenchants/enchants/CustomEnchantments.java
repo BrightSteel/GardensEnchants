@@ -69,7 +69,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment PIERCING = new CustomWrapper(Enchantment.PIERCING, "Piercing", EnchantRarity.UNIQUE);
     public static final CustomEnchantment FEATHER_FALLING = new CustomWrapper(Enchantment.PROTECTION_FALL, "Feather Falling", EnchantRarity.UNIQUE);
     public static final CustomEnchantment FROST_WALKER = new CustomWrapper(Enchantment.FROST_WALKER, "Frost Walker", EnchantRarity.UNIQUE);
-    public static final CustomEnchantment BLAST_PROTECTION = new CustomWrapper(Enchantment.LUCK, "Blast Defense", EnchantRarity.UNIQUE);
+    public static final CustomEnchantment BLAST_PROTECTION = new CustomWrapper(Enchantment.PROTECTION_EXPLOSIONS, "Blast Defense", EnchantRarity.UNIQUE);
     public static final CustomEnchantment PROJECTILE_PROTECTION = new CustomWrapper(Enchantment.PROTECTION_PROJECTILE,  "Arrow Defense", EnchantRarity.UNIQUE);
     public static final CustomEnchantment INFINITY = new CustomWrapper(Enchantment.ARROW_INFINITE,  "Infinity", EnchantRarity.UNIQUE);
 

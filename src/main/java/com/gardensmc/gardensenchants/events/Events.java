@@ -21,15 +21,13 @@ import com.sk89q.worldguard.bukkit.event.block.BreakBlockEvent;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
+import de.tr7zw.nbtapi.NBTContainer;
 import de.tr7zw.nbtapi.NBTItem;
 
 import net.minecraft.core.BlockPosition;
 import net.minecraft.server.level.EntityPlayer;
 import net.minecraft.server.level.PlayerInteractManager;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
@@ -38,16 +36,14 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerHarvestBlockEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.AnvilInventory;
+import org.bukkit.inventory.GrindstoneInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -222,7 +218,7 @@ public class Events implements Listener {
             ItemStack result = null;
                 switch (customItem.getIdentifier()) {
                     case "slot_increaser_rune" -> result = RuneUtil.getRuneResult(Rune.SLOT_INCREASER, item);
-                    case "power_up_rune" -> {}
+                    case "power_up_rune" -> result = RuneUtil.getRuneResult(Rune.POWER_UP, item);
                     case "restoration_rune" -> result = RuneUtil.getRuneResult(Rune.RESTORATION, item);
                     case "amber" -> result = RuneUtil.amberUpgrade(item, rune);
                 }
@@ -376,6 +372,10 @@ public class Events implements Listener {
                 }
 
                 if (level != 0) {
+                    if (enchantment instanceof CustomEnchantment c && c == CustomEnchantments.WINGED_BOOTS) {
+//                        System.out.println("REDBULL GIVES YOU WINGS");
+                        nbtItem.setInteger("charge", 3600);
+                    }
                     ItemStack final_item = nbtItem.getItem();
                     EnchantUtils.enchantItem(final_item, enchantment, level);
                     inv.setRepairCost(3);
@@ -548,9 +548,16 @@ public class Events implements Listener {
             return;
         }
 
+//        System.out.println(NBTItem.convertItemtoNBT(e.getPlayer().getInventory().getItemInMainHand()));
+//
+//        NBTItem.convertNBTtoItem()
+//        ItemStack test = NBTItem.convertNBTtoItem(new NBTContainer("{Count:1b,id:\"minecraft:diamond_pickaxe\",tag:{Damage:0,display:{Name:'{\"extra\":[{\"text\":\"farttttt\"}],\"text\":\"\"}'}}}"));
+//        NBTContainer nbtc = new NBTContainer("fds");
+//        ItemStack stack = nbtc.getItemStack(null);
+//        e.getPlayer().getInventory().addItem(test);
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE") || block_name.endsWith("NETHERRACK")) {
+        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE") || block_name.endsWith("NETHERRACK") || block_name.endsWith("BASALT")) {
             if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
                 return;
             }
@@ -699,6 +706,7 @@ public class Events implements Listener {
                 ItemStack currentItem = e.getCurrentItem();
                 if (item != null && currentItem != null) {
                     ItemStack book = e.getInventory().getItem(1);
+                    if (book == null || book.getType() == Material.AIR) return;
                     NBTItem nbtItem = new NBTItem(book);
                     if (nbtItem.hasKey("destruction")) {
                         int destruction = nbtItem.getInteger("destruction");
@@ -748,6 +756,7 @@ public class Events implements Listener {
                                 // send to their inventory directly
                                 e.getWhoClicked().getInventory().addItem(fresh_clone);
                                 ItemStack air = new ItemStack(Material.AIR);
+
                                 e.setCurrentItem(air);
                                 for (int i = 0; i < 3; i++) {
                                     e.getInventory().setItem(i, air);
@@ -1110,6 +1119,50 @@ public class Events implements Listener {
 //        System.out.println("moved " + e.getItem().getType().name());
 //    }
 
+//    @EventHandler
+//    private void onPrepareGrindstone(PrepareResultEvent e) {
+//        if (e.getInventory() instanceof GrindstoneInventory inv) {
+//            if (Arrays.stream(e.getInventory().getContents()).anyMatch(itemStack ->
+//                itemStack.getType() == Material.ENCHANTED_BOOK && itemStack.hasItemMeta() && itemStack.getItemMeta().hasCustomModelData()
+//            )) {
+//                if (e.getResult() != null) {
+//                    ItemMeta meta = e.getResult().getItemMeta();
+//                    if (!meta.getDisplayName().equalsIgnoreCase("Book")) {
+//                        meta.setDisplayName("Book");
+//                        e.getResult().setItemMeta(meta);
+//                        e.setResult(e.getResult());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
+    @EventHandler
+    public void onClickGrindstone(InventoryClickEvent e) {
+        if (e.getClickedInventory() != null && e.getClickedInventory() instanceof GrindstoneInventory inv) {
+            if (e.getSlotType() == InventoryType.SlotType.RESULT) {
+                ItemStack result = inv.getItem(e.getSlot());
+                if (result != null && result.getType() == Material.BOOK) {
+                    System.out.println("Grindstone resulted!");
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void arrowFire(EntityDamageByEntityEvent e) {
+
+        if (e.getDamager() instanceof Arrow arrow) {
+            Color color = arrow.getColor();
+            if (color == null) return;
+            int rgb = color.asRGB();
+            if (rgb == 15558708) { // explosive arrow
+                arrow.getWorld().createExplosion(e.getDamager().getLocation(), 3, true, true);
+            }
+            else if (rgb == 15587124) {
+                arrow.getWorld().strikeLightning(e.getDamager().getLocation());
+            }
+        }
+    }
 
 }

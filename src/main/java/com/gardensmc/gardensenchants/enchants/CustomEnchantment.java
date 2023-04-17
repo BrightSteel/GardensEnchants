@@ -134,6 +134,7 @@ public abstract class CustomEnchantment extends Enchantment {
         this.availableThroughTable = availableThroughTable;
     }
 
+
     public boolean isAvailableThroughTable() {
         return availableThroughTable;
     }

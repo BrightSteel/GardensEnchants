@@ -16,6 +16,9 @@ commands:
   mobhead:
     description: Get a mob head
     usage: /<command>
+  disenchant:
+    description: Remove enchantment from held item
+    usage: /<command>
 depend:
   - Vault
   - GardensPlayers

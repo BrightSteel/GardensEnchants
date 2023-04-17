@@ -7,6 +7,7 @@ import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchants.EnchantRarity;
+import de.tr7zw.nbtapi.NBTCompoundList;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -63,12 +64,11 @@ public class EnchantUtils {
             CustomEnchantment c = entry.getKey();
             int level = entry.getValue();
 
-            if (c == CustomEnchantments.WINGED_BOOTS) {
+            if (c == CustomEnchantments.WINGED_BOOTS && nbtItem.hasKey("charge")) {
 //                NBTItem nbtItem = new NBTItem(item);
-                int charge = 3600;
-                if (nbtItem.hasKey("charge")) {
-                    charge = nbtItem.getInteger("charge");
-                }
+//                int charge = 3600;
+                int charge = nbtItem.getInteger("charge");
+
                 int min = charge/60;
 //                System.out.println("Updating lore: " + min);
 
@@ -229,50 +229,18 @@ public class EnchantUtils {
 //        return hasEnchant;
 //    }
 
-    /**
-     *
-     * @param item
-     * @param destructed_enchant
-     * @return cloned itemstack with destructed enchant removed
-     */
-    public static ItemStack removeEnchant(ItemStack item, Enchantment destructed_enchant) {
-        ItemStack fresh_clone = new ItemStack(item.getType());
-        ItemMeta clone_meta = fresh_clone.getItemMeta();
-        ItemMeta prev_meta = item.getItemMeta();
+    public static ItemStack removeEnchant(ItemStack item, Enchantment enchant) {
+        NBTItem nbtItem = new NBTItem(item);
+        NBTCompoundList lst = nbtItem.getCompoundList("Enchantments");
+        if (lst.isEmpty()) return item;
 
-        if (clone_meta != null && prev_meta != null) {
-//            if (meta.hasLore())
-//                newMeta.setLore(meta.getLore());
+        lst.removeIf(comp -> comp.getString("id").equals(enchant.getKey().toString()));
 
-            if (prev_meta.hasDisplayName())
-                clone_meta.setDisplayName(prev_meta.getDisplayName());
-
-            if (prev_meta.hasLocalizedName())
-                clone_meta.setLocalizedName(prev_meta.getLocalizedName());
-
-            if (prev_meta.hasCustomModelData()) {
-                clone_meta.setCustomModelData(prev_meta.getCustomModelData());
-            }
+        // remove charge if winged boots is being removed
+        if (enchant instanceof CustomEnchantment c && c == CustomEnchantments.WINGED_BOOTS) {
+            nbtItem.removeKey("charge");
         }
-
-        fresh_clone.setItemMeta(clone_meta);
-        // re-add all enchants except for the one we are removing
-        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
-            Enchantment enchantment = entry.getKey();
-//            System.out.println("Comparing " + enchantment.getKey() + " with " + destructed_enchant.getKey());
-            if (!enchantment.equals(destructed_enchant)) {
-                fresh_clone.addEnchantment(enchantment, entry.getValue());
-            }
-        }
-
-        // replace nbt data
-        NBTItem old_nbt = new NBTItem(item);
-        NBTItem fresh_nbt = new NBTItem(fresh_clone);
-        if (old_nbt.hasKey("slots")) {
-            fresh_nbt.setInteger("slots", old_nbt.getInteger("slots"));
-        }
-
-        return fresh_nbt.getItem();
+        return nbtItem.getItem();
     }
 
     public static int getEnchantLevel(ItemStack item, Enchantment custom_enchant) {

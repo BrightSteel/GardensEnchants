@@ -15,6 +15,8 @@ public class GiveBookCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
 
+        if (!commandSender.hasPermission("gardens.givebook")) return false;
+
         if (args.length > 1) {
             String player_name = args[0];
             String enchant = args[1];
