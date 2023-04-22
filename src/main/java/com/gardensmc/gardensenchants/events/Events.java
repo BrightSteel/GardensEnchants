@@ -298,12 +298,14 @@ public class Events implements Listener {
 
         }
         else if (contents[0] != null && Arrays.asList(repair_ores).contains(contents[1].getType())) { // repairing
+
             ItemStack og = contents[0].clone();
+
             ItemMeta meta = og.getItemMeta();
             ItemMeta repaired = e.getResult().getItemMeta();
             if (repaired instanceof Damageable damageable && meta instanceof Damageable og_damageable) {
                 og_damageable.setDamage(damageable.getDamage());
-                og.setItemMeta(damageable);
+                og.setItemMeta(og_damageable);
                 e.setResult(og);
             }
         }
@@ -541,6 +543,27 @@ public class Events implements Listener {
             }
         }
     }
+    
+    private static String[] super_break_inc = new String[] {
+            "netherrack",
+            "deepslate",
+            "stone",
+            "ore",
+            "ancient_debris",
+            "brick",
+            "granite",
+            "andesite",
+            "basalt",
+            "terracotta",
+            "diorite",
+            "tuff",
+            "calcite",
+    };
+
+    private static String[] super_break_exc = new String[] {
+            "stair",
+            "wall"
+    };
 
     @EventHandler(ignoreCancelled = true)
     public void onMineBlock(BlockBreakEvent e) {
@@ -556,8 +579,8 @@ public class Events implements Listener {
 //        ItemStack stack = nbtc.getItemStack(null);
 //        e.getPlayer().getInventory().addItem(test);
         Player player = e.getPlayer();
-        String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("ORE") || block_name.endsWith("STONE") || block_name.endsWith("DEEPSLATE") || block_name.endsWith("NETHERRACK") || block_name.endsWith("BASALT")) {
+        String block_name = e.getBlock().getType().toString().toLowerCase();
+        if ((Arrays.asList(super_break_inc).contains(block_name) || block_name.endsWith("stone") || block_name.endsWith("ore"))&& !Arrays.asList(super_break_exc).contains(block_name)) {
             if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
                 return;
             }
@@ -1137,17 +1160,17 @@ public class Events implements Listener {
 //        }
 //    }
 
-    @EventHandler
-    public void onClickGrindstone(InventoryClickEvent e) {
-        if (e.getClickedInventory() != null && e.getClickedInventory() instanceof GrindstoneInventory inv) {
-            if (e.getSlotType() == InventoryType.SlotType.RESULT) {
-                ItemStack result = inv.getItem(e.getSlot());
-                if (result != null && result.getType() == Material.BOOK) {
-                    System.out.println("Grindstone resulted!");
-                }
-            }
-        }
-    }
+//    @EventHandler
+//    public void onClickGrindstone(InventoryClickEvent e) {
+//        if (e.getClickedInventory() != null && e.getClickedInventory() instanceof GrindstoneInventory inv) {
+//            if (e.getSlotType() == InventoryType.SlotType.RESULT) {
+//                ItemStack result = inv.getItem(e.getSlot());
+//                if (result != null && result.getType() == Material.BOOK) {
+//                    System.out.println("Grindstone resulted!");
+//                }
+//            }
+//        }
+//    }
 
     @EventHandler
     public void arrowFire(EntityDamageByEntityEvent e) {

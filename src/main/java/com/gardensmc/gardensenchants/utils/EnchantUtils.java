@@ -79,6 +79,16 @@ public class EnchantUtils {
             }
             num++;
         }
+
+        if (nbtItem.hasKey("extraLore")) {
+            String extraLore = nbtItem.getString("extraLore");
+            String[] extra = extraLore.split(";");
+            for (String l : extra) {
+                String translate = ChatColor.translateAlternateColorCodes('&', l);
+                translate = com.gardensmc.gardensplayers.utils.ChatUtils.translateHex(translate);
+                lore.add(translate);
+            }
+        }
 //        for (Map.Entry<Enchantment, Integer> entry : item.getEnchantments().entrySet()) {
 //            Enchantment enchantment = entry.getKey();
 //            int level = entry.getValue();
