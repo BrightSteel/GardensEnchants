@@ -91,7 +91,7 @@ public class RuneUtil {
             if (item.getType().name().toLowerCase().endsWith("boots")) {
                 NBTItem nbtItem = new NBTItem(item);
                 if (nbtItem.hasKey("charge")) {
-                    nbtItem.setInteger("charge", 3600);
+                    nbtItem.setInteger("charge", 1800);
                     EnchantUtils.updateLore(nbtItem.getItem());
                     return nbtItem.getItem();
                 }

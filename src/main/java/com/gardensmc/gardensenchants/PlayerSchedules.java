@@ -41,7 +41,7 @@ public class PlayerSchedules {
                         if (boots != null && boots.getType() != Material.AIR) {
                             if (EnchantUtils.hasEnchantment(boots, CustomEnchantments.WINGED_BOOTS)) {
                                 NBTItem nbtItem = new NBTItem(boots);
-                                int charge = 3600; // in seconds
+                                int charge = 0; // in seconds
                                 if (nbtItem.hasKey("charge")) {
                                     charge = nbtItem.getInteger("charge");
                                 }

@@ -281,9 +281,9 @@ public class CustomEnchantments {
         int min, max;
         switch (rarity) {
             default -> {min = 15; max = 25;}
-            case UNIQUE -> {min = 30; max = 45;}
-            case MYSTICAL -> {min = 50; max = 65;}
-            case DIVINE -> {min = 70; max = 85;}
+            case UNIQUE -> {min = 30; max = 40;}
+            case MYSTICAL -> {min = 45; max = 55;}
+            case DIVINE -> {min = 60; max = 70;}
         }
         return ThreadLocalRandom.current().nextInt(min, max+1);
     }

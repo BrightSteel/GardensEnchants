@@ -38,14 +38,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
-import org.bukkit.event.player.PlayerHarvestBlockEvent;
-import org.bukkit.event.player.PlayerItemDamageEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.AnvilInventory;
-import org.bukkit.inventory.GrindstoneInventory;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.player.*;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -376,7 +370,7 @@ public class Events implements Listener {
                 if (level != 0) {
                     if (enchantment instanceof CustomEnchantment c && c == CustomEnchantments.WINGED_BOOTS) {
 //                        System.out.println("REDBULL GIVES YOU WINGS");
-                        nbtItem.setInteger("charge", 3600);
+                        nbtItem.setInteger("charge", 1800);
                     }
                     ItemStack final_item = nbtItem.getItem();
                     EnchantUtils.enchantItem(final_item, enchantment, level);
@@ -1087,7 +1081,7 @@ public class Events implements Listener {
             return;
         }
 
-        if (ProbabilityUtil.roll(25)) {
+        if (ProbabilityUtil.roll(10)) {
             String typeEncoder = getEntityTypeVariant(e.getEntity(), e.getEntityType().toString().toLowerCase());
             ItemStack head = ItemUtils.getMobHead(typeEncoder);
             if (head != null) {
@@ -1187,5 +1181,25 @@ public class Events implements Listener {
             }
         }
     }
+
+//    @EventHandler
+//    public void onVillagerInteract(PlayerInteractAtEntityEvent e) {
+//        if (e.getRightClicked() instanceof Villager villager) {
+//            List<MerchantRecipe> recipes = villager.getRecipes();
+//            MerchantRecipe[] array = recipes.toArray(new MerchantRecipe[0]);
+//            for (int i = 0; i < array.length; i++) {
+//                MerchantRecipe recipe = array[i];
+//                ItemStack result = recipe.getResult();
+//                if (result.getType() == Material.ENCHANTED_BOOK) {
+//                    ItemMeta meta = result.getItemMeta();
+//                    if (meta != null) {
+//                        if (meta.hasEnchants()) {
+//                            meta.getEnchants()
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 }
