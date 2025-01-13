@@ -1,4 +1,4 @@
-package com.gardensmc.gardensenchants.enchants;
+package com.gardensmc.gardensenchants.enchantment;
 
 public enum EnchantRarity {
     ORDINARY,

@@ -2,7 +2,7 @@ name: GardensEnchants
 version: 1.0.0
 author: Bright_Steel
 main: com.gardensmc.gardensenchants.GardensEnchants
-api-version: 1.19
+api-version: 1.20
 commands:
   getbook:
     description: Get enchanting book
@@ -21,6 +21,4 @@ commands:
     usage: /<command>
 depend:
   - Vault
-  - GardensPlayers
-  - ArmorEquipEvent
   - GardensFurniture

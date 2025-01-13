@@ -1,15 +1,12 @@
 package com.gardensmc.gardensenchants.gui;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
-import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
+import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import de.themoep.inventorygui.*;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -36,12 +33,15 @@ public class EnchantingMenu {
 
     private void initializeElements() {
         GuiElementGroup grp = new GuiElementGroup('b');
-        List<CustomEnchantment>[] enchantLists = new List[]{CustomEnchantments.ordinaryEnchants, CustomEnchantments.uniqueEnchants, CustomEnchantments.mysticalEnchants, CustomEnchantments.divineEnchants};
-        for (List<CustomEnchantment> enchantList : enchantLists) {
-            for (CustomEnchantment enchant : enchantList) {
-                ItemStack book = enchant.getBook();
+        for (var rarity : EnchantRarity.values()) {
+            var enchantList = GardensEnchantments.INSTANCE.getEnchantments(rarity);
+            for (var enchant : enchantList) {
+                ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+//                ItemStack book = enchant.getBook(); // todo re-impl
                 ItemMeta meta = book.getItemMeta();
-                String minLvl = RomanNumber.toRoman(enchant.getStartLevel());
+                String minLvl = RomanNumber.toRoman(1);
+                // todo re-impl
+//                String minLvl = RomanNumber.toRoman(enchant.getStartLevel());
                 String maxLvl = RomanNumber.toRoman(enchant.getMaxLevel());
                 if (meta != null) {
                     if (minLvl.equals(maxLvl)) {

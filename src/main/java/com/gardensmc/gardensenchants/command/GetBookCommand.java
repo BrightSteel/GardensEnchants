@@ -1,6 +1,5 @@
 package com.gardensmc.gardensenchants.command;
 
-import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.enchantments.Enchantment;
@@ -25,7 +24,8 @@ public class GetBookCommand implements TabExecutor {
             return false;
         }
 
-        ItemStack stack = EnchantUtils.getEnchantBook(args[0]);
+        ItemStack stack = null; // todo re-impl
+//        ItemStack stack = EnchantUtils.getEnchantBook(args[0]);
         if (stack == null) {
             player.sendMessage(ChatColor.RED + "Could not find a valid book by that name");
         }

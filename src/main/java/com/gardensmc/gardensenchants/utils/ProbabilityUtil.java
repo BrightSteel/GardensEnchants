@@ -1,6 +1,6 @@
 package com.gardensmc.gardensenchants.utils;
 
-import com.gardensmc.gardensenchants.enchants.EnchantRarity;
+import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 
 import java.util.concurrent.ThreadLocalRandom;
 

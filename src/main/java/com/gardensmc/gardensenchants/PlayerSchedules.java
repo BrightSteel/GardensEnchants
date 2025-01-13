@@ -1,7 +1,6 @@
 package com.gardensmc.gardensenchants;
 
-import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
-import com.gardensmc.gardensenchants.utils.EnchantUtils;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -11,6 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Arrays;
 
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.*;
+
 public class PlayerSchedules {
 
     public static void cancelOxygenDepletion() {
@@ -19,7 +20,7 @@ public class PlayerSchedules {
                 if (player.isInWater()) {
                     ItemStack helmet = player.getInventory().getHelmet();
 
-                    if (helmet != null && EnchantUtils.hasEnchantment(helmet, CustomEnchantments.BUBBLE_HEAD)) {
+                    if (helmet != null && BUBBLE_HEAD.hasEnchantment(helmet)) {
                         player.setRemainingAir(player.getMaximumAir());
                     }
                 }
@@ -39,7 +40,7 @@ public class PlayerSchedules {
                     if (Arrays.asList(anywhere_req).contains(player.getWorld().getName().toLowerCase()) || !player.hasPermission("gardens.fly")) {
                         ItemStack boots = player.getInventory().getBoots();
                         if (boots != null && boots.getType() != Material.AIR) {
-                            if (EnchantUtils.hasEnchantment(boots, CustomEnchantments.WINGED_BOOTS)) {
+                            if (WINGED_BOOTS.hasEnchantment(boots)) {
                                 NBTItem nbtItem = new NBTItem(boots);
                                 int charge = 0; // in seconds
                                 if (nbtItem.hasKey("charge")) {
@@ -54,8 +55,8 @@ public class PlayerSchedules {
                                         player.setAllowFlight(false);
                                     }
                                     player.getInventory().setBoots(nbtItem.getItem());
-
-                                    EnchantUtils.updateLore(player.getInventory().getBoots());
+                                    // todo re-impl
+//                                    EnchantUtils.updateLore(player.getInventory().getBoots());
                                 }
                             }
                         }

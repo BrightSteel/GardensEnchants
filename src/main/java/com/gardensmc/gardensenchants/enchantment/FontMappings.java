@@ -1,11 +1,8 @@
-package com.gardensmc.gardensenchants.enchants;
+package com.gardensmc.gardensenchants.enchantment;
 
 import com.gardensmc.gardensenchants.utils.OraxenShift;
-import org.bukkit.Bukkit;
 
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class FontMappings {
 

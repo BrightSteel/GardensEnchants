@@ -1,10 +1,7 @@
 package com.gardensmc.gardensenchants.command;
 
-import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
-import com.gardensmc.gardensenchants.enchants.CustomEnchantments;
-import com.gardensmc.gardensenchants.utils.ChatUtils;
-import com.gardensmc.gardensenchants.utils.EnchantUtils;
-import de.tr7zw.nbtapi.NBTItem;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -32,7 +29,7 @@ public class EnchantCommand implements TabExecutor {
             return true;
         }
 
-        CustomEnchantment enchant = CustomEnchantments.getCustomEnchant(args[0]);
+        var enchant = GardensEnchantments.INSTANCE.getEnchantment(args[0].toLowerCase());
         if (enchant == null) {
             player.sendMessage(ChatColor.RED + "Could not find the enchant " + args[0]);
             return true;
@@ -50,16 +47,11 @@ public class EnchantCommand implements TabExecutor {
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() != Material.AIR) {
-            if (!enchant.canEnchantItem(item)) {
+            if (!enchant.canEnchant(item)) {
                 player.sendMessage(ChatColor.RED + "You cannot apply " + args[0] + " to this item!");
                 return true;
             }
-            item.addEnchantment(enchant, level);
-            NBTItem nbtItem = new NBTItem(item);
-            if (!nbtItem.hasKey("slots")) {
-                nbtItem.setInteger("slots", 4);
-            }
-            EnchantUtils.updateLore(nbtItem.getItem());
+            new GardensEnchantHandler(enchant).enchant(item, level);
             player.sendMessage(ChatColor.GREEN + "Added " + args[0] + " to your item");
         }
         else {

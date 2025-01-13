@@ -1,6 +1,5 @@
 package com.gardensmc.gardensenchants.command;
 
-import com.gardensmc.gardensenchants.utils.EnchantUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -22,8 +21,9 @@ public class GiveBookCommand implements CommandExecutor {
             String enchant = args[1];
             Player player = Bukkit.getPlayer(player_name);
             if (player != null) {
-                ItemStack book = EnchantUtils.getEnchantBook(enchant, 0);
-                player.getInventory().addItem(book);
+                // todo re-impl
+//                ItemStack book = EnchantUtils.getEnchantBook(enchant, 0);
+//                player.getInventory().addItem(book);
             }
         }
 

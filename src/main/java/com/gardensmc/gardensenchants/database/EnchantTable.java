@@ -43,25 +43,25 @@ public class EnchantTable {
         String update = "UPDATE enchant SET enchants = ?, expiration = ? WHERE uuid = ?";
         DatabaseConnector.INSTANCE.executeUpdate(update,enchants, expiration, uuid);
     }
-
-    public static EnchantEntry getEnchantEntry(String uuid) throws SQLException {
-        String query = "SELECT enchants, expiration FROM enchant WHERE uuid = ?";
-        Connection conn = DatabaseConnector.INSTANCE.getConnection();
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, uuid);
-
-        EnchantEntry enchantEntry = null;
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            String enchants = rs.getString(1);
-            LocalDateTime expiration = rs.getObject(2, LocalDateTime.class);
-            enchantEntry = new EnchantEntry(enchants, expiration);
-        }
-
-        rs.close();
-        ps.close();
-        conn.close();
-
-        return enchantEntry;
-    }
+//
+//    public static EnchantEntry getEnchantEntry(String uuid) throws SQLException {
+//        String query = "SELECT enchants, expiration FROM enchant WHERE uuid = ?";
+//        Connection conn = DatabaseConnector.INSTANCE.getConnection();
+//        PreparedStatement ps = conn.prepareStatement(query);
+//        ps.setString(1, uuid);
+//
+//        EnchantEntry enchantEntry = null;
+//        ResultSet rs = ps.executeQuery();
+//        if (rs.next()) {
+//            String enchants = rs.getString(1);
+//            LocalDateTime expiration = rs.getObject(2, LocalDateTime.class);
+//            enchantEntry = new EnchantEntry(enchants, expiration);
+//        }
+//
+//        rs.close();
+//        ps.close();
+//        conn.close();
+//
+//        return enchantEntry;
+//    }
 }

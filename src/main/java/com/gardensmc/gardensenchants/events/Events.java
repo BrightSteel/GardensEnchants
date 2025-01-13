@@ -1,36 +1,20 @@
 package com.gardensmc.gardensenchants.events;
 
-import com.codingforcookies.armorequip.ArmorEquipEvent;
-import com.codingforcookies.armorequip.ArmorType;
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.cache.EnchantCache;
-import com.gardensmc.gardensfurniture.custom.CustomItem;
-import com.gardensmc.gardensfurniture.register.CustomRegister;
-import com.gardensmc.gardensplayers.GardensPlayers;
-import com.gardensmc.gardensplayers.player.PlayerCache;
-import com.gardensmc.gardensenchants.enchants.*;
+import com.gardensmc.gardensenchants.books.BooksHandler;
+import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.enchantment.*;
 import com.gardensmc.gardensenchants.gui.EnchantingGUI;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.gui.InventoryUpdate;
 import com.gardensmc.gardensenchants.utils.*;
-import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.bukkit.event.block.BreakBlockEvent;
-import com.sk89q.worldguard.protection.flags.Flags;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
-import de.tr7zw.nbtapi.NBTContainer;
+import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensfurniture.custom.item.CustomItem;
+import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.NBTItem;
 
-import net.minecraft.core.BlockPosition;
-import net.minecraft.server.level.EntityPlayer;
-import net.minecraft.server.level.PlayerInteractManager;
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -42,71 +26,73 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.*;
+
 public class Events implements Listener {
 
-    @EventHandler
-    public void onEquip(ArmorEquipEvent e) {
-
-        // equipping
-        if (e.getNewArmorPiece() != null && e.getNewArmorPiece().getType() != Material.AIR) {
-            if (e.getType() == ArmorType.BOOTS) {
-                if (EnchantUtils.hasEnchantment(e.getNewArmorPiece(), CustomEnchantments.SPEEDY)) {
-                    int lvl = EnchantUtils.getEnchantLevel(e.getNewArmorPiece(), CustomEnchantments.SPEEDY);
-                    float newSpeed = 0.2f + (lvl * 0.025f);
-                    e.getPlayer().setWalkSpeed(newSpeed);
-                }
-                if (EnchantUtils.hasEnchantment(e.getNewArmorPiece(), CustomEnchantments.WINGED_BOOTS)) {
-                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
-                    if (nbtItem.hasKey("charge")) {
-                        if (nbtItem.getInteger("charge") > 0) {
-                            e.getPlayer().setAllowFlight(true);
-                        }
-                    }
-                }
-
-            }
-            else if (e.getType() == ArmorType.HELMET) {
-                if (EnchantUtils.hasEnchantment(e.getNewArmorPiece(), CustomEnchantments.NIGHT_VISION)) {
-                    e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
-                }
-
-            }
-        }
-
-        // unequipping
-        if (e.getOldArmorPiece() != null && e.getOldArmorPiece().getType() != Material.AIR) {
-            if (e.getType() == ArmorType.BOOTS) {
-                if (e.getPlayer().getWalkSpeed() > 0.2f) {
-                    e.getPlayer().setWalkSpeed(0.2f);
-                }
-                if (e.getPlayer().getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
-                    String[] anywhere_req = new String[]{
-                            "resource_world",
-                            "nether",
-                            "end"
-                    };
-                    if (Arrays.asList(anywhere_req).contains(e.getPlayer().getWorld().getName().toLowerCase()) || !e.getPlayer().hasPermission("gardens.fly")) {
-                        e.getPlayer().setFlying(false);
-                        e.getPlayer().setAllowFlight(false);
-                    }
-
-                }
-            }
-            else if (e.getType() == ArmorType.HELMET) {
-                if (EnchantUtils.hasEnchantment(e.getOldArmorPiece(), CustomEnchantments.NIGHT_VISION)){
-                    e.getPlayer().removePotionEffect(PotionEffectType.NIGHT_VISION);
-                    e.getPlayer().sendMessage("Removed night vision effect");
-                }
-            }
-        }
-    }
+    // todo re-impl
+//    @EventHandler
+//    public void onEquip(ArmorEquipEvent e) {
+//
+//        // equipping
+//        if (e.getNewArmorPiece() != null && e.getNewArmorPiece().getType() != Material.AIR) {
+//            if (e.getType() == ArmorType.BOOTS) {
+//                if (SPEEDY.hasEnchantment(e.getNewArmorPiece())) {
+//                    int lvl = SPEEDY.getEnchantmentLevel(e.getNewArmorPiece());
+//                    float newSpeed = 0.2f + (lvl * 0.025f);
+//                    e.getPlayer().setWalkSpeed(newSpeed);
+//                }
+//                if (CustomEnchantments.WINGED_BOOTS.hasEnchantment(e.getNewArmorPiece())) {
+//                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
+//                    if (nbtItem.hasKey("charge")) {
+//                        if (nbtItem.getInteger("charge") > 0) {
+//                            e.getPlayer().setAllowFlight(true);
+//                        }
+//                    }
+//                }
+//
+//            }
+//            else if (e.getType() == ArmorType.HELMET) {
+//                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getNewArmorPiece())) {
+//                    e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
+//                }
+//
+//            }
+//        }
+//
+//        // unequipping
+//        if (e.getOldArmorPiece() != null && e.getOldArmorPiece().getType() != Material.AIR) {
+//            if (e.getType() == ArmorType.BOOTS) {
+//                if (e.getPlayer().getWalkSpeed() > 0.2f) {
+//                    e.getPlayer().setWalkSpeed(0.2f);
+//                }
+//                if (e.getPlayer().getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
+//                    String[] anywhere_req = new String[]{
+//                            "resource_world",
+//                            "nether",
+//                            "end"
+//                    };
+//                    if (Arrays.asList(anywhere_req).contains(e.getPlayer().getWorld().getName().toLowerCase()) || !e.getPlayer().hasPermission("gardens.fly")) {
+//                        e.getPlayer().setFlying(false);
+//                        e.getPlayer().setAllowFlight(false);
+//                    }
+//
+//                }
+//            }
+//            else if (e.getType() == ArmorType.HELMET) {
+//                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getOldArmorPiece())) {
+//                    e.getPlayer().removePotionEffect(PotionEffectType.NIGHT_VISION);
+//                    e.getPlayer().sendMessage("Removed night vision effect");
+//                }
+//            }
+//        }
+//    }
 
     @EventHandler
     public void onDamageEvent(EntityDamageEvent e) {
@@ -115,8 +101,8 @@ public class Events implements Listener {
         if (e.getEntity() instanceof Player player) {
             if (e.getCause() == EntityDamageEvent.DamageCause.FALL) {
                 ItemStack boots = player.getInventory().getBoots();
-                if (boots != null && EnchantUtils.hasEnchantment(boots, CustomEnchantments.JELLY_LEGS)) {
-                    int level = boots.getEnchantmentLevel(CustomEnchantments.JELLY_LEGS);
+                if (boots != null && JELLY_LEGS.hasEnchantment(boots)) {
+                    int level = JELLY_LEGS.getEnchantmentLevel(boots);
                     if (level < 1) level = 1;
                     if (ProbabilityUtil.roll(level * 15)) {
                         e.setCancelled(true);
@@ -126,7 +112,7 @@ public class Events implements Listener {
             }
         }
         else if (e.getEntity() instanceof Item item) {
-            if (EnchantUtils.hasEnchantment(item.getItemStack(), CustomEnchantments.ETERNAL)) {
+            if (ETERNAL.hasEnchantment(item.getItemStack())) {
                 e.setCancelled(true);
             }
         }
@@ -152,14 +138,14 @@ public class Events implements Listener {
             ItemStack weapon = player.getInventory().getItemInMainHand();
 
             if (Arrays.asList(netherTypes).contains(e.getEntity().getType())) {
-                if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.NETHERLING)) {
+                if (NETHERLING.hasEnchantment(weapon)) {
                     e.setDamage(e.getDamage()*2);
                 }
             }
 
-            if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.LIFE_STEAL)) {
+            if (LIFE_STEAL.hasEnchantment(weapon)) {
                 // todo check if this actually works with custom enchantments, i doubt it
-                double enchant_level = weapon.getEnchantmentLevel(CustomEnchantments.LIFE_STEAL);
+                double enchant_level = LIFE_STEAL.getEnchantmentLevel(weapon);
                 if (enchant_level < 1) enchant_level = 1;
                 double hp = e.getDamage() * ((enchant_level + 1)/30);
                 double newHP = player.getHealth() + hp;
@@ -169,8 +155,8 @@ public class Events implements Listener {
                 player.setHealth(newHP);
             }
 
-            if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.DOUBLE_STRIKE)) {
-                double enchant_level = weapon.getEnchantmentLevel(CustomEnchantments.DOUBLE_STRIKE);
+            if (DOUBLE_STRIKE.hasEnchantment(weapon)) {
+                double enchant_level = DOUBLE_STRIKE.getEnchantmentLevel(weapon);
                 if (enchant_level < 1) enchant_level = 1;
                 if (ProbabilityUtil.roll(20*enchant_level)) {
                     if (e.getEntity() instanceof LivingEntity livingEntity) {
@@ -183,27 +169,28 @@ public class Events implements Listener {
     }
 
 
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e) {
-        new EnchantCache(e.getPlayer().getUniqueId()).loadCache();
+//    @EventHandler
+//    public void onPlayerJoin(PlayerJoinEvent e) {
+//        new EnchantCache(e.getPlayer().getUniqueId()).loadCache();
+//
+//        EnchantUtils.refreshEnchants(e.getPlayer());
+//    }
 
-        EnchantUtils.refreshEnchants(e.getPlayer());
-    }
-
-    @EventHandler
-    public void onDisconnect(PlayerQuitEvent e) {
-        EnchantCache.remove(e.getPlayer().getUniqueId());
-    }
+//    @EventHandler
+//    public void onDisconnect(PlayerQuitEvent e) {
+//        EnchantCache.remove(e.getPlayer().getUniqueId());
+//    }
 
     @EventHandler
     public static void onApplyRune(PrepareAnvilEvent e) {
+        // todo update these to use new anvilView?
         AnvilInventory inv = e.getInventory();
         ItemStack[] contents = inv.getContents();
 
         ItemStack item = contents[0];
         ItemStack rune = contents[1];
         if (item != null && rune != null) {
-            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
+            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(rune);
             if (customItem == null || (!customItem.getIdentifier().equalsIgnoreCase("amber") && rune.getAmount() != 1)) return;
 //            if (rune.getAmount() != 1) return;
             // attempt to get rune
@@ -319,31 +306,21 @@ public class Events implements Listener {
             // our items adder category
             if (book.getType() != Material.ENCHANTED_BOOK) return;
 
-            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(book);
-//            String item_id = OraxenItems.getIdByItem(book);
-            String item_id = null;
+            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(book);
             if (customItem == null) {
-                // attempt use model data
-                ItemMeta meta = book.getItemMeta();
-                if (meta != null && meta.hasCustomModelData()) {
-                    int model = meta.getCustomModelData();
-                    item_id = CustomEnchantments.conversionMap.get(model);
-                }
-            }
-            else {
-                item_id = customItem.getIdentifier();
-            }
-//            CustomStack customStack = CustomStack.byItemStack(book);
-            if (item_id == null) {
                 // hopefully disallows vanilla books?
                 e.setResult(new ItemStack(Material.AIR));
                 return;
             }
 
-            Enchantment enchantment = CustomEnchantments.getGardensEnchant(item_id);
+            var bookId = customItem.getIdentifier();
+            if (!bookId.endsWith("_book")) {
+                return;
+            }
+            var enchantment = GardensEnchantments.INSTANCE.getEnchantment(bookId.substring(0, bookId.lastIndexOf("_book")));
             if (enchantment == null) return;
 
-            if (enchantment.canEnchantItem(item) && !hasConflicts(enchantment, item)) {
+            if (enchantment.canEnchant(item) && !hasConflicts(enchantment, item)) {
 
                 NBTItem nbtItem = new NBTItem(item);
                 if (!nbtItem.hasKey("slots")) {
@@ -360,7 +337,7 @@ public class Events implements Listener {
                 int level = new NBTItem(book).getInteger("level");
 
                 // check if item already contains enchantment at same level, then we should attempt to upgrade it
-                if (EnchantUtils.getEnchantLevel(item, enchantment) == level) {
+                if (enchantment.getEnchantmentLevel(item) == level) {
                     int upgrade = level + 1;
                     if (enchantment.getMaxLevel() >= upgrade) {
                         level = upgrade;
@@ -368,12 +345,12 @@ public class Events implements Listener {
                 }
 
                 if (level != 0) {
-                    if (enchantment instanceof CustomEnchantment c && c == CustomEnchantments.WINGED_BOOTS) {
+                    if (enchantment == WINGED_BOOTS) {
 //                        System.out.println("REDBULL GIVES YOU WINGS");
                         nbtItem.setInteger("charge", 1800);
                     }
                     ItemStack final_item = nbtItem.getItem();
-                    EnchantUtils.enchantItem(final_item, enchantment, level);
+                    new GardensEnchantHandler(enchantment).enchant(final_item, level);
                     inv.setRepairCost(3);
                     e.setResult(final_item);
                 }
@@ -381,13 +358,11 @@ public class Events implements Listener {
         }
     }
 
-    public static boolean hasConflicts(Enchantment enchantment, ItemStack item) {
-        for (Enchantment ench : item.getEnchantments().keySet()) {
-            if (ench.conflictsWith(enchantment)) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean hasConflicts(GardensEnchantment enchantment, ItemStack item) {
+        var enchants = GardensEnchantHandler.getEnchantments(item);
+        return enchants
+                .stream()
+                .anyMatch(enchantmentInstance -> enchantmentInstance.getEnchantment().conflictsWith(enchantment));
     }
 
 //    @EventHandler
@@ -400,122 +375,122 @@ public class Events implements Listener {
 //        }
 //    }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onTimber(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Timber_TBD")) {
-            return;
-        }
-
-        Player player = e.getPlayer();
-        if (!player.isSneaking()) {
-            return;
-        }
-
-        String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("LOG") || block_name.endsWith("ROOTS") || block_name.endsWith("STEM") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE")) {
-            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.TIMBER)) {
-                return;
-            }
-
-            List<Block> blocks = new ArrayList<>();
-            blocks.add(e.getBlock());
-
-            List<Block> destroy = new ArrayList<>();
-            destroy.add(e.getBlock());
-
-            BlockFace[] faces = new BlockFace[]{
-                    BlockFace.NORTH,
-                    BlockFace.EAST,
-                    BlockFace.SOUTH,
-                    BlockFace.WEST,
-                    BlockFace.UP,
-                    BlockFace.DOWN
-            };
-
-            for (int i = 0; i < blocks.size(); i++) {
-                if (i >= 30) break;
-                Block curr = blocks.get(i);
-                for (BlockFace blockFace : faces) {
-                    for (int j = -1; j < 2; j++) {
-                        for (int l = -1; l < 2; l++) {
-                            Block potential = curr.getRelative(blockFace);
-                            potential = potential.getRelative(j, 0, l);
-                            Block finalPotential = potential;
-                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
-                                blocks.add(potential);
-                                destroy.add(potential);
-                            }
-                        }
-                    }
-
-                }
-            }
-
-            // do block breaking
-            for (Block block : destroy) {
-                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
-                breakIfAble(player, block);
-            }
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onVeinMiner(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
-            return;
-        }
-
-        Player player = e.getPlayer();
-        String block_name = e.getBlock().getType().toString().toUpperCase();
-        if (block_name.endsWith("ORE")) {
-            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.VEIN_MINER)) {
-                return;
-            }
-
-            List<Block> blocks = new ArrayList<>();
-            blocks.add(e.getBlock());
-
-            List<Block> destroy = new ArrayList<>();
-            destroy.add(e.getBlock());
-
-            BlockFace[] faces = new BlockFace[]{
-                    BlockFace.NORTH,
-                    BlockFace.EAST,
-                    BlockFace.SOUTH,
-                    BlockFace.WEST,
-                    BlockFace.UP,
-                    BlockFace.DOWN
-            };
-
-            for (int i = 0; i < blocks.size(); i++) {
-                if (i >= 12) break;
-                Block curr = blocks.get(i);
-                for (BlockFace blockFace : faces) {
-                    Block potential = curr.getRelative(blockFace);
-                    if (potential.getType() == e.getBlock().getType()) {
-                        blocks.add(potential);
-                        destroy.add(potential);
-                    }
-                }
-            }
-
-            // do block breaking
-            for (Block block : destroy) {
-                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
-                breakIfAble(player, block);
-            }
-        }
-    }
+//    @EventHandler(ignoreCancelled = true)
+//    public void onTimber(BlockBreakEvent e) {
+//        if (e.getBlock().hasMetadata("Timber_TBD")) {
+//            return;
+//        }
+//
+//        Player player = e.getPlayer();
+//        if (!player.isSneaking()) {
+//            return;
+//        }
+//
+//        String block_name = e.getBlock().getType().toString().toUpperCase();
+//        if (block_name.endsWith("LOG") || block_name.endsWith("ROOTS") || block_name.endsWith("STEM") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE")) {
+//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.TIMBER)) {
+//                return;
+//            }
+//
+//            List<Block> blocks = new ArrayList<>();
+//            blocks.add(e.getBlock());
+//
+//            List<Block> destroy = new ArrayList<>();
+//            destroy.add(e.getBlock());
+//
+//            BlockFace[] faces = new BlockFace[]{
+//                    BlockFace.NORTH,
+//                    BlockFace.EAST,
+//                    BlockFace.SOUTH,
+//                    BlockFace.WEST,
+//                    BlockFace.UP,
+//                    BlockFace.DOWN
+//            };
+//
+//            for (int i = 0; i < blocks.size(); i++) {
+//                if (i >= 30) break;
+//                Block curr = blocks.get(i);
+//                for (BlockFace blockFace : faces) {
+//                    for (int j = -1; j < 2; j++) {
+//                        for (int l = -1; l < 2; l++) {
+//                            Block potential = curr.getRelative(blockFace);
+//                            potential = potential.getRelative(j, 0, l);
+//                            Block finalPotential = potential;
+//                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
+//                                blocks.add(potential);
+//                                destroy.add(potential);
+//                            }
+//                        }
+//                    }
+//
+//                }
+//            }
+//
+//            // do block breaking
+//            for (Block block : destroy) {
+//                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+//                breakIfAble(player, block);
+//            }
+//        }
+//    }
+//
+//    @EventHandler(ignoreCancelled = true)
+//    public void onVeinMiner(BlockBreakEvent e) {
+//        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+//            return;
+//        }
+//
+//        Player player = e.getPlayer();
+//        String block_name = e.getBlock().getType().toString().toUpperCase();
+//        if (block_name.endsWith("ORE")) {
+//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.VEIN_MINER)) {
+//                return;
+//            }
+//
+//            List<Block> blocks = new ArrayList<>();
+//            blocks.add(e.getBlock());
+//
+//            List<Block> destroy = new ArrayList<>();
+//            destroy.add(e.getBlock());
+//
+//            BlockFace[] faces = new BlockFace[]{
+//                    BlockFace.NORTH,
+//                    BlockFace.EAST,
+//                    BlockFace.SOUTH,
+//                    BlockFace.WEST,
+//                    BlockFace.UP,
+//                    BlockFace.DOWN
+//            };
+//
+//            for (int i = 0; i < blocks.size(); i++) {
+//                if (i >= 12) break;
+//                Block curr = blocks.get(i);
+//                for (BlockFace blockFace : faces) {
+//                    Block potential = curr.getRelative(blockFace);
+//                    if (potential.getType() == e.getBlock().getType()) {
+//                        blocks.add(potential);
+//                        destroy.add(potential);
+//                    }
+//                }
+//            }
+//
+//            // do block breaking
+//            for (Block block : destroy) {
+//                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+//                breakIfAble(player, block);
+//            }
+//        }
+//    }
 
     @EventHandler(ignoreCancelled = true)
     public void onSmeltMineBlock(BlockBreakEvent e) {
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
         if (block_name.endsWith("ORE")) {
-            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SMELTER)) {
+            if (!CustomEnchantments.SMELTER.hasEnchantment(player.getInventory().getItemInMainHand())) {
                 return;
             }
-            int fortune = EnchantUtils.getEnchantLevel(player.getInventory().getItemInMainHand(), CustomEnchantments.FORTUNE);
+            int fortune = player.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.LOOT_BONUS_BLOCKS);
             Material drop = null;
             int amount = 1 + ThreadLocalRandom.current().nextInt(0, fortune + 1);
 
@@ -559,81 +534,74 @@ public class Events implements Listener {
             "wall"
     };
 
-    @EventHandler(ignoreCancelled = true)
-    public void onMineBlock(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
-            return;
-        }
-
-//        System.out.println(NBTItem.convertItemtoNBT(e.getPlayer().getInventory().getItemInMainHand()));
+//    @EventHandler(ignoreCancelled = true)
+//    public void onMineBlock(BlockBreakEvent e) {
+//        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+//            return;
+//        }
 //
-//        NBTItem.convertNBTtoItem()
-//        ItemStack test = NBTItem.convertNBTtoItem(new NBTContainer("{Count:1b,id:\"minecraft:diamond_pickaxe\",tag:{Damage:0,display:{Name:'{\"extra\":[{\"text\":\"farttttt\"}],\"text\":\"\"}'}}}"));
-//        NBTContainer nbtc = new NBTContainer("fds");
-//        ItemStack stack = nbtc.getItemStack(null);
-//        e.getPlayer().getInventory().addItem(test);
-        Player player = e.getPlayer();
-        String block_name = e.getBlock().getType().toString().toLowerCase();
-        if ((Arrays.asList(super_break_inc).contains(block_name) || block_name.endsWith("stone") || block_name.endsWith("ore"))&& !Arrays.asList(super_break_exc).contains(block_name)) {
-            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
-                return;
-            }
-            BlockFace facing = PlayerUtils.getBlockFaceLooking(player);
-            if (facing == null) {
-                return;
-            }
+//        Player player = e.getPlayer();
+//        String block_name = e.getBlock().getType().toString().toLowerCase();
+//        if ((Arrays.asList(super_break_inc).contains(block_name) || block_name.endsWith("stone") || block_name.endsWith("ore"))&& !Arrays.asList(super_break_exc).contains(block_name)) {
+//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
+//                return;
+//            }
+//            BlockFace facing = PlayerUtils.getBlockFaceLooking(player);
+//            if (facing == null) {
+//                return;
+//            }
+//
+//            for (int i = -1; i < 2; i++) {
+//                for (int j = -1; j < 2; j++) {
+//                    if (i == 0 && j == 0) continue;
+//                    Block target = null;
+//                    String face = facing.toString();
+//                    if (face.startsWith("NORTH") || face.startsWith("SOUTH")) { // X, Y area
+//                        target = e.getBlock().getRelative(i, j, 0);
+//                    }
+//                    else if (face.startsWith("EAST") || face.startsWith("WEST")) {
+//                        target = e.getBlock().getRelative(0, j, i);
+//                    }
+//                    else if (face.startsWith("UP") || face.startsWith("DOWN")) {
+//                        target = e.getBlock().getRelative(i, 0, j);
+//                    }
+//
+//                    if (target != null) {
+//                        // give metadata so we can avoid calling this event on this block again
+//                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+//                        breakIfAble(player, target);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    if (i == 0 && j == 0) continue;
-                    Block target = null;
-                    String face = facing.toString();
-                    if (face.startsWith("NORTH") || face.startsWith("SOUTH")) { // X, Y area
-                        target = e.getBlock().getRelative(i, j, 0);
-                    }
-                    else if (face.startsWith("EAST") || face.startsWith("WEST")) {
-                        target = e.getBlock().getRelative(0, j, i);
-                    }
-                    else if (face.startsWith("UP") || face.startsWith("DOWN")) {
-                        target = e.getBlock().getRelative(i, 0, j);
-                    }
-
-                    if (target != null) {
-                        // give metadata so we can avoid calling this event on this block again
-                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensPlayers.plugin, true));
-                        breakIfAble(player, target);
-                    }
-                }
-            }
-        }
-    }
-
-    private void breakIfAble(Player player, Block target) {
-
-        LocalPlayer  lp = WorldGuardPlugin.inst().wrapPlayer(player);
-        Location loc = new Location(lp.getWorld(), target.getX(), target.getY(), target.getZ());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionQuery query = container.createQuery();
-        if (query.testBuild(loc, lp)) {
-            EntityPlayer human = ((CraftPlayer) player).getHandle();
-            BlockPosition blockPosition = new BlockPosition(target.getX(), target.getY(), target.getZ());
-
-            // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
-            // which we do by giving it metadata to mark it as such
-            new PlayerInteractManager(human).a(blockPosition);
-
-//            target.breakNaturally(player.getInventory().getItemInMainHand());
-        }
-        if (target.hasMetadata("Super_Breaker_TBD")) {
-            target.removeMetadata("Super_Breaker_TBD", GardensPlayers.plugin);
-        }
-        if (target.hasMetadata("Vein_Miner_TBD")) {
-            target.removeMetadata("Vein_Miner_TBD", GardensPlayers.plugin);
-        }
-        if (target.hasMetadata("Timber_TBD")) {
-            target.removeMetadata("Timber_TBD", GardensPlayers.plugin);
-        }
-    }
+//    private void breakIfAble(Player player, Block target) {
+//
+//        LocalPlayer  lp = WorldGuardPlugin.inst().wrapPlayer(player);
+//        Location loc = new Location(lp.getWorld(), target.getX(), target.getY(), target.getZ());
+//        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+//        RegionQuery query = container.createQuery();
+//        if (query.testBuild(loc, lp)) {
+//            EntityPlayer human = ((CraftPlayer) player).getHandle();
+//            BlockPosition blockPosition = new BlockPosition(target.getX(), target.getY(), target.getZ());
+//
+//            // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
+//            // which we do by giving it metadata to mark it as such
+//            new PlayerInteractManager(human).a(blockPosition);
+//
+////            target.breakNaturally(player.getInventory().getItemInMainHand());
+//        }
+//        if (target.hasMetadata("Super_Breaker_TBD")) {
+//            target.removeMetadata("Super_Breaker_TBD", GardensEnchants.plugin);
+//        }
+//        if (target.hasMetadata("Vein_Miner_TBD")) {
+//            target.removeMetadata("Vein_Miner_TBD", GardensEnchants.plugin);
+//        }
+//        if (target.hasMetadata("Timber_TBD")) {
+//            target.removeMetadata("Timber_TBD", GardensEnchants.plugin);
+//        }
+//    }
 
 //    @EventHandler
 //    public void onVeinMine(PlayerVeinMineEvent e) {
@@ -664,11 +632,8 @@ public class Events implements Listener {
 
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent e) {
-        if (EnchantUtils.hasEnchantment(e.getItem(), CustomEnchantments.ETERNAL)) {
-//            int ench_level = EnchantUtils.getEnchantLevel(e.getItem(), CustomEnchantments.ETERNAL);
-//            if (ProbabilityUtil.roll((ench_level*10)*2)) {
+        if (CustomEnchantments.ETERNAL.hasEnchantment(e.getItem())) {
                 e.setCancelled(true);
-//            }
         }
     }
 
@@ -677,8 +642,8 @@ public class Events implements Listener {
         Player killer = e.getEntity().getKiller();
         if (killer != null) {
             ItemStack weapon = killer.getInventory().getItemInMainHand();
-            if (EnchantUtils.hasEnchantment(weapon, CustomEnchantments.SKULL_STEALER)) {
-                int ench_level = EnchantUtils.getEnchantLevel(weapon, CustomEnchantments.SKULL_STEALER);
+            if (CustomEnchantments.SKULL_STEALER.hasEnchantment(weapon)) {
+                int ench_level = SKULL_STEALER.getEnchantmentLevel(weapon);
 //                int percent = ench_level == 1 ? 15 : 15 * ench_level;
                 if (ProbabilityUtil.roll(25)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
@@ -732,18 +697,17 @@ public class Events implements Listener {
                             String enchant = nbtItem.getString("destroy_enchant");
                             System.out.println("destroy enchant: " + enchant);
 
-                            Enchantment customEnchantment = CustomEnchantments.getCustomEnchant(enchant);
+                            var customEnchantment = GardensEnchantments.INSTANCE.getEnchantment(enchant);
 //                            if (customEnchantment instanceof CustomWrapper w) {
 //                                customEnchantment = w.enchantment;
 //                                currentItem.removeEnchantment(customEnchantment);
 //                            }
 //                            else {
-                            ItemStack fresh_clone = EnchantUtils.removeEnchant(currentItem, customEnchantment);
+                            new GardensEnchantHandler(customEnchantment).removeEnchant(currentItem);
 //                            }
-                            EnchantUtils.updateLore(fresh_clone);
 
                             // send to their inventory directly
-                            e.getWhoClicked().getInventory().addItem(fresh_clone);
+                            e.getWhoClicked().getInventory().addItem(currentItem);
                             ItemStack air = new ItemStack(Material.AIR);
                             e.setCurrentItem(air);
                             for (int i = 0; i < 3; i++) {
@@ -756,7 +720,7 @@ public class Events implements Listener {
                         }
                     }
                     else if (book.getType() == Material.PAPER) {
-                        CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(book);
+                        CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(book);
                         if (customItem != null && customItem.getIdentifier().equalsIgnoreCase("amber")) {
                             // 50 percent chance failure
                             if (ProbabilityUtil.roll(50)) {
@@ -766,12 +730,11 @@ public class Events implements Listener {
 //                                currentItem.removeEnchantment(customEnchantment);
 //                            }
 //                            else {
-                                ItemStack fresh_clone = EnchantUtils.removeEnchant(currentItem, CustomEnchantments.WINGED_BOOTS);
+                                new GardensEnchantHandler(WINGED_BOOTS).removeEnchant(currentItem);
 //                            }
-                                EnchantUtils.updateLore(fresh_clone);
 
                                 // send to their inventory directly
-                                e.getWhoClicked().getInventory().addItem(fresh_clone);
+                                e.getWhoClicked().getInventory().addItem(currentItem);
                                 ItemStack air = new ItemStack(Material.AIR);
 
                                 e.setCurrentItem(air);
@@ -785,7 +748,7 @@ public class Events implements Listener {
                             }
                             int excess_amber = book.getAmount() - 24;
                             if (excess_amber > 0) {
-                                ItemStack amber = CustomRegister.INSTANCE.itemRegistry.buildItem("amber");
+                                ItemStack amber = GardensFurniture.itemRegistry.buildItem("amber");
                                 if (amber != null) {
                                     amber.setAmount(excess_amber);
                                     e.getWhoClicked().getInventory().addItem(amber);
@@ -846,7 +809,7 @@ public class Events implements Listener {
                             ExpUtil.changeExp(player, -xp);
                             GardensEnchants.econ.withdrawPlayer(player, amber);
 
-                            new EnchantCache(player.getUniqueId()).resetEnchant();
+//                            new EnchantCache(player.getUniqueId()).resetEnchant();
                             ItemStack enchantTarget = e.getInventory().getItem(1);
                             if (enchantTarget != null) {
                                 int amount = enchantTarget.getAmount();
@@ -900,19 +863,6 @@ public class Events implements Listener {
     private void updateEnchantingGUI(Player player, Inventory inv) {
 
         Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
-            boolean optifine = false;
-            try {
-                PlayerCache playerCache = new PlayerCache(player.getUniqueId());
-                optifine = playerCache.isUsingOptifine();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-//            if (optifine) {
-//                player.sendMessage("using opti offset");
-//            }
-//            String offset = (optifine) ? "&f:offset_80:&f" : "";
-            String offset = (optifine) ? "&f" + OraxenShift.INSTANCE.getShift(80, false) : "";
 
             String title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094");
 
@@ -933,7 +883,7 @@ public class Events implements Listener {
 
 //                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ:&f\uE05F:offset_-195:&f" + offset + sample[0] + "&f:offset_-100:&f" + sample[1] + "&f:offset_-100:&f" + sample[2]);
 //                String hundred = OraxenShift.INSTANCE.getShift(100, true);
-                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(195, true) + offset + sample[0]  + sample[1]  + sample[2]);
+                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(195, true) + sample[0]  + sample[1]  + sample[2]);
 
             }
             else {
@@ -967,45 +917,28 @@ public class Events implements Listener {
     // places books into inventory
     private ItemStack[] genBooks(Inventory inv, Player player) {
         ItemStack display = ItemUtils.getBlankItem();
-        ItemStack[] books = EnchantUtils.getRandomBooks(player.getUniqueId());
-        CustomEnchantment[] enchantments = new EnchantCache(player.getUniqueId()).getEnchants();
-        int playerLevels = ExpUtil.getExp(player);
-        double playerBal = GardensEnchants.econ.getBalance(player);
+//        int playerLevels = ExpUtil.getExp(player);
+//        double playerBal = GardensEnchants.econ.getBalance(player);
         // cost and amber
         // costs
-        for (int i = 0; i < 3; i++) {
-            EnchantRarity rarity = enchantments[i].getRarity();
-            int amber = EnchantUtils.getAmberCost(rarity);
-            int xp = EnchantUtils.getXpCost(rarity);
-
-
-            ItemMeta bookMeta = books[i].getItemMeta();
-            if (bookMeta != null) {
-                List<String> lore = bookMeta.getLore();
-                if (lore != null) {
-                    lore.add("");
-                    if (playerBal >= amber) {
-                        lore.add(ChatColor.WHITE + "\uE01F " + amber + " Amber");
-                    }
-                    else {
-                        lore.add(ChatColor.WHITE + "\uE01F " + ChatColor.RED + amber + " Amber");
-                    }
-
-                    if (playerLevels >= xp) {
-                        lore.add(ChatColor.WHITE + "\uE10F " + EnchantUtils.translateXpToLevel(xp) + " Levels");
-                    }
-                    else {
-                        lore.add(ChatColor.WHITE + "\uE10F " + ChatColor.RED + EnchantUtils.translateXpToLevel(xp) + " Levels");
-                    }
-                }
-
-                bookMeta.setLore(lore);
+        var books = new ItemStack[3];
+        for (int i = 0; i < books.length; i++) {
+            var book = BooksHandler.INSTANCE.generateRandomBook();
+            int amber = 1;
+            int xp = 1;
+            var meta = book.getItemMeta();
+            if (meta != null) {
+                var lore = meta.lore() != null ? meta.lore() : new ArrayList<Component>();
+                lore.add(MessageUtil.parseIntoComponent("<white>\uE01F " + amber + " Amber"));
+                lore.add(MessageUtil.parseIntoComponent("<white>\uE10F " + xp + " Levels"));
+                meta.lore(lore);
             }
-            books[i].setItemMeta(bookMeta);
-            NBTItem nbtItem = new NBTItem(books[i]);
-            nbtItem.setInteger("amber", amber);
-            nbtItem.setInteger("xp", xp);
-            books[i] = nbtItem.getItem();
+            book.setItemMeta(meta);
+            NBT.modify(book, nbt -> {
+                nbt.setInteger("amber", amber);
+                nbt.setInteger("xp", xp);
+            });
+            books[i] = book;
         }
 
         inv.setItem(8, books[0]);
@@ -1017,8 +950,8 @@ public class Events implements Listener {
             ItemMeta displayMeta = display.getItemMeta();
             ItemMeta bookMeta = (book != null) ? book.getItemMeta() : null;
             if (displayMeta != null && bookMeta != null) {
-                displayMeta.setDisplayName(bookMeta.getDisplayName());
-                displayMeta.setLore(bookMeta.getLore());
+                displayMeta.displayName(bookMeta.displayName());
+                displayMeta.lore(bookMeta.lore());
                 display.setItemMeta(displayMeta);
             }
             for (int i = 3 + (j * 9); i < 8 + (j * 9); i++) {
@@ -1077,7 +1010,7 @@ public class Events implements Listener {
         Player player = e.getEntity().getKiller();
         if (player == null) return;
 
-        if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SKULL_STEALER)) {
+        if (!CustomEnchantments.SKULL_STEALER.hasEnchantment(player.getInventory().getItemInMainHand())) {
             return;
         }
 

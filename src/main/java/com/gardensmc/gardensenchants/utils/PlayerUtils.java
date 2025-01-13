@@ -1,10 +1,5 @@
 package com.gardensmc.gardensenchants.utils;
 
-import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.PacketContainer;
-import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.enchants.CustomEnchantment;
-import com.gardensmc.gardensenchants.enchants.EnchantRarity;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.HumanEntity;

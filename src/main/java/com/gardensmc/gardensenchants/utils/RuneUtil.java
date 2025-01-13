@@ -44,7 +44,7 @@ public class RuneUtil {
                 slots++;
 
                 nbtItem.setInteger("slots", slots);
-                EnchantUtils.updateLore(nbtItem.getItem());
+//                EnchantUtils.updateLore(nbtItem.getItem()); todo re-impl
 
                 return nbtItem.getItem();
             }
@@ -78,7 +78,7 @@ public class RuneUtil {
 
                 if (!changed) return null;
 
-                EnchantUtils.updateLore(clone);
+//                EnchantUtils.updateLore(clone); todo re-impl
                 return clone;
             }
         }
@@ -92,7 +92,7 @@ public class RuneUtil {
                 NBTItem nbtItem = new NBTItem(item);
                 if (nbtItem.hasKey("charge")) {
                     nbtItem.setInteger("charge", 1800);
-                    EnchantUtils.updateLore(nbtItem.getItem());
+                    // EnchantUtils.updateLore(nbtItem.getItem()); todo re-impl
                     return nbtItem.getItem();
                 }
             }

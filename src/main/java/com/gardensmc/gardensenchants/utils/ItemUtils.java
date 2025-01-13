@@ -1,9 +1,9 @@
 package com.gardensmc.gardensenchants.utils;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensfurniture.register.CustomRegister;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
+import com.gardensmc.gardensfurniture.GardensFurniture;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -17,38 +17,38 @@ import java.util.UUID;
 
 public class ItemUtils {
 
-    public static ItemStack getHead(UUID uuid) {
+    public static ItemStack getHead(String name, String base64Skin) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta skullMeta = (SkullMeta) head.getItemMeta();
-        if (skullMeta != null)
-            skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
-        head.setItemMeta(skullMeta);
+        if (skullMeta != null) {
+            skullMeta.setPlayerProfile(getProfile(base64Skin));
+            skullMeta.displayName(MessageUtil.parseIntoComponent(name));
+            head.setItemMeta(skullMeta);
+        }
         return head;
     }
 
-    public static ItemStack getHeadBase64(String name, String value) {
+    public static ItemStack getHead(UUID uuid) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) head.getItemMeta();
-        if (meta != null) {
-            GameProfile profile = new GameProfile(UUID.randomUUID(), name);
-            profile.getProperties().put("textures", new Property("textures", value));
-            Field profileField;
-            try {
-                profileField = meta.getClass().getDeclaredField("profile");
-                profileField.setAccessible(true);
-                profileField.set(meta, profile);
-            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-                e.printStackTrace();
-            }
-            head.setItemMeta(meta);
+        SkullMeta skullMeta = (SkullMeta) head.getItemMeta();
+        if (skullMeta != null) {
+            skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+            head.setItemMeta(skullMeta);
         }
         return head;
+    }
+
+    private static PlayerProfile getProfile(String base64) {
+        PlayerProfile profile = Bukkit.getServer().createProfile(UUID.randomUUID());
+        profile.setProperty(new ProfileProperty("textures", base64));
+//        profile.complete();
+        return profile;
     }
 
     public static ItemStack getCustomItem(String id) {
         ItemStack stack = new ItemStack(Material.PAPER);
 //        CustomStack customStack = CustomStack.getInstance(namespace);
-        ItemStack customItem = CustomRegister.INSTANCE.itemRegistry.buildItem(id);
+        ItemStack customItem = GardensFurniture.itemRegistry.buildItem(id);
 //        ItemBuilder itemBuilder = OraxenItems.getItemById(id);
         if (customItem != null) {
             stack = customItem;
@@ -68,7 +68,7 @@ public class ItemUtils {
             if (section1 != null) {
                 String name = section1.getString("name");
                 String base64 = section1.getString("base64");
-                return ItemUtils.getHeadBase64(name, base64);
+                return ItemUtils.getHead(name, base64);
             }
         }
         return null;
