@@ -6,7 +6,6 @@ import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchantment.*;
 import com.gardensmc.gardensenchants.gui.EnchantingGUI;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
-import com.gardensmc.gardensenchants.gui.InventoryUpdate;
 import com.gardensmc.gardensenchants.utils.*;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.custom.item.CustomItem;
@@ -26,8 +25,6 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -868,7 +865,7 @@ public class Events implements Listener {
 
             if (itemIsEnchantable(inv.getItem(1))) {
                 ItemStack[] books = genBooks(inv, player);
-                String book[] = new String[3];
+                String[] book = new String[3];
                 for (int i = 0; i < book.length; i++) {
                     book[i] = (books[i] != null && books[i].getItemMeta() != null) ? books[i].getItemMeta().getDisplayName() : " ";
                 }
@@ -889,8 +886,7 @@ public class Events implements Listener {
             else {
                 removeBooks(inv);
             }
-
-            InventoryUpdate.updateInventory(GardensEnchants.plugin, player, title);
+            player.getOpenInventory().setTitle(title);
 
         }, 1);
         // we placed something into an empty

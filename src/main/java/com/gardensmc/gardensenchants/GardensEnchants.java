@@ -4,6 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.events.Events;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -36,13 +37,15 @@ public class GardensEnchants extends JavaPlugin {
 //        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
 
 //        EnchantTable.loadTable();
+        GardensEnchantments.INSTANCE.registerEnchantments();
         getServer().getPluginManager().registerEvents(new Events(), this);
         PlayerSchedules.scheduleAll();
         protocolManager = ProtocolLibrary.getProtocolManager();
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        assert rsp != null;
-        econ = rsp.getProvider();
+        // todo - enable economy
+//        assert rsp != null;
+//        econ = rsp.getProvider();
 
         Objects.requireNonNull(Bukkit.getPluginCommand("getbook")).setExecutor(new GetBookCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("givebook")).setExecutor(new GiveBookCommand());

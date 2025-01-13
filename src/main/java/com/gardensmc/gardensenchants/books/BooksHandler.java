@@ -14,6 +14,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -36,13 +37,17 @@ public class BooksHandler {
     private ItemStack buildBook(GardensEnchantment enchantment, int level) {
         ItemStack book = GardensFurniture.itemRegistry.buildItem(enchantment.getId() + "_book");
         if (book == null) {
-            return null;
+            book = new ItemStack(Material.ENCHANTED_BOOK);
         }
         int destruction = 1; // todo impl random destruction
         // modify displayName and lore
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text().append(meta.displayName()).content(" " + level).build());
+            var display = meta.displayName();
+            meta.displayName(Component.text()
+                    .append(display != null ? display : Component.text(enchantment.getDisplayName()))
+                    .content(" " + level)
+                    .build());
             meta.lore(List.of(
                     Component.text()
                             .color(TextColor.fromHexString("FF5555"))
@@ -56,8 +61,8 @@ public class BooksHandler {
         // modify NBT
         // todo nest this in a enchant component
         NBT.modify(book, nbt -> {
-            nbt.setInteger("destruction", destruction);
-            nbt.setInteger("level", level);
+            nbt.setInteger("destruction", 1);
+            nbt.setInteger("level", 1);
         });
         return book;
     }
