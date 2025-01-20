@@ -6,13 +6,14 @@ import com.gardensmc.gardensenchants.utils.MessageUtil;
 import de.tr7zw.nbtapi.NBT;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+
+import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
 
 @Getter
 public class CustomEnchantment implements GardensEnchantment {
 
-    public static final String GARDENS_ENCHANTS_KEY = "GardensEnchants";
+    public static final String ENCHANTS_KEY = "Enchants";
 
     private final String id;
     private EnchantRarity rarity = EnchantRarity.ORDINARY;
@@ -29,9 +30,12 @@ public class CustomEnchantment implements GardensEnchantment {
     @Override
     public boolean hasEnchantment(ItemStack itemStack) {
         return NBT.get(itemStack, nbt -> {
-            var compound = nbt.getCompound(GARDENS_ENCHANTS_KEY);
+            var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {
-                return compound.hasTag(id);
+                var enchants = compound.getCompound(ENCHANTS_KEY);
+                if (enchants != null) {
+                    return compound.hasTag(id);
+                }
             }
             return false;
         });
@@ -40,7 +44,7 @@ public class CustomEnchantment implements GardensEnchantment {
     @Override
     public void applyEnchantment(ItemStack itemStack, int level) {
         NBT.modify(itemStack, nbt -> {
-            var compound = nbt.getOrCreateCompound(GARDENS_ENCHANTS_KEY);
+            var compound = nbt.getOrCreateCompound(ITEM_NBT_KEY).getOrCreateCompound(ENCHANTS_KEY);
             compound.setInteger(id, level);
         });
     }
@@ -48,9 +52,12 @@ public class CustomEnchantment implements GardensEnchantment {
     @Override
     public void removeEnchantment(ItemStack itemStack) {
         NBT.modify(itemStack, nbt -> {
-            var compound = nbt.getCompound(GARDENS_ENCHANTS_KEY);
+            var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {
-                compound.removeKey(id);
+                var enchants = compound.getCompound(ENCHANTS_KEY);
+                if (enchants != null) {
+                    enchants.removeKey(id);
+                }
             }
         });
     }
@@ -58,9 +65,12 @@ public class CustomEnchantment implements GardensEnchantment {
     @Override
     public int getEnchantmentLevel(ItemStack itemStack) {
         return NBT.get(itemStack, nbt -> {
-            var compound = nbt.getCompound(GARDENS_ENCHANTS_KEY);
+            var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {
-                return compound.getInteger(id);
+                var enchants = nbt.getCompound(ENCHANTS_KEY);
+                if (enchants != null) {
+                    return enchants.getInteger(id);
+                }
             }
             return 0;
         });

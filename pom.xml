@@ -165,13 +165,12 @@
         <dependency>
             <groupId>com.gardensmc.gardensfurniture</groupId>
             <artifactId>GardensFurniture</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
             <groupId>de.themoep</groupId>
             <artifactId>inventorygui</artifactId>
-            <!--The following version may not be the latest. Check it before using.-->
-            <version>1.6.1-SNAPSHOT</version>
+            <version>1.6.4-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

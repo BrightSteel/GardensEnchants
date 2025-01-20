@@ -57,7 +57,7 @@ public class ItemUtils {
     }
 
     public static ItemStack getBlankItem() {
-        return getCustomItem("blank_item");
+        return getCustomItem("blank");
     }
 
     @Nullable

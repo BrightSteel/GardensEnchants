@@ -6,6 +6,7 @@ import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.events.Events;
+import com.gardensmc.gardensenchants.listener.Listeners;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -38,7 +39,7 @@ public class GardensEnchants extends JavaPlugin {
 
 //        EnchantTable.loadTable();
         GardensEnchantments.INSTANCE.registerEnchantments();
-        getServer().getPluginManager().registerEvents(new Events(), this);
+        Listeners.registerListeners();
         PlayerSchedules.scheduleAll();
         protocolManager = ProtocolLibrary.getProtocolManager();
 

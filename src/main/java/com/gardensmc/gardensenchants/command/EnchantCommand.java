@@ -51,7 +51,7 @@ public class EnchantCommand implements TabExecutor {
                 player.sendMessage(ChatColor.RED + "You cannot apply " + args[0] + " to this item!");
                 return true;
             }
-            new GardensEnchantHandler(enchant).enchant(item, level);
+            new GardensEnchantHandler(item).enchant(enchant, level);
             player.sendMessage(ChatColor.GREEN + "Added " + args[0] + " to your item");
         }
         else {

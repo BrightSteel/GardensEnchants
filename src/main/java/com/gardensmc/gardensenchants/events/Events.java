@@ -1,18 +1,13 @@
 package com.gardensmc.gardensenchants.events;
 
-import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchantment.*;
-import com.gardensmc.gardensenchants.gui.EnchantingGUI;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.utils.*;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.custom.item.CustomItem;
-import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.NBTItem;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
@@ -23,8 +18,6 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -208,159 +201,8 @@ public class Events implements Listener {
         }
     }
 
-    @EventHandler
-    public static void onCombine(PrepareAnvilEvent e) {
-        AnvilInventory inv = e.getInventory();
-        ItemStack[] contents = inv.getContents();
 
-        if (contents[0] != null && contents[1] != null) {
-            if (e.getResult() == null || e.getResult().getType() == Material.AIR) {
-                return;
-            }
-            else if (contents[0].getType() == contents[1].getType()) {
-                // clone first item
-                ItemStack og = contents[0].clone();
-                // upgrade matching enchants
-                for (Map.Entry<Enchantment, Integer> entry : contents[0].getEnchantments().entrySet()) {
-                    if (contents[1].getEnchantments().containsKey(entry.getKey())) {
-                        // matching, attempt upgrade
-                        int level_a = entry.getValue();
-                        int level_b = contents[1].getEnchantments().get(entry.getKey());
-                        int level_max = entry.getKey().getMaxLevel();
-                        int upgrade = level_a + 1;
 
-                        if (level_a == level_b && upgrade <= level_max) {
-                            og.addEnchantment(entry.getKey(), upgrade);
-                        }
-                    }
-                }
-                // add in missing enchants from second item
-                for (Map.Entry<Enchantment, Integer> entry : contents[1].getEnchantments().entrySet()) {
-                    if (!og.getEnchantments().containsKey(entry.getKey())) {
-                        og.addEnchantment(entry.getKey(), entry.getValue());
-                    }
-                }
-
-                // give resulting durability
-                ItemMeta og_meta = og.getItemMeta();
-                ItemMeta result_meta = e.getResult().getItemMeta();
-                if (result_meta instanceof Damageable damageable && og_meta instanceof Damageable og_damageable) {
-                    og_damageable.setDamage(damageable.getDamage());
-                    og.setItemMeta(og_meta);
-                }
-                e.setResult(og);
-            }
-        }
-    }
-
-    @EventHandler
-    public static void onRepairOrRename(PrepareAnvilEvent e) {
-        Material[] repair_ores = new Material[]{
-                Material.IRON_INGOT, Material.GOLD_INGOT, Material.DIAMOND, Material.NETHERITE_INGOT
-        };
-
-        AnvilInventory inv = e.getInventory();
-        ItemStack[] contents = inv.getContents();
-        if (e.getResult() == null || e.getResult().getType() == Material.AIR) {
-            return;
-        }
-        if (contents[0] != null && contents[1] == null) { // renaming
-            ItemStack og = contents[0].clone();
-            ItemMeta renamed = e.getResult().getItemMeta();
-            ItemMeta meta = og.getItemMeta();
-            if (meta != null && renamed != null) {
-                meta.setDisplayName(renamed.getDisplayName());
-                og.setItemMeta(meta);
-                e.setResult(og);
-            }
-
-        }
-        else if (contents[0] != null && Arrays.asList(repair_ores).contains(contents[1].getType())) { // repairing
-
-            ItemStack og = contents[0].clone();
-
-            ItemMeta meta = og.getItemMeta();
-            ItemMeta repaired = e.getResult().getItemMeta();
-            if (repaired instanceof Damageable damageable && meta instanceof Damageable og_damageable) {
-                og_damageable.setDamage(damageable.getDamage());
-                og.setItemMeta(og_damageable);
-                e.setResult(og);
-            }
-        }
-    }
-
-    @EventHandler
-    public static void onRepair(PrepareAnvilEvent e) {
-        AnvilInventory inv = e.getInventory();
-        ItemStack[] contents = inv.getContents();
-        if (contents.length > 1) {
-
-            if (contents[0] == null || contents[1] == null) return;
-
-            ItemStack item = contents[0].clone();
-            ItemStack book = contents[1];
-
-            // our items adder category
-            if (book.getType() != Material.ENCHANTED_BOOK) return;
-
-            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(book);
-            if (customItem == null) {
-                // hopefully disallows vanilla books?
-                e.setResult(new ItemStack(Material.AIR));
-                return;
-            }
-
-            var bookId = customItem.getIdentifier();
-            if (!bookId.endsWith("_book")) {
-                return;
-            }
-            var enchantment = GardensEnchantments.INSTANCE.getEnchantment(bookId.substring(0, bookId.lastIndexOf("_book")));
-            if (enchantment == null) return;
-
-            if (enchantment.canEnchant(item) && !hasConflicts(enchantment, item)) {
-
-                NBTItem nbtItem = new NBTItem(item);
-                if (!nbtItem.hasKey("slots")) {
-                    nbtItem.setInteger("slots", 4);
-                }
-
-                int slots = nbtItem.getInteger("slots");
-                int currEnchants = nbtItem.getItem().getEnchantments().size();
-
-                if (currEnchants >= slots) {
-                    return;
-                }
-
-                int level = new NBTItem(book).getInteger("level");
-
-                // check if item already contains enchantment at same level, then we should attempt to upgrade it
-                if (enchantment.getEnchantmentLevel(item) == level) {
-                    int upgrade = level + 1;
-                    if (enchantment.getMaxLevel() >= upgrade) {
-                        level = upgrade;
-                    }
-                }
-
-                if (level != 0) {
-                    if (enchantment == WINGED_BOOTS) {
-//                        System.out.println("REDBULL GIVES YOU WINGS");
-                        nbtItem.setInteger("charge", 1800);
-                    }
-                    ItemStack final_item = nbtItem.getItem();
-                    new GardensEnchantHandler(enchantment).enchant(final_item, level);
-                    inv.setRepairCost(3);
-                    e.setResult(final_item);
-                }
-            }
-        }
-    }
-
-    public static boolean hasConflicts(GardensEnchantment enchantment, ItemStack item) {
-        var enchants = GardensEnchantHandler.getEnchantments(item);
-        return enchants
-                .stream()
-                .anyMatch(enchantmentInstance -> enchantmentInstance.getEnchantment().conflictsWith(enchantment));
-    }
 
 //    @EventHandler
 //    public void onSilkTouchSpawner(SilkSpawnersSpawnerBreakEvent e) {
@@ -660,346 +502,229 @@ public class Events implements Listener {
 //        }
 //    }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent e) {
         Inventory inv = e.getInventory();
         if (inv.getType() == InventoryType.ENCHANTING && e.getPlayer() instanceof Player player) {
             e.setCancelled(true);
-            if (player.hasPermission("gardens.enchant")) {
-                EnchantingGUI enchantingGUI = new EnchantingGUI(player);
-                player.openInventory(enchantingGUI.getInventory());
-            }
-            else {
-                e.getPlayer().sendMessage(ChatColor.RED + "Enchanting is currently disabled!");
-            }
-//
+//            EnchantingGUI enchantingGUI = new EnchantingGUI(player);
+//            player.openInventory(enchantingGUI.getInventory());
+            new EnchantingMenu(player).open();
         }
     }
 
-    @EventHandler
-    public void onClick(InventoryClickEvent e) {
-
-        if (e.getClickedInventory() instanceof AnvilInventory) {
-            if (e.getSlot() == 2) {
-                ItemStack item = e.getInventory().getItem(e.getSlot());
-                ItemStack currentItem = e.getCurrentItem();
-                if (item != null && currentItem != null) {
-                    ItemStack book = e.getInventory().getItem(1);
-                    if (book == null || book.getType() == Material.AIR) return;
-                    NBTItem nbtItem = new NBTItem(book);
-                    if (nbtItem.hasKey("destruction")) {
-                        int destruction = nbtItem.getInteger("destruction");
-
-                        if (ProbabilityUtil.roll(destruction)) {
-                            String enchant = nbtItem.getString("destroy_enchant");
-                            System.out.println("destroy enchant: " + enchant);
-
-                            var customEnchantment = GardensEnchantments.INSTANCE.getEnchantment(enchant);
-//                            if (customEnchantment instanceof CustomWrapper w) {
-//                                customEnchantment = w.enchantment;
-//                                currentItem.removeEnchantment(customEnchantment);
-//                            }
-//                            else {
-                            new GardensEnchantHandler(customEnchantment).removeEnchant(currentItem);
-//                            }
-
-                            // send to their inventory directly
-                            e.getWhoClicked().getInventory().addItem(currentItem);
-                            ItemStack air = new ItemStack(Material.AIR);
-                            e.setCurrentItem(air);
-                            for (int i = 0; i < 3; i++) {
-                                e.getInventory().setItem(i, air);
-                            }
-
-                            e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
-//                            e.getWhoClicked().sendMessage(ChatColor.RED + "Attempted removal of " + customEnchantment.getKey() + " found using " + enchant);
-
-                        }
-                    }
-                    else if (book.getType() == Material.PAPER) {
-                        CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(book);
-                        if (customItem != null && customItem.getIdentifier().equalsIgnoreCase("amber")) {
-                            // 50 percent chance failure
-                            if (ProbabilityUtil.roll(50)) {
-
-//                            if (customEnchantment instanceof CustomWrapper w) {
-//                                customEnchantment = w.enchantment;
-//                                currentItem.removeEnchantment(customEnchantment);
-//                            }
-//                            else {
-                                new GardensEnchantHandler(WINGED_BOOTS).removeEnchant(currentItem);
-//                            }
-
-                                // send to their inventory directly
-                                e.getWhoClicked().getInventory().addItem(currentItem);
-                                ItemStack air = new ItemStack(Material.AIR);
-
-                                e.setCurrentItem(air);
-                                for (int i = 0; i < 3; i++) {
-                                    e.getInventory().setItem(i, air);
-                                }
-
-                                e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
-//                            e.getWhoClicked().sendMessage(ChatColor.RED + "Attempted removal of " + customEnchantment.getKey() + " found using " + enchant);
-
-                            }
-                            int excess_amber = book.getAmount() - 24;
-                            if (excess_amber > 0) {
-                                ItemStack amber = GardensFurniture.itemRegistry.buildItem("amber");
-                                if (amber != null) {
-                                    amber.setAmount(excess_amber);
-                                    e.getWhoClicked().getInventory().addItem(amber);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return;
-        }
-
-        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
-
-            if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                Inventory clicked = e.getClickedInventory();
-                if (clicked != null && clicked.getType() == InventoryType.PLAYER) {
-                    System.out.println(e.getInventory().getType().name());
-                    if (e.getInventory().getItem(1) != null) {
-                        e.setCancelled(true);
-                        return;
-//                e.getInventory().setItem(0, null);
-//                e.getInventory().setItem(1, stack);
-                    }
-//                else if (e.getSlot() != 1){
+//    @EventHandler(ignoreCancelled = true)
+//    public void onClickEnchanting(InventoryClickEvent e) {
+//        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
+//        var slot = e.getSlot();
+//        if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+//            Inventory clicked = e.getClickedInventory();
+//            if (clicked != null && clicked.getType() == InventoryType.PLAYER) {
+//                if (e.getInventory().getItem(1) != null) {
 //                    e.setCancelled(true);
+//                    return;
 //                }
-                } else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
-                    if (e.getSlot() != 1) {
-                        e.setCancelled(true);
-                        return;
-                    }
-                }
-            }
-            else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
-                ItemStack selection = null;
-                if (e.getSlot() != 1 && e.getWhoClicked() instanceof Player player) {
-                    if (e.getSlot() > 2 && e.getSlot() < 9) {
-                        selection = e.getInventory().getItem(8);
-                    } else if (e.getSlot() > 11 && e.getSlot() < 18) {
-                        selection = e.getInventory().getItem(17);
-
-                    } else if (e.getSlot() > 20 && e.getSlot() < 27) {
-                        selection = e.getInventory().getItem(26);
-
-                    } else if (e.getSlot() == 19) {
-                        new EnchantingMenu(player).open();
-                    }
-
-                    // todo account for xp and money
-                    if (selection != null) {
-                        int playerLevels = ExpUtil.getExp(player);
-                        NBTItem nbtItem = new NBTItem(selection);
-                        int amber = nbtItem.getInteger("amber");
-                        int xp = nbtItem.getInteger("xp");
-
-                        if (playerLevels >= xp && GardensEnchants.econ.getBalance(player) >= amber) {
-                            ExpUtil.changeExp(player, -xp);
-                            GardensEnchants.econ.withdrawPlayer(player, amber);
-
-//                            new EnchantCache(player.getUniqueId()).resetEnchant();
-                            ItemStack enchantTarget = e.getInventory().getItem(1);
-                            if (enchantTarget != null) {
-                                int amount = enchantTarget.getAmount();
-                                if (amount > 1) {
-                                    enchantTarget.setAmount(amount - 1);
-                                    e.getInventory().getViewers().get(0).getInventory().addItem(enchantTarget);
-                                }
-                                // remove costs from lore before enchanting target
-                                ItemMeta meta = selection.getItemMeta();
-                                if (meta != null) {
-                                    List<String> lore = meta.getLore();
-                                    if (lore != null) {
-                                        // remove last 3 lines
-                                        for (int i = 0; i < 3; i++) {
-                                            lore.remove(lore.size() - 1);
-                                        }
-                                    }
-                                    meta.setLore(lore);
-                                    selection.setItemMeta(meta);
-                                }
-                                e.getInventory().setItem(1, selection);
-                            }
-
-                            updateEnchantingGUI(player, e.getInventory());
-                        }
-                    }
-
-                    e.setCancelled(true);
-                }
-            }
-
-
-
-        if (e.getWhoClicked() instanceof Player player) {
-            if (e.getRawSlot() == 1) {
-                if (e.getAction().name().contains("PLACE") || e.getAction().name().contains("PICKUP") || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                    updateEnchantingGUI(player, e.getInventory());
-                }
-
-            }
-            else if (e.getRawSlot() >= 27 && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-                updateEnchantingGUI(player, e.getInventory());
-            }
-        }
-
-//        System.out.println("Clicked: " + e.getRawSlot() + "slot, " + e.getCurrentItem() + "item, Action: " + e.getAction().name());
-
-
-    }
-
-    private void updateEnchantingGUI(Player player, Inventory inv) {
-
-        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
-
-            String title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094");
-
-            if (itemIsEnchantable(inv.getItem(1))) {
-                ItemStack[] books = genBooks(inv, player);
-                String[] book = new String[3];
-                for (int i = 0; i < book.length; i++) {
-                    book[i] = (books[i] != null && books[i].getItemMeta() != null) ? books[i].getItemMeta().getDisplayName() : " ";
-                }
-
-                HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
-                String[] sample = new String[3];
-                for (int i = 0; i < 3; i++) {
-                     String raw = stripFormatting(book[i]);
-                     String padding = FontMappings.getPadding(raw);
-                     sample[i] = FontMappings.INSTANCE.replaceAll(raw, fontMaps[i]) + padding;
-                }
-
-//                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ:&f\uE05F:offset_-195:&f" + offset + sample[0] + "&f:offset_-100:&f" + sample[1] + "&f:offset_-100:&f" + sample[2]);
-//                String hundred = OraxenShift.INSTANCE.getShift(100, true);
-                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(195, true) + sample[0]  + sample[1]  + sample[2]);
-
-            }
-            else {
-                removeBooks(inv);
-            }
-            player.getOpenInventory().setTitle(title);
-
-        }, 1);
-        // we placed something into an empty
-//        if (bookSlot == null) {
-//            String title = ChatColor.translateAlternateColorCodes('&', "&f:offset_-8:&f\uE094");
+//            } else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
+//                if (slot != 1) {
+//                    e.setCancelled(true);
+//                    return;
+//                }
+//            }
+//        } else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
+//            ItemStack selection = null;
+//            if (slot != 1 && e.getWhoClicked() instanceof Player player) {
+//                if (slot > 2 && slot < 9) {
+//                    selection = e.getInventory().getItem(8);
+//                } else if (slot > 11 && slot < 18) {
+//                    selection = e.getInventory().getItem(17);
+//                } else if (slot > 20 && slot < 27) {
+//                    selection = e.getInventory().getItem(26);
+//                } else if (slot == 19) {
+//                    new EnchantingBooksMenu(player).open();
+//                }
+//                // todo account for xp and money
+//                if (selection != null) {
+//                    int playerLevels = ExpUtil.getExp(player);
+//                    NBTItem nbtItem = new NBTItem(selection);
+//                    int amber = nbtItem.getInteger("amber");
+//                    int xp = nbtItem.getInteger("xp");
 //
-//            InventoryUpdate.updateInventory(GardensEnchants.plugin, player, title);
+//                    if (playerLevels >= xp && GardensEnchants.econ.getBalance(player) >= amber) {
+//                        ExpUtil.changeExp(player, -xp);
+//                        GardensEnchants.econ.withdrawPlayer(player, amber);
 //
+////                            new EnchantCache(player.getUniqueId()).resetEnchant();
+//                        ItemStack enchantTarget = e.getInventory().getItem(1);
+//                        if (enchantTarget != null) {
+//                            int amount = enchantTarget.getAmount();
+//                            if (amount > 1) {
+//                                enchantTarget.setAmount(amount - 1);
+//                                e.getInventory().getViewers().get(0).getInventory().addItem(enchantTarget);
+//                            }
+//                            // remove costs from lore before enchanting target
+//                            ItemMeta meta = selection.getItemMeta();
+//                            if (meta != null) {
+//                                List<String> lore = meta.getLore();
+//                                if (lore != null) {
+//                                    // remove last 3 lines
+//                                    for (int i = 0; i < 3; i++) {
+//                                        lore.remove(lore.size() - 1);
+//                                    }
+//                                }
+//                                meta.setLore(lore);
+//                                selection.setItemMeta(meta);
+//                            }
+//                            e.getInventory().setItem(1, selection);
+//                        }
+//
+//                        updateEnchantingGUI(player, e.getInventory());
+//                    }
+//                }
+//
+//                e.setCancelled(true);
+//            }
 //        }
-//         else if (bookSlot.getType() == Material.BOOK){
 //
-
-//        }
-    }
-
-    // assumes we have a formatted hex code at beginning of display name
-    private String stripFormatting(String formatted) {
-        if (formatted.length() < 14) {
-            return formatted;
-        }
-        return formatted.substring(14);
-    }
-
-    // places books into inventory
-    private ItemStack[] genBooks(Inventory inv, Player player) {
-        ItemStack display = ItemUtils.getBlankItem();
-//        int playerLevels = ExpUtil.getExp(player);
-//        double playerBal = GardensEnchants.econ.getBalance(player);
-        // cost and amber
-        // costs
-        var books = new ItemStack[3];
-        for (int i = 0; i < books.length; i++) {
-            var book = BooksHandler.INSTANCE.generateRandomBook();
-            int amber = 1;
-            int xp = 1;
-            var meta = book.getItemMeta();
-            if (meta != null) {
-                var lore = meta.lore() != null ? meta.lore() : new ArrayList<Component>();
-                lore.add(MessageUtil.parseIntoComponent("<white>\uE01F " + amber + " Amber"));
-                lore.add(MessageUtil.parseIntoComponent("<white>\uE10F " + xp + " Levels"));
-                meta.lore(lore);
-            }
-            book.setItemMeta(meta);
-            NBT.modify(book, nbt -> {
-                nbt.setInteger("amber", amber);
-                nbt.setInteger("xp", xp);
-            });
-            books[i] = book;
-        }
-
-        inv.setItem(8, books[0]);
-        inv.setItem(17, books[1]);
-        inv.setItem(26, books[2]);
-
-        int j = 0;
-        for (ItemStack book : books) {
-            ItemMeta displayMeta = display.getItemMeta();
-            ItemMeta bookMeta = (book != null) ? book.getItemMeta() : null;
-            if (displayMeta != null && bookMeta != null) {
-                displayMeta.displayName(bookMeta.displayName());
-                displayMeta.lore(bookMeta.lore());
-                display.setItemMeta(displayMeta);
-            }
-            for (int i = 3 + (j * 9); i < 8 + (j * 9); i++) {
-                inv.setItem(i, display);
-            }
-            j++;
-        }
-        return books;
-    }
-
-    private void removeBooks(Inventory inv) {
-        for (int j = 0; j < 3; j++) {
-            for (int i = 3; i < 9; i++) {
-                inv.setItem(i + (j * 9), null);
-            }
-        }
-    }
-
-    private boolean itemIsEnchantable(ItemStack item) {
-        return item != null && item.getType() == Material.BOOK;
-    }
-
-    @EventHandler
-    public void onDrag(InventoryDragEvent e) {
-        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
-//
-        if (e.getRawSlots().stream().anyMatch(integer -> integer < 27 && integer != 1)) {
-            e.setCancelled(true);
-        }
-
-        if (e.getWhoClicked() instanceof Player player) {
-            if (e.getRawSlots().contains(1)) {
-                updateEnchantingGUI(player, e.getInventory());
-            }
-        }
-
 //        if (e.getWhoClicked() instanceof Player player) {
-//            ItemStack bookSlot = e.getInventory().getItem(1);
-//            if (bookSlot != null)
-//                updateEnchantingGUI(bookSlot, player);
+//            if (e.getRawSlot() == 1) {
+//                if (e.getAction().name().contains("PLACE") || e.getAction().name().contains("PICKUP") || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+//                    updateEnchantingGUI(player, e.getInventory());
+//                }
+//
+//            }
+//            else if (e.getRawSlot() >= 27 && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+//                updateEnchantingGUI(player, e.getInventory());
+//            }
 //        }
+//    }
 
-    }
+//    private void updateEnchantingGUI(Player player, Inventory inv) {
+//
+//        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
+//
+//
+//            String title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094");
+//
+//            if (itemIsEnchantable(inv.getItem(1))) {
+//                BookInstance[] books = genBooks(inv, player);
+//                String[] book = new String[3];
+//                for (int i = 0; i < book.length; i++) {
+//                    var b = books[i];
+//                    book[i] = (b != null) ? b.enchantment().getEnchantment().getDisplayName() + " " + RomanNumber.toRoman(b.enchantment().getLevel()) : " ";
+//                }
+//
+//                HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
+//                String[] sample = new String[3];
+//                for (int i = 0; i < 3; i++) {
+//                     String raw = stripFormatting(book[i]);
+//                     String padding = FontMappings.getPadding(raw);
+//                     sample[i] = FontMappings.INSTANCE.replaceAll(raw, fontMaps[i]) + padding;
+//                }
+//                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(193, true) + sample[0]  + sample[1]  + sample[2]);
+//
+//            }
+//            else {
+//                removeBooks(inv);
+//            }
+//            player.getOpenInventory().setTitle(title);
+//
+//        }, 1);
+//    }
 
-    @EventHandler
-    public void onClose(InventoryCloseEvent e) {
-        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
-        ItemStack item = e.getInventory().getItem(1);
-        if (item != null) {
-            e.getPlayer().getInventory().addItem(item);
-        }
-    }
+//    private String stripFormatting(String formatted) {
+//        var maxLength = 12;
+//        if (formatted.length() < maxLength) {
+//            return formatted; // already small enough
+//        }
+//        var numeralIndex = formatted.lastIndexOf(" ") + 1;
+//        var numeral = formatted.substring(numeralIndex);
+//        return formatted.substring(0, Math.min(maxLength, numeralIndex)) + " " + numeral;
+//    }
+
+//    // places books into inventory
+//    private BookInstance[] genBooks(Inventory inv, Player player) {
+//        ItemStack display = ItemUtils.getBlankItem();
+////        int playerLevels = ExpUtil.getExp(player);
+////        double playerBal = GardensEnchants.econ.getBalance(player);
+//        // cost and amber
+//        // costs
+//        var books = new BookInstance[3];
+//        for (int i = 0; i < books.length; i++) {
+//            var bookInstance = BooksHandler.INSTANCE.generateRandomBook();
+//            var book = bookInstance.book();
+//            int amber = 1;
+//            int xp = 1;
+//            var meta = book.getItemMeta();
+//            if (meta != null) {
+//                var lore = meta.lore() != null ? meta.lore() : new ArrayList<Component>();
+//                lore.add(Component
+//                        .text("\uE01F " + amber)
+//                        .color(NamedTextColor.WHITE)
+//                        .decoration(TextDecoration.ITALIC, false));
+//                lore.add(Component
+//                        .text("\uE10F " + xp)
+//                        .color(NamedTextColor.WHITE)
+//                        .decoration(TextDecoration.ITALIC, false));
+//                meta.lore(lore);
+//            }
+//            book.setItemMeta(meta);
+//            NBT.modify(book, nbt -> {
+//                nbt.setInteger("amber", amber);
+//                nbt.setInteger("xp", xp);
+//            });
+//            books[i] = bookInstance;
+//        }
+//
+//        inv.setItem(8, books[0].book());
+//        inv.setItem(17, books[1].book());
+//        inv.setItem(26, books[2].book());
+//
+//        int row = 0;
+//        for (BookInstance bookInstance : books) {
+//            var bookClone = bookInstance.book().clone().withType(display.getType());
+//            bookClone.getItemMeta().setCustomModelData(display.getItemMeta().getCustomModelData());
+//            var rowOffset = row * 9;
+//            for (int i = rowOffset + 3; i < rowOffset + 8; i++) {
+//                inv.setItem(i, bookClone);
+//            }
+//            row++;
+//        }
+//        return books;
+//    }
+//
+//    private void removeBooks(Inventory inv) {
+//        for (int j = 0; j < 3; j++) {
+//            for (int i = 3; i < 9; i++) {
+//                inv.setItem(i + (j * 9), null);
+//            }
+//        }
+//    }
+//
+//    private boolean itemIsEnchantable(ItemStack item) {
+//        return item != null && item.getType() == Material.BOOK;
+//    }
+
+//    @EventHandler
+//    public void onDrag(InventoryDragEvent e) {
+//        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
+////
+//        if (e.getRawSlots().stream().anyMatch(integer -> integer < 27 && integer != 1)) {
+//            e.setCancelled(true);
+//        }
+//
+//        if (e.getWhoClicked() instanceof Player player) {
+//            if (e.getRawSlots().contains(1)) {
+//                updateEnchantingGUI(player, e.getInventory());
+//            }
+//        }
+//
+////        if (e.getWhoClicked() instanceof Player player) {
+////            ItemStack bookSlot = e.getInventory().getItem(1);
+////            if (bookSlot != null)
+////                updateEnchantingGUI(bookSlot, player);
+////        }
+//
+//    }
 
     @EventHandler(ignoreCancelled = true)
     public void onMobDeath(EntityDeathEvent e) {

@@ -26,4 +26,9 @@ public interface GardensEnchantment {
 
     boolean conflictsWith(GardensEnchantment ench);
 
+    default int getCostInXP(int level) {
+        var base = getRarity().getBaseCost();
+        return base + (base * (level / 2));
+    }
+
 }

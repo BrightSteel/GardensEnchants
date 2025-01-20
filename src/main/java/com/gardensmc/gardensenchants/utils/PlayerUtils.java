@@ -9,14 +9,6 @@ import java.util.List;
 
 public class PlayerUtils {
 
-
-    public static void updateGuiTitlePacket(HumanEntity player) {
-//        Bukkit.getpl
-//        int id = player.getOpenInventory().getTopInventory()
-//        PacketContainer pc = GardensEnchants.protocolManager.createPacket(PacketType.Play.Server.OPEN_WINDOW);
-
-    }
-
     /**
      * Gets the BlockFace of the block the player is currently targeting.
      *
