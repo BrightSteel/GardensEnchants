@@ -1,0 +1,6 @@
+unbreaking:
+  rarity: UNIQUE
+  display: "Unbreaking"
+  lore:
+    - "<white>Does x y z"
+  bookIdentifier: "unbreaking"

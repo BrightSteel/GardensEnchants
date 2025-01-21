@@ -1,34 +1,59 @@
 package com.gardensmc.gardensenchants.enchantment;
 
+import com.gardensmc.gardensenchants.utils.MessageUtil;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 
-public interface GardensEnchantment {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    boolean hasEnchantment(ItemStack itemStack);
+@AllArgsConstructor
+@NoArgsConstructor
+public abstract class GardensEnchantment {
 
-    void applyEnchantment(ItemStack itemStack, int level);
+    @Getter
+    protected EnchantRarity rarity = EnchantRarity.ORDINARY;
+    protected String displayName;
+    @Getter
+    protected List<Component> lore = Collections.emptyList();
+    protected String bookIdentifier;
 
-    void removeEnchantment(ItemStack itemStack);
+    public abstract boolean hasEnchantment(ItemStack itemStack);
 
-    int getEnchantmentLevel(ItemStack itemStack);
+    public abstract void applyEnchantment(ItemStack itemStack, int level);
 
-    boolean canEnchant(ItemStack itemStack);
+    public abstract void removeEnchantment(ItemStack itemStack);
 
-    int getMaxLevel();
+    public abstract int getEnchantmentLevel(ItemStack itemStack);
 
-    String getId();
+    public abstract boolean canEnchant(ItemStack itemStack);
 
-    String getDisplayName();
+    public abstract int getMaxLevel();
 
-    EnchantRarity getRarity();
+    public abstract String getId();
 
-    boolean isVisibleInTable();
+    public String getDisplayName() {
+        return displayName != null ? displayName : MessageUtil.readableId(getId());
+    }
 
-    boolean conflictsWith(GardensEnchantment ench);
+    public abstract boolean isVisibleInTable();
 
-    default int getCostInXP(int level) {
+    public abstract boolean conflictsWith(GardensEnchantment ench);
+
+    public int getCostInXP(int level) {
         var base = getRarity().getBaseCost();
         return base + (base * (level / 2));
+    }
+
+    public String bookIdentifier() {
+        if (bookIdentifier != null) {
+            return bookIdentifier;
+        }
+        return getId() + "_book";
     }
 
 }

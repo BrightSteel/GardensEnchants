@@ -1,16 +1,14 @@
 package com.gardensmc.gardensenchants.books;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
-import com.gardensmc.gardensenchants.utils.ChatUtils;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.tr7zw.nbtapi.NBT;
-import de.tr7zw.nbtapi.iface.ReadableNBT;
+import de.tr7zw.nbtapi.iface.ReadWriteItemNBT;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -22,11 +20,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BooksHandler {
@@ -35,9 +34,11 @@ public class BooksHandler {
     private static final String BOOK_NBT_KEY = "GardensEnchantBook";
     private static final String ENCHANTMENT_KEY = "enchantment";
     private static final String DESTRUCTION_KEY = "destruction";
+    private static final String RESTORATIONS_KEY = "restorations";
     private static final String LEVEL_KEY = "level";
 
     public static final int ENCHANT_GENERATE_COUNT = 3;
+    public static final int MAX_RESTORATIONS = 5;
 
     public Queue<EnchantmentInstance> getRandomEnchantments() {
         Queue<EnchantmentInstance> enchantments = new LinkedList<>();
@@ -67,13 +68,17 @@ public class BooksHandler {
                     book,
                     enchantment,
                     bookNBT.getInteger(LEVEL_KEY),
-                    bookNBT.getInteger(DESTRUCTION_KEY)
+                    bookNBT.getInteger(DESTRUCTION_KEY),
+                    bookNBT.getInteger(RESTORATIONS_KEY)
             );
         });
     }
 
     private EnchantmentInstance getRandomEnchantment() {
-        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(ProbabilityUtil.rollRarity());
+        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(ProbabilityUtil.rollRarity())
+                .stream()
+                .filter(GardensEnchantment::isVisibleInTable)
+                .toList();
         if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
             return null;
         }
@@ -91,8 +96,70 @@ public class BooksHandler {
 //        return buildBook(enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size())), level);
 //    }
 
+    public void reduceDestructionChance(BookInstance bookInstance, int amount) {
+        NBT.modify(bookInstance.book(), nbt -> {
+            reduceDestructionNBT(nbt, amount);
+        });
+        // refresh bookInstance
+        bookInstance = getBookInstance(bookInstance.book());
+        if (bookInstance == null) {
+            throw new RuntimeException("Failed to refresh book instance after changing destruction chance!");
+        }
+        refreshLore(bookInstance);
+    }
+
+    private void reduceDestructionNBT(ReadWriteItemNBT nbt, int amount) {
+        var bookNBT = nbt.getCompound(BOOK_NBT_KEY);
+        if (bookNBT == null) {
+            return;
+        }
+        var destruction = bookNBT.getInteger(DESTRUCTION_KEY);
+        if (destruction == null) {
+            return;
+        }
+        bookNBT.setInteger(DESTRUCTION_KEY, Math.max(destruction - amount, 0));
+    }
+
+    private void refreshLore(BookInstance bookInstance) {
+        var book = bookInstance.book();
+        var meta = book.getItemMeta();
+        if (meta != null) {
+            var lore = bookInstance.enchantment().getLore()
+                    .stream()
+                    .map(component -> Component.text()
+                            .append(component)
+                            // remove italics from lore
+                            // hopefully gets overridden by italic tags in config file
+                            .decoration(TextDecoration.ITALIC, false)
+                            .build())
+                    .collect(Collectors.toList());
+            var destruction = bookInstance.destruction();
+            if (destruction != 0) {
+                lore.add(Component.text()
+                                .append(Component
+                                        .text("Destruction Chance: ", TextColor.color(0xFF5555))
+                                        .decoration(TextDecoration.ITALIC, false))
+                                .append(Component.
+                                        text(destruction + "%", TextColor.color(0xAAAAAA))
+                                        .decoration(TextDecoration.ITALIC, false))
+                                .build()
+                );
+            }
+            var restorations = bookInstance.restorations();
+            if (restorations != 0) {
+                lore.add(Component.text()
+                        .content("%s/%s Restorations".formatted(restorations, MAX_RESTORATIONS))
+                        .color(NamedTextColor.RED)
+                        .build()
+                );
+            }
+            meta.lore(lore);
+            book.setItemMeta(meta);
+        }
+    }
+
     public ItemStack getBookItem(GardensEnchantment enchantment) {
-        ItemStack book = GardensFurniture.itemRegistry.buildItem(enchantment.getId() + "_book");
+        ItemStack book = GardensFurniture.itemRegistry.buildItem(enchantment.bookIdentifier());
         if (book == null) {
             book = new ItemStack(Material.ENCHANTED_BOOK);
         }
@@ -105,9 +172,9 @@ public class BooksHandler {
         return buildBook(enchantment, enchantmentInstance.getLevel(), destruction);
     }
 
-    private BookInstance buildBook(GardensEnchantment enchantment, int level, Integer destruction) {
+    private BookInstance buildBook(GardensEnchantment enchantment, int level, int destruction) {
         var book = getBookItem(enchantment);
-        // modify displayName and lore
+        // set displayName
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
             var display = meta.displayName();
@@ -121,18 +188,6 @@ public class BooksHandler {
                     .append(display)
                     .append(Component.text(" " + RomanNumber.toRoman(level)))
                     .build());
-            if (destruction != null) {
-                meta.lore(List.of(
-                        Component.text()
-                                .append(Component
-                                        .text("Destruction Chance: ", TextColor.color(0xFF5555))
-                                        .decoration(TextDecoration.ITALIC, false))
-                                .append(Component.
-                                        text(destruction + "%", TextColor.color(0xAAAAAA))
-                                        .decoration(TextDecoration.ITALIC, false))
-                                .build()
-                ));
-            }
             book.setItemMeta(meta);
         }
         // modify NBT
@@ -140,11 +195,11 @@ public class BooksHandler {
             var bookNbt = nbt.getOrCreateCompound(BOOK_NBT_KEY);
             bookNbt.setString(ENCHANTMENT_KEY, enchantment.getId());
             bookNbt.setInteger(LEVEL_KEY, level);
-            if (destruction != null) {
-                bookNbt.setInteger(DESTRUCTION_KEY, destruction);
-            }
+            bookNbt.setInteger(DESTRUCTION_KEY, destruction);
         });
-        return new BookInstance(book, enchantment, level, destruction);
+        var bookInstance = new BookInstance(book, enchantment, level, destruction, 0);
+        refreshLore(bookInstance);
+        return bookInstance;
     }
 
     @Nullable

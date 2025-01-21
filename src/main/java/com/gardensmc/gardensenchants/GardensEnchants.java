@@ -9,6 +9,7 @@ import com.gardensmc.gardensenchants.events.Events;
 import com.gardensmc.gardensenchants.listener.Listeners;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,7 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class GardensEnchants extends JavaPlugin {
 
@@ -25,6 +32,7 @@ public class GardensEnchants extends JavaPlugin {
     public static ProtocolManager protocolManager;
 
     public static Economy econ;
+    public static Map<String, VanillaOverride> vanillaOverrides;
 
     @Override
     public void onLoad() {
@@ -38,6 +46,8 @@ public class GardensEnchants extends JavaPlugin {
 //        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
 
 //        EnchantTable.loadTable();
+        saveDefaultConfig();
+        loadVanillaOverrides();
         GardensEnchantments.INSTANCE.registerEnchantments();
         Listeners.registerListeners();
         PlayerSchedules.scheduleAll();
@@ -54,6 +64,30 @@ public class GardensEnchants extends JavaPlugin {
         Objects.requireNonNull(Bukkit.getPluginCommand("mobhead")).setExecutor(new MobHeadCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("disenchant")).setExecutor(new DisenchantCommand());
 
+    }
+
+    private void loadVanillaOverrides() {
+        var config = loadConfig("vanilla_overrides.yml");
+        vanillaOverrides = config.getKeys(false).stream().collect(Collectors.toMap(
+                String::toUpperCase,
+                s -> new VanillaOverride(Objects.requireNonNull(config.getConfigurationSection(s)))
+        ));
+    }
+
+    private YamlConfiguration loadConfig(String path) {
+        var file = new File(this.getDataFolder(), path);
+        if (!file.exists()) {
+            try (var resource = getClass().getClassLoader().getResourceAsStream(path)) {
+                if (resource != null) {
+                    Files.copy(resource, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } else {
+                    throw new IllegalStateException("No resource found for " + path);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return YamlConfiguration.loadConfiguration(file);
     }
 
 //    @Override

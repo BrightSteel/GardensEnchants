@@ -1,23 +1,20 @@
 package com.gardensmc.gardensenchants.enchantment;
 
-import com.gardensmc.gardensenchants.utils.MessageUtil;
+import lombok.AllArgsConstructor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
-public class VanillaEnchantment implements GardensEnchantment {
+import java.util.List;
+
+@AllArgsConstructor
+public class VanillaEnchantment extends GardensEnchantment {
 
     private final Enchantment enchantment;
-    private EnchantRarity rarity = EnchantRarity.ORDINARY;
-    private String displayName;
 
-    public VanillaEnchantment(Enchantment enchantment) {
+    public VanillaEnchantment(Enchantment enchantment, EnchantRarity rarity, String displayName, List<Component> lore, String bookIdentifier) {
+        super(rarity, displayName, lore, bookIdentifier);
         this.enchantment = enchantment;
-    }
-
-    public VanillaEnchantment(Enchantment enchantment, EnchantRarity rarity, String displayName) {
-        this(enchantment);
-        this.rarity = rarity;
-        this.displayName = displayName;
     }
 
     @Override
@@ -53,16 +50,6 @@ public class VanillaEnchantment implements GardensEnchantment {
     @Override
     public String getId() {
         return enchantment.getKey().getKey();
-    }
-
-    @Override
-    public String getDisplayName() {
-        return displayName != null ? displayName : MessageUtil.readableId(getId());
-    }
-
-    @Override
-    public EnchantRarity getRarity() {
-        return rarity;
     }
 
     @Override

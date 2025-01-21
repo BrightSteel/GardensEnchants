@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.listener;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
+import com.gardensmc.gardensenchants.rune.RuneFactory;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -19,7 +20,24 @@ import java.util.List;
 
 public class AnvilListener implements Listener {
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
+    public void onPrepareAnvilWithRune(PrepareAnvilEvent e) {
+        AnvilInventory inv = e.getInventory();
+        ItemStack[] contents = inv.getContents();
+        var itemPrimary = contents[0];
+        var itemSecondary = contents[1];
+        if (itemPrimary == null || itemSecondary == null) {
+            return;
+        }
+        var runeHandler = RuneFactory.createRuneHandler(itemSecondary);
+        if (runeHandler == null || !runeHandler.canApply(itemPrimary)) {
+            return;
+        }
+        inv.setRepairCost(runeHandler.getApplyCost(itemPrimary));
+        e.setResult(runeHandler.apply(itemPrimary));
+    }
+
+    @EventHandler
     public void onPrepareAnvilWithBook(PrepareAnvilEvent e) {
         AnvilInventory inv = e.getInventory();
         ItemStack[] contents = inv.getContents();
@@ -63,7 +81,7 @@ public class AnvilListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onCombineBooks(PrepareAnvilEvent e) {
         AnvilInventory inv = e.getInventory();
         ItemStack[] contents = inv.getContents();
@@ -84,7 +102,7 @@ public class AnvilListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onCombineTools(PrepareAnvilEvent e) {
         AnvilInventory inv = e.getInventory();
         ItemStack[] contents = inv.getContents();
@@ -134,7 +152,7 @@ public class AnvilListener implements Listener {
             return;
         }
         var bookInstance = BooksHandler.INSTANCE.getBookInstance(bookItem);
-        if (bookInstance == null || bookInstance.destruction() == null) {
+        if (bookInstance == null) {
             return;
         }
         if (ProbabilityUtil.roll(bookInstance.destruction())) {
@@ -184,7 +202,8 @@ public class AnvilListener implements Listener {
                 .stream()
                 .reduce(0,
                         ((accumulator, enchantmentInstance) -> accumulator + enchantmentInstance.getCombineCost()),
-                        Integer::sum);
+                        Integer::sum
+                );
         return new CombinedEnchantResult(resultEnchantments, cost);
     }
 

@@ -171,35 +171,35 @@ public class Events implements Listener {
 //        EnchantCache.remove(e.getPlayer().getUniqueId());
 //    }
 
-    @EventHandler
-    public static void onApplyRune(PrepareAnvilEvent e) {
-        // todo update these to use new anvilView?
-        AnvilInventory inv = e.getInventory();
-        ItemStack[] contents = inv.getContents();
-
-        ItemStack item = contents[0];
-        ItemStack rune = contents[1];
-        if (item != null && rune != null) {
-            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(rune);
-            if (customItem == null || (!customItem.getIdentifier().equalsIgnoreCase("amber") && rune.getAmount() != 1)) return;
-//            if (rune.getAmount() != 1) return;
-            // attempt to get rune
-//            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
-//            if (customItem != null) {
-            ItemStack result = null;
-                switch (customItem.getIdentifier()) {
-                    case "slot_increaser_rune" -> result = RuneUtil.getRuneResult(Rune.SLOT_INCREASER, item);
-                    case "power_up_rune" -> result = RuneUtil.getRuneResult(Rune.POWER_UP, item);
-                    case "restoration_rune" -> result = RuneUtil.getRuneResult(Rune.RESTORATION, item);
-                    case "amber" -> result = RuneUtil.amberUpgrade(item, rune);
-                }
-                if (result != null) {
-                    inv.setRepairCost(3);
-                    e.setResult(result);
-                }
-//            }
-        }
-    }
+//    @EventHandler
+//    public static void onApplyRune(PrepareAnvilEvent e) {
+//        // todo update these to use new anvilView?
+//        AnvilInventory inv = e.getInventory();
+//        ItemStack[] contents = inv.getContents();
+//
+//        ItemStack item = contents[0];
+//        ItemStack rune = contents[1];
+//        if (item != null && rune != null) {
+//            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(rune);
+//            if (customItem == null || (!customItem.getIdentifier().equalsIgnoreCase("amber") && rune.getAmount() != 1)) return;
+////            if (rune.getAmount() != 1) return;
+//            // attempt to get rune
+////            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
+////            if (customItem != null) {
+//            ItemStack result = null;
+//                switch (customItem.getIdentifier()) {
+//                    case "slot_increaser_rune" -> result = RuneUtil.getRuneResult(Rune.SLOT_INCREASER, item);
+//                    case "power_up_rune" -> result = RuneUtil.getRuneResult(Rune.POWER_UP, item);
+//                    case "restoration_rune" -> result = RuneUtil.getRuneResult(Rune.RESTORATION, item);
+//                    case "amber" -> result = RuneUtil.amberUpgrade(item, rune);
+//                }
+//                if (result != null) {
+//                    inv.setRepairCost(3);
+//                    e.setResult(result);
+//                }
+////            }
+//        }
+//    }
 
 
 

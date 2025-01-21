@@ -9,7 +9,6 @@ import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiStorageElement;
-import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,17 +67,18 @@ public class EnchantingMenu extends Menu {
         );
         gui.addElement(bookStorage);
         gui.setCloseAction(close -> onClose());
-
         // dynamic rows
         dynamicRows.forEach(dynamicRow -> Arrays
                 .stream(Column.values())
                 .forEach(column -> gui.addElement(getDynamicBookElement(dynamicRow, column))));
-
         // books menu
         gui.addElement(new StaticGuiElement(
                 'i',
                 GardensFurniture.itemRegistry.buildItem("enchanting_books_menu"),
-                click -> open(() -> new EnchantingBooksMenu(viewer)),
+                click -> {
+                    onClose(); // run on-close since we aren't actually closing the menu
+                    return open(() -> new EnchantingBooksMenu(viewer));
+                },
                 parseIntoLegacy("<blue>View Enchanting Books")
         ));
     }
@@ -104,7 +104,6 @@ public class EnchantingMenu extends Menu {
                 dynamicRow.bookInstance = BooksHandler.INSTANCE.buildBook(enchantment);
             }
             title = getPopulatedTitle();
-
         } else {
             // remove enchantment instances
             dynamicRows.forEach(dynamicRow -> dynamicRow.setBookInstance(null));
@@ -134,7 +133,7 @@ public class EnchantingMenu extends Menu {
     }
 
     private String stripFormatting(String formatted) {
-        var maxLength = 13;
+        var maxLength = 15;
         if (formatted.length() < maxLength) {
             return formatted; // already small enough
         }
@@ -201,7 +200,6 @@ public class EnchantingMenu extends Menu {
             // displayName is wrapped with &e[...] since the component has an array...?
             // todo - replace with a build to re-construct name from default book & enchantment
             displayName = displayName.substring("&e[".length(), displayName.length() - 1);
-
             var lore = bookInstance.book().lore();
             if (lore == null) {
                 lore = new ArrayList<>();

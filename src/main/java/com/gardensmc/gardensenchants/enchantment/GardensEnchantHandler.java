@@ -38,6 +38,22 @@ public class GardensEnchantHandler {
         return enchants.size() < getSlots();
     }
 
+    public List<EnchantmentInstance> getUpgradeableEnchantments() {
+        return getEnchantments()
+                .stream()
+                .filter(enchant -> enchant.getLevel() < enchant.getEnchantment().getMaxLevel())
+                .toList();
+    }
+
+    public void upgradeEnchantments() {
+        getUpgradeableEnchantments().forEach(this::upgradeEnchant);
+        applyPostEnchantChanges();
+    }
+
+    private void upgradeEnchant(EnchantmentInstance enchantment) {
+        enchantment.getEnchantment().applyEnchantment(item, enchantment.getLevel() + 1);
+    }
+
     public void enchant(GardensEnchantment enchantment, int level) {
         enchantment.applyEnchantment(item, level);
         applyPostEnchantChanges();
@@ -142,7 +158,7 @@ public class GardensEnchantHandler {
                 });
     }
 
-    private int getSlots() {
+    public int getSlots() {
         return NBT.get(item, nbt -> {
             var itemNBT = nbt.getCompound(ITEM_NBT_KEY);
             if (itemNBT != null && itemNBT.hasTag(SLOTS_KEY)) {
@@ -150,6 +166,15 @@ public class GardensEnchantHandler {
             }
             return DEFAULT_SLOTS;
         });
+    }
+
+    public void incrementSlots() {
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            var slots = itemNBT.getOrDefault(SLOTS_KEY, DEFAULT_SLOTS);
+            itemNBT.setInteger(SLOTS_KEY, ++slots);
+        });
+        refreshLore();
     }
 
 }

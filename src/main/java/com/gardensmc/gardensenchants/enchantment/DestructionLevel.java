@@ -1,7 +1,6 @@
 package com.gardensmc.gardensenchants.enchantment;
 
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -20,10 +19,9 @@ public enum DestructionLevel {
         this.maxPercent = maxPercent;
     }
 
-    @Nullable
     public Integer generateDestructionChance() {
         if (maxPercent == 0) {
-            return null;
+            return 0;
         }
         return ThreadLocalRandom.current().nextInt(minPercent, maxPercent);
     }

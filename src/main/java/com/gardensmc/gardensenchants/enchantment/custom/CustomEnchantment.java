@@ -2,26 +2,24 @@ package com.gardensmc.gardensenchants.enchantment.custom;
 
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
-import com.gardensmc.gardensenchants.utils.MessageUtil;
 import de.tr7zw.nbtapi.NBT;
-import lombok.AccessLevel;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
 
 import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
 
 @Getter
-public class CustomEnchantment implements GardensEnchantment {
+public class CustomEnchantment extends GardensEnchantment {
 
     public static final String ENCHANTS_KEY = "Enchants";
 
     private final String id;
-    private EnchantRarity rarity = EnchantRarity.ORDINARY;
     private int maxLevel = 1;
     private ItemRestrict restrict = ItemRestrict.ALL;
-    @Getter(AccessLevel.NONE)
-    private String displayName;
-    private boolean isVisibleInTable;
+    private boolean isVisibleInTable = true;
 
     private CustomEnchantment(String id) {
         this.id = id;
@@ -82,11 +80,6 @@ public class CustomEnchantment implements GardensEnchantment {
     }
 
     @Override
-    public String getDisplayName() {
-        return displayName != null ? displayName : MessageUtil.readableId(id);
-    }
-
-    @Override
     public boolean isVisibleInTable() {
         return isVisibleInTable;
     }
@@ -104,6 +97,8 @@ public class CustomEnchantment implements GardensEnchantment {
         private String displayName;
         private ItemRestrict restrict;
         private Boolean isVisibleInTable;
+        private List<Component> lore;
+        private String bookIdentifier;
 
         public Builder(String id) {
             this.id = id;
@@ -134,6 +129,16 @@ public class CustomEnchantment implements GardensEnchantment {
             return this;
         }
 
+        public Builder lore(List<Component> lore) {
+            this.lore = lore;
+            return this;
+        }
+
+        public Builder bookIdentifier(String bookIdentifier) {
+            this.bookIdentifier = bookIdentifier;
+            return this;
+        }
+
         public CustomEnchantment build() {
             var customEnchant = new CustomEnchantment(id);
             if (rarity != null) {
@@ -153,6 +158,12 @@ public class CustomEnchantment implements GardensEnchantment {
             }
             if (isVisibleInTable != null) {
                 customEnchant.isVisibleInTable = isVisibleInTable;
+            }
+            if (lore != null) {
+                customEnchant.lore = lore;
+            }
+            if (bookIdentifier != null) {
+                customEnchant.bookIdentifier = bookIdentifier;
             }
             return customEnchant;
         }

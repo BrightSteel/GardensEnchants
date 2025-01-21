@@ -7,10 +7,7 @@ import lombok.NoArgsConstructor;
 import org.bukkit.Registry;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -36,7 +33,24 @@ public class GardensEnchantments {
         // register vanilla enchants
         gardensEnchantments.putAll(Registry.ENCHANTMENT
                 .stream()
-                .map(VanillaEnchantment::new)
+                .map(enchantment -> {
+                    var id = enchantment.getKey().getKey().toUpperCase();
+                    var vanillaOverride = GardensEnchants.vanillaOverrides.get(id);
+                    if (vanillaOverride != null) {
+                        if (vanillaOverride.isDisabled()) {
+                            return null;
+                        }
+                        return new VanillaEnchantment(
+                                enchantment,
+                                vanillaOverride.getEnchantRarity(),
+                                vanillaOverride.getDisplay(),
+                                vanillaOverride.getLore(),
+                                vanillaOverride.getBookIdentifier()
+                        );
+                    }
+                    return new VanillaEnchantment(enchantment);
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toMap(VanillaEnchantment::getId, Function.identity()))
         );
         // register custom enchants
