@@ -1,13 +1,18 @@
 package com.gardensmc.gardensenchants.rune;
 
 import com.gardensmc.gardensenchants.books.BooksHandler;
+import com.gardensmc.gardensenchants.enchantment.custom.ItemRestrict;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Objects;
 
-public class RestorationRune extends RuneHandler {
+public final class RestorationRune extends RuneHandler {
 
     private static final int REDUCTION_AMOUNT = 5;
+
+    public RestorationRune(ItemStack rune) {
+        super(rune, ItemRestrict.ENCHANTED_BOOK);
+    }
 
     @Override
     public int getApplyCost(ItemStack target) {

@@ -3,7 +3,11 @@ package com.gardensmc.gardensenchants.rune;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import org.bukkit.inventory.ItemStack;
 
-public class PowerUpRune extends RuneHandler {
+public final class PowerUpRune extends RuneHandler {
+
+    public PowerUpRune(ItemStack rune) {
+        super(rune);
+    }
 
     @Override
     public int getApplyCost(ItemStack target) {

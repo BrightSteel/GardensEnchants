@@ -70,7 +70,11 @@ public class GardensEnchantHandler {
     private void applyPostEnchantChanges() {
         var meta = item.getItemMeta();
         // todo - add enchantment glint, this is a new tag in 1.21
-        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        meta.addItemFlags(
+                ItemFlag.HIDE_ENCHANTS,
+                ItemFlag.HIDE_UNBREAKABLE,
+                ItemFlag.HIDE_ATTRIBUTES
+        );
         meta.lore(getLore());
         item.setItemMeta(meta);
     }

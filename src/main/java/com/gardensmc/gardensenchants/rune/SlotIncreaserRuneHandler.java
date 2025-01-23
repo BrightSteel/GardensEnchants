@@ -7,6 +7,10 @@ public final class SlotIncreaserRuneHandler extends RuneHandler {
 
     private static final int MAX_SLOTS = 12;
 
+    public SlotIncreaserRuneHandler(ItemStack rune) {
+        super(rune);
+    }
+
     @Override
     public int getApplyCost(ItemStack target) {
         return new GardensEnchantHandler(target).getSlots() / 2;

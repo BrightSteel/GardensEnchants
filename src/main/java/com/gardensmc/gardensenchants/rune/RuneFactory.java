@@ -4,7 +4,7 @@ import com.gardensmc.gardensfurniture.GardensFurniture;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-public class RuneFactory {
+public final class RuneFactory {
 
     @Nullable
     public static RuneHandler createRuneHandler(ItemStack rune) {
@@ -13,9 +13,9 @@ public class RuneFactory {
             return null;
         }
         return switch (customRuneItem.getIdentifier()) {
-            case "power_up_rune" -> new PowerUpRune();
-            case "restoration_rune" -> new RestorationRune();
-            case "slot_increaser_rune" -> new SlotIncreaserRuneHandler();
+            case "power_up_rune" -> new PowerUpRune(rune);
+            case "restoration_rune" -> new RestorationRune(rune);
+            case "slot_increaser_rune" -> new SlotIncreaserRuneHandler(rune);
             default -> null;
         };
     }

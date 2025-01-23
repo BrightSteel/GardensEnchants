@@ -2,17 +2,21 @@ package com.gardensmc.gardensenchants.rune;
 
 import com.gardensmc.gardensenchants.enchantment.custom.ItemRestrict;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.bukkit.inventory.ItemStack;
 
 @AllArgsConstructor
-@NoArgsConstructor
 public abstract class RuneHandler {
 
-    private ItemRestrict itemRestrict;
+    private final ItemStack rune;
+    private final ItemRestrict itemRestrict;
+
+    public RuneHandler(ItemStack rune) {
+        this.rune = rune;
+        this.itemRestrict = ItemRestrict.ALL;
+    }
 
     public boolean canApply(ItemStack target) {
-        return itemRestrict.isEnchantable(target);
+        return rune.getAmount() == 1 && itemRestrict.isEnchantable(target);
     }
 
     public abstract int getApplyCost(ItemStack target);

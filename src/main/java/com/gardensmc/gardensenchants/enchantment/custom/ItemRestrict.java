@@ -17,6 +17,7 @@ public enum ItemRestrict {
     HELMET(Suffixes.HELMET),
     BOOTS(Suffixes.BOOTS),
     WAND(itemStack -> itemStack.getType() == Material.STICK),
+    ENCHANTED_BOOK(itemStack -> itemStack.getType() == Material.ENCHANTED_BOOK),
     ALL(Suffixes.all());
 
     private final Predicate<ItemStack> isPermitted;
