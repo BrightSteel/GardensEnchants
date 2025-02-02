@@ -3,7 +3,11 @@ package com.gardensmc.gardensenchants.gui;
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.books.BookInstance;
 import com.gardensmc.gardensenchants.books.BooksHandler;
+import com.gardensmc.gardensenchants.books.TypedBooksHandler;
+import com.gardensmc.gardensenchants.cache.EnchantEntryCache;
+import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
 import com.gardensmc.gardensenchants.utils.OraxenShift;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -95,7 +99,7 @@ public class EnchantingMenu extends Menu {
         String title;
         if (storageIsEnchantable()) {
             // fetch enchantment instances
-            var enchantments = BooksHandler.INSTANCE.getRandomEnchantments();
+            var enchantments = new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).getEnchantmentInstances();
             for (var dynamicRow : dynamicRows) {
                 var enchantment = enchantments.poll();
                 if (enchantment == null) {
@@ -133,13 +137,12 @@ public class EnchantingMenu extends Menu {
     }
 
     private String stripFormatting(String formatted) {
-        var maxLength = 15;
+        var maxLength = 13;
         if (formatted.length() < maxLength) {
             return formatted; // already small enough
         }
         var numeralIndex = formatted.lastIndexOf(" ") + 1;
-        var numeral = formatted.substring(numeralIndex);
-        return formatted.substring(0, Math.min(maxLength, numeralIndex - 1)) + " " + numeral;
+        return formatted.substring(0, Math.min(maxLength, numeralIndex - 1)) + "...";
     }
 
     private DynamicGuiElement getDynamicBookElement(DynamicRow dynamicRow, Column column) {
@@ -152,6 +155,7 @@ public class EnchantingMenu extends Menu {
                         bookStorage.setStorageItem(
                                 viewer, STORAGE_SLOT, dynamicRow.getBookInstance().book()
                         );
+                        new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).resetEnchantEntry();
                     }
                     return true;
                 },
@@ -162,6 +166,11 @@ public class EnchantingMenu extends Menu {
     private boolean storageIsEnchantable() {
         var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
         return storageItem != null && storageItem.getType() == Material.BOOK && storageItem.getAmount() == 1;
+    }
+
+    private String getInsertedBookType() {
+        var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
+        return TypedBooksHandler.getTypeFromBook(storageItem);
     }
 
     private ItemStack getBookDisplayItem(BookInstance bookInstance, Column column) {

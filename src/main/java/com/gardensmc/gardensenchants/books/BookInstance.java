@@ -7,11 +7,17 @@ public record BookInstance(
         ItemStack book,
         GardensEnchantment enchantment,
         int level,
-        int destruction,
+        int destructionBase,
         int restorations
 ) {
 
+    private static final int RESTORATION_MULTIPLIER = 3;
+
     public int getCostInXP() {
         return enchantment().getCostInXP(level);
+    }
+
+    public int calculateDestructionChance() {
+        return destructionBase - (restorations * RESTORATION_MULTIPLIER);
     }
 }

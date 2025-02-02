@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -116,15 +117,31 @@ public class GardensEnchantHandler {
 
     private List<Component> getLore() {
         var enchantments = getEnchantments();
-        var enchantLore = enchantments.stream().map(EnchantmentInstance::toLore).collect(Collectors.toList());
-        enchantLore.add(Component.text("")); // space
-        enchantLore.add(Component.text()
-                .content("%s/%s Slots".formatted(enchantments.size(), getSlots()))
-                .color(NamedTextColor.BLUE)
+        var slots = getSlots();
+        var enchantCount = enchantments.size();
+        var lore = new ArrayList<Component>();
+        lore.add(Component.empty());
+        lore.add(Component.text()
+                .content("Enchant Slots: ")
+                .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false)
+                .append(Component
+                        .text("(%s/%s)".formatted(enchantCount, slots))
+                        .color(NamedTextColor.GOLD))
                 .build()
         );
-        return enchantLore;
+        lore.add(Component.empty());
+        lore.addAll(enchantments.stream().map(EnchantmentInstance::toLore).toList());
+        var remainingSlots = slots - enchantCount;
+        if (remainingSlots > 0) {
+            var component = Component
+                    .text("+ Available Slot", NamedTextColor.GOLD)
+                    .decoration(TextDecoration.ITALIC, false);
+            for (int i = 0; i < remainingSlots; i++) {
+                lore.add(component);
+            }
+        }
+        return lore;
     }
 
     /**

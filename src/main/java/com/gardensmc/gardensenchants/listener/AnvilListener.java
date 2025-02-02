@@ -155,7 +155,7 @@ public class AnvilListener implements Listener {
         if (bookInstance == null) {
             return;
         }
-        if (ProbabilityUtil.roll(bookInstance.destruction())) {
+        if (ProbabilityUtil.roll(bookInstance.calculateDestructionChance())) {
             // add original item to inventory
             e.getWhoClicked().getInventory().addItem(primaryItem);
             // remove held item and clear contents of anvil
@@ -164,7 +164,7 @@ public class AnvilListener implements Listener {
             for (int i = 0; i < 3; i++) {
                 e.getInventory().setItem(i, air);
             }
-            // notify user of destruction
+            // notify user of destructionBase
             e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
         }
     }

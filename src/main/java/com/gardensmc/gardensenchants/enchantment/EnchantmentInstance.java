@@ -20,7 +20,7 @@ public class EnchantmentInstance implements Comparable<EnchantmentInstance> {
 
     @Override
     public int compareTo(@NotNull EnchantmentInstance o) {
-        int rarity = enchantment.getRarity().compareTo(o.getEnchantment().getRarity());
+        int rarity = enchantment.getRarity().compareTo(o.getEnchantment().getRarity()) * -1;
         if (rarity != 0) {
             return rarity;
         }
@@ -30,7 +30,7 @@ public class EnchantmentInstance implements Comparable<EnchantmentInstance> {
     public Component toLore() {
         return Component
                 .text()
-                .content(enchantment.getDisplayName() + " " + RomanNumber.toRoman(level))
+                .content("+ " + enchantment.getDisplayName() + " " + RomanNumber.toRoman(level))
                 .color(enchantment.getRarity().getTextColor())
                 .decoration(TextDecoration.ITALIC, false)
                 .build();

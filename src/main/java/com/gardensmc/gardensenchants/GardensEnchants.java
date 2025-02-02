@@ -4,6 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
+import com.gardensmc.gardensenchants.database.Tables;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.events.Events;
 import com.gardensmc.gardensenchants.listener.Listeners;
@@ -64,6 +65,7 @@ public class GardensEnchants extends JavaPlugin {
         Objects.requireNonNull(Bukkit.getPluginCommand("mobhead")).setExecutor(new MobHeadCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("disenchant")).setExecutor(new DisenchantCommand());
 
+        Tables.initializeClass();
     }
 
     private void loadVanillaOverrides() {

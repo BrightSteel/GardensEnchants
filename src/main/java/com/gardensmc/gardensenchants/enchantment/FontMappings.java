@@ -70,6 +70,7 @@ public class FontMappings {
         fontMap1.put('x', '\uE091');
         fontMap1.put('y', '\uE092');
         fontMap1.put('z', '\uE093');
+        fontMap1.put('.', '\uE259');
 
         fontMap2.put('A', '\uE096');
         fontMap2.put('B', '\uE097');
@@ -123,6 +124,7 @@ public class FontMappings {
         fontMap2.put('x', '\uE0C7');
         fontMap2.put('y', '\uE0C8');
         fontMap2.put('z', '\uE0C9');
+        fontMap2.put('.', '\uE257');
 
         fontMap3.put('A', '\uE0CA');
         fontMap3.put('B', '\uE0CB');
@@ -176,6 +178,7 @@ public class FontMappings {
         fontMap3.put('x', '\uE0FB');
         fontMap3.put('y', '\uE0FC');
         fontMap3.put('z', '\uE0FD');
+        fontMap3.put('.', '\uE258');
     }
 
     public String replaceAll(String text, HashMap<Character, Character> map) {
@@ -195,7 +198,7 @@ public class FontMappings {
             case 'I', 't', ' ' -> pixels = 3;
             case 'f', 'k' -> pixels = 4;
             case 'l' -> pixels = 2;
-            case 'i' -> pixels = 1;
+            case 'i', '.' -> pixels = 1;
 
         }
         pixels++; //account for space between letters

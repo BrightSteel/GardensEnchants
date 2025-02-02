@@ -1,67 +1,54 @@
 package com.gardensmc.gardensenchants.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import com.gardensmc.gardensenchants.database.entry.EnchantEntry;
+import com.gardensmc.gardensenchants.database.entry.nested.EnchantJsonEntry;
+
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 
-public class EnchantTable {
+public final class EnchantTable implements Table {
 
-    public static void loadTable() {
-        DatabaseConnector connector = DatabaseConnector.INSTANCE;
+    @Override
+    public String getPrepareStatement() {
+        return """
+            CREATE TABLE IF NOT EXISTS enchant(
+                uuid varchar(36),
+                type varchar(20),
+                enchants json,
+                PRIMARY KEY (uuid, type)
+            )
+            """;
+    }
+
+    public EnchantEntry getEnchantEntry(String uuid, String type) {
+        String query = "SELECT enchants FROM enchant WHERE uuid = ? AND type = ?";
         try {
-            String update = "CREATE TABLE IF NOT EXISTS enchant(uuid varchar(36) PRIMARY KEY, enchants varchar(256), expiration DateTime)";
-            connector.executeUpdate(update);
-
+            return DatabaseConnector.INSTANCE.querySingleton(
+                    query,
+                    EnchantEntry::new,
+                    uuid,
+                    type
+            );
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-
     }
 
-    /**
-     * Create player's first enchant
-     * @param uuid
-     * @param enchants
-     * @param expiration
-     * @throws SQLException
-     */
-    public static void createEnchant(String uuid, String enchants, LocalDateTime expiration) throws SQLException {
-        String insert = "INSERT INTO enchant(uuid, enchants, expiration) VALUES (?, ?, ?)";
-        DatabaseConnector.INSTANCE.executeUpdate(insert, uuid, enchants, expiration);
+    public void removeEnchantEntry(String uuid, String type) {
+        String update = "DELETE FROM enchant WHERE uuid = ? AND type = ?";
+        try {
+            DatabaseConnector.INSTANCE.executeUpdate(update, uuid, type);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /**
-     * Modify player's existing enchant
-     * @param uuid
-     * @param enchants
-     * @param expiration
-     * @throws SQLException
-     */
-    public static void updateEnchant(String uuid, String enchants, LocalDateTime expiration) throws SQLException {
-        String update = "UPDATE enchant SET enchants = ?, expiration = ? WHERE uuid = ?";
-        DatabaseConnector.INSTANCE.executeUpdate(update,enchants, expiration, uuid);
+    public EnchantEntry createEnchantEntry(String uuid, String type, EnchantJsonEntry enchantJson) {
+        String update = "INSERT INTO enchant (uuid, type, enchants) VALUES (?, ?, ?)";
+        try {
+           DatabaseConnector.INSTANCE.executeUpdate(update, uuid, type, enchantJson.toJson());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return new EnchantEntry(enchantJson);
     }
-//
-//    public static EnchantEntry getEnchantEntry(String uuid) throws SQLException {
-//        String query = "SELECT enchants, expiration FROM enchant WHERE uuid = ?";
-//        Connection conn = DatabaseConnector.INSTANCE.getConnection();
-//        PreparedStatement ps = conn.prepareStatement(query);
-//        ps.setString(1, uuid);
-//
-//        EnchantEntry enchantEntry = null;
-//        ResultSet rs = ps.executeQuery();
-//        if (rs.next()) {
-//            String enchants = rs.getString(1);
-//            LocalDateTime expiration = rs.getObject(2, LocalDateTime.class);
-//            enchantEntry = new EnchantEntry(enchants, expiration);
-//        }
-//
-//        rs.close();
-//        ps.close();
-//        conn.close();
-//
-//        return enchantEntry;
-//    }
 }

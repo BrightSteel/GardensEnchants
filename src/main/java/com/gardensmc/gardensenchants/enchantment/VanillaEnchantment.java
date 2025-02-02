@@ -1,5 +1,6 @@
 package com.gardensmc.gardensenchants.enchantment;
 
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.enchantments.Enchantment;
@@ -12,8 +13,15 @@ public class VanillaEnchantment extends GardensEnchantment {
 
     private final Enchantment enchantment;
 
-    public VanillaEnchantment(Enchantment enchantment, EnchantRarity rarity, String displayName, List<Component> lore, String bookIdentifier) {
-        super(rarity, displayName, lore, bookIdentifier);
+    public VanillaEnchantment(
+            Enchantment enchantment,
+            EnchantRarity rarity,
+            String displayName,
+            List<Component> lore,
+            String bookIdentifier,
+            EnchantRestrict enchantRestrict
+    ) {
+        super(rarity, displayName, lore, bookIdentifier, enchantRestrict);
         this.enchantment = enchantment;
     }
 

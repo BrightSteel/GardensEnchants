@@ -18,7 +18,6 @@ public class CustomEnchantment extends GardensEnchantment {
 
     private final String id;
     private int maxLevel = 1;
-    private ItemRestrict restrict = ItemRestrict.ALL;
     private boolean isVisibleInTable = true;
 
     private CustomEnchantment(String id) {
@@ -95,7 +94,7 @@ public class CustomEnchantment extends GardensEnchantment {
         private EnchantRarity rarity;
         private Integer maxLevel;
         private String displayName;
-        private ItemRestrict restrict;
+        private EnchantRestrict restrict;
         private Boolean isVisibleInTable;
         private List<Component> lore;
         private String bookIdentifier;
@@ -119,7 +118,7 @@ public class CustomEnchantment extends GardensEnchantment {
             return this;
         }
 
-        public Builder enchantRestrict(ItemRestrict restrict) {
+        public Builder enchantRestrict(EnchantRestrict restrict) {
             this.restrict = restrict;
             return this;
         }

@@ -2,9 +2,10 @@ package com.gardensmc.gardensenchants.enchantment;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.bukkit.Registry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -31,8 +32,9 @@ public class GardensEnchantments {
 
     public void registerEnchantments() {
         // register vanilla enchants
-        gardensEnchantments.putAll(Registry.ENCHANTMENT
+        gardensEnchantments.putAll(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
                 .stream()
+                .filter(enchantment -> enchantment.isDiscoverable() && !enchantment.isCursed())
                 .map(enchantment -> {
                     var id = enchantment.getKey().getKey().toUpperCase();
                     var vanillaOverride = GardensEnchants.vanillaOverrides.get(id);
@@ -45,7 +47,8 @@ public class GardensEnchantments {
                                 vanillaOverride.getEnchantRarity(),
                                 vanillaOverride.getDisplay(),
                                 vanillaOverride.getLore(),
-                                vanillaOverride.getBookIdentifier()
+                                vanillaOverride.getBookIdentifier(),
+                                vanillaOverride.getEnchantRestrict()
                         );
                     }
                     return new VanillaEnchantment(enchantment);

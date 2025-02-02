@@ -12,50 +12,50 @@ public class CustomEnchantments {
     public static final Map<String, CustomEnchantment> customEnchantments = new HashMap<>();
 
     public static final CustomEnchantment SKULL_STEALER = register("skull_stealer", builder -> builder
-            .enchantRestrict(ItemRestrict.WEAPON));
+            .enchantRestrict(EnchantRestricts.WEAPON));
     public static final CustomEnchantment TIMBER = register( "timber", builder -> builder
-            .enchantRestrict(ItemRestrict.AXE));
+            .enchantRestrict(EnchantRestricts.AXE));
     public static final CustomEnchantment VEIN_MINER = register("vein_miner", builder -> builder
-            .enchantRestrict(ItemRestrict.PICKAXE));
+            .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment BUBBLE_HEAD = register("bubble_head", builder -> builder
             .rarity(EnchantRarity.UNIQUE)
-            .enchantRestrict(ItemRestrict.HELMET));
+            .enchantRestrict(EnchantRestricts.HELMET));
     public static final CustomEnchantment LIFE_STEAL = register("life_steal", builder -> builder
-            .enchantRestrict(ItemRestrict.WEAPON)
+            .enchantRestrict(EnchantRestricts.WEAPON)
             .rarity(EnchantRarity.UNIQUE)
             .maxLevel(3));
     public static final CustomEnchantment DOUBLE_STRIKE = register("double_strike", builder -> builder
-            .enchantRestrict(ItemRestrict.WEAPON)
+            .enchantRestrict(EnchantRestricts.WEAPON)
             .rarity(EnchantRarity.MYSTICAL)
             .maxLevel(3));
     public static final CustomEnchantment NIGHT_VISION = register("night_vision", builder -> builder
-            .enchantRestrict(ItemRestrict.HELMET)
+            .enchantRestrict(EnchantRestricts.HELMET)
             .rarity(EnchantRarity.MYSTICAL));
     public static final CustomEnchantment JELLY_LEGS = register("jelly_legs", builder -> builder
-            .enchantRestrict(ItemRestrict.BOOTS)
+            .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.MYSTICAL)
             .maxLevel(5));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
             .rarity(EnchantRarity.DIVINE)
-            .enchantRestrict(ItemRestrict.PICKAXE));
+            .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment SMELTER = register("smelter", builder -> builder
             .rarity(EnchantRarity.MYSTICAL)
-            .enchantRestrict(ItemRestrict.PICKAXE));
+            .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment ETERNAL = register( "eternal", builder -> builder
             .rarity(EnchantRarity.DIVINE));
     public static final CustomEnchantment NETHERLING = register("netherling", builder -> builder
             .rarity(EnchantRarity.DIVINE)
-            .enchantRestrict(ItemRestrict.SWORD));
+            .enchantRestrict(EnchantRestricts.SWORD));
     public static final CustomEnchantment SILK_TOUCH_SPAWNER = register("silk_touch_spawner", builder -> builder
             .displayName("Silk Spawner")
-            .enchantRestrict(ItemRestrict.TOOL)
+            .enchantRestrict(EnchantRestricts.TOOLS)
             .rarity(EnchantRarity.DIVINE));
     public static final CustomEnchantment SPEEDY = register("speedy", builder -> builder
-            .enchantRestrict(ItemRestrict.BOOTS)
+            .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.DIVINE)
             .maxLevel(3));
     public static final CustomEnchantment WINGED_BOOTS = register("winged_boots", builder -> builder
-            .enchantRestrict(ItemRestrict.BOOTS)
+            .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.DIVINE)
             .isVisibleInTable(false));
 

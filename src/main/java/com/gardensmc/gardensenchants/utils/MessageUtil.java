@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.utils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import java.util.Arrays;
 
@@ -24,6 +25,11 @@ public class MessageUtil {
 
     public static Component parseIntoComponent(String message) {
         return MiniMessage.miniMessage().deserialize(message);
+    }
+
+    public static boolean isBlank(Component component) {
+        var str = PlainTextComponentSerializer.plainText().serialize(component);
+        return str.isBlank();
     }
 
 }

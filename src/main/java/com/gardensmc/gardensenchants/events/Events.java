@@ -329,7 +329,7 @@ public class Events implements Listener {
             if (!CustomEnchantments.SMELTER.hasEnchantment(player.getInventory().getItemInMainHand())) {
                 return;
             }
-            int fortune = player.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.LOOT_BONUS_BLOCKS);
+            int fortune = player.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.FORTUNE);
             Material drop = null;
             int amount = 1 + ThreadLocalRandom.current().nextInt(0, fortune + 1);
 

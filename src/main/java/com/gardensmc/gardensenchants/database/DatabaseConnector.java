@@ -1,6 +1,7 @@
 package com.gardensmc.gardensenchants.database;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.database.entry.MySQLEntry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.configuration.ConfigurationSection;
@@ -9,7 +10,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class DatabaseConnector {
 
@@ -17,7 +21,7 @@ public class DatabaseConnector {
     private final HikariDataSource dataSource;
     public HikariConfig hikariConfig = new HikariConfig();
 
-    public DatabaseConnector() {
+    private DatabaseConnector() {
         ConfigurationSection configSection = Objects.requireNonNull(GardensEnchants.plugin.getConfig().getConfigurationSection("database"));
         String db = configSection.getString("databaseName");
         String host = configSection.getString("host");
@@ -55,26 +59,52 @@ public class DatabaseConnector {
         connection.close();
     }
 
-    public boolean queryPresence(String string, Object... obj) throws SQLException {
-        Connection con = dataSource.getConnection();
-        PreparedStatement ps = con.prepareStatement(string);
-        for (int i = 0; i < obj.length; i++) {
+    public <T extends MySQLEntry> T querySingleton(String query, Supplier<T> supplier, Object... obj) throws SQLException {
+        Connection connection = DatabaseConnector.INSTANCE.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query);
+        for(int i = 0; i < obj.length; i++) {
             ps.setObject(i + 1, obj[i]);
         }
         ResultSet rs = ps.executeQuery();
-        boolean present = rs.next();
+        T mySQLEntry = supplier.get();
+        if (rs.next()) {
+            mySQLEntry.populate(rs);
+        } else {
+            mySQLEntry = null;
+        }
+
         rs.close();
         ps.close();
-        con.close();
-        return present;
+        connection.close();
+        return mySQLEntry;
     }
 
-    public boolean connectTest() {
-        try {
-            dataSource.getConnection();
-        } catch (SQLException throwables) {
-            return false;
+    public Collection<MySQLEntry> queryCollection(String query, MySQLEntry mySQLEntry, Object... obj) throws SQLException {
+        Collection<MySQLEntry> collection = new ArrayList<>();
+        Connection connection = DatabaseConnector.INSTANCE.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query);
+        for(int i = 0; i < obj.length; i++) {
+            ps.setObject(i + 1, obj[i]);
         }
-        return true;
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            MySQLEntry entry = mySQLEntry.clone();
+            entry.populate(rs);
+            collection.add(entry);
+        }
+
+        rs.close();
+        ps.close();
+        connection.close();
+        return collection;
+    }
+
+    public void establishConnection() {
+        try {
+            var connection = DatabaseConnector.INSTANCE.getConnection();
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

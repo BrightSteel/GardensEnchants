@@ -1,17 +1,15 @@
 package com.gardensmc.gardensenchants.rune;
 
 import com.gardensmc.gardensenchants.books.BooksHandler;
-import com.gardensmc.gardensenchants.enchantment.custom.ItemRestrict;
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Objects;
 
 public final class RestorationRune extends RuneHandler {
 
-    private static final int REDUCTION_AMOUNT = 5;
-
     public RestorationRune(ItemStack rune) {
-        super(rune, ItemRestrict.ENCHANTED_BOOK);
+        super(rune, EnchantRestricts.ENCHANTED_BOOK);
     }
 
     @Override
@@ -26,7 +24,7 @@ public final class RestorationRune extends RuneHandler {
     @Override
     public ItemStack apply(ItemStack target) {
         var bookInstance = Objects.requireNonNull(BooksHandler.INSTANCE.getBookInstance(target.clone()));
-        BooksHandler.INSTANCE.reduceDestructionChance(bookInstance, REDUCTION_AMOUNT);
+        BooksHandler.INSTANCE.applyRestoration(bookInstance, 1);
         return bookInstance.book();
     }
 
@@ -39,6 +37,6 @@ public final class RestorationRune extends RuneHandler {
         if (bookInstance == null || bookInstance.restorations() == BooksHandler.MAX_RESTORATIONS) {
             return false;
         }
-        return bookInstance.destruction() > 0;
+        return bookInstance.calculateDestructionChance() > 0;
     }
 }

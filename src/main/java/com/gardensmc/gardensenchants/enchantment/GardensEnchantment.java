@@ -1,5 +1,7 @@
 package com.gardensmc.gardensenchants.enchantment;
 
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
 import com.gardensmc.gardensenchants.utils.MessageUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,7 +9,6 @@ import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,6 +22,8 @@ public abstract class GardensEnchantment {
     @Getter
     protected List<Component> lore = Collections.emptyList();
     protected String bookIdentifier;
+    @Getter
+    protected EnchantRestrict restrict = EnchantRestricts.ALL;
 
     public abstract boolean hasEnchantment(ItemStack itemStack);
 
@@ -54,6 +57,10 @@ public abstract class GardensEnchantment {
             return bookIdentifier;
         }
         return getId() + "_book";
+    }
+
+    public List<Character> getPermittedItemIcons() {
+        return restrict.iconRepresentation();
     }
 
 }
