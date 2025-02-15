@@ -11,7 +11,7 @@ public class EnchantmentInstanceSerializer implements JsonSerializer<Enchantment
             EnchantmentInstance enchantmentInstance, Type type, JsonSerializationContext jsonSerializationContext
     ) {
         var jsonObject = new JsonObject();
-        jsonObject.addProperty("name", enchantmentInstance.getEnchantment().getId());
+        jsonObject.addProperty("id", enchantmentInstance.getEnchantment().getId());
         jsonObject.addProperty("level", enchantmentInstance.getLevel());
         return jsonObject;
     }
@@ -21,7 +21,7 @@ public class EnchantmentInstanceSerializer implements JsonSerializer<Enchantment
     public EnchantmentInstance deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
         var jsonObject = jsonElement.getAsJsonObject();
         return new EnchantmentInstance(
-                GardensEnchantments.INSTANCE.getEnchantment(jsonObject.get("name").getAsString()),
+                GardensEnchantments.INSTANCE.getEnchantment(jsonObject.get("id").getAsString()),
                 jsonObject.get("level").getAsInt()
         );
     }

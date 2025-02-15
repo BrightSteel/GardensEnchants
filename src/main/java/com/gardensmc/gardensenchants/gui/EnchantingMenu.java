@@ -4,10 +4,8 @@ import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.books.BookInstance;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
-import com.gardensmc.gardensenchants.cache.EnchantEntryCache;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
-import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
 import com.gardensmc.gardensenchants.utils.OraxenShift;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -26,6 +24,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -120,29 +119,32 @@ public class EnchantingMenu extends Menu {
     }
 
     private String getPopulatedTitle() {
-        String[] book = new String[ENCHANT_GENERATE_COUNT];
+        BookInstance[] book = new BookInstance[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < book.length; i++) {
-            var b = dynamicRows.get(i).getBookInstance();
-            book[i] = (b != null) ? b.enchantment().getDisplayName() + " " + RomanNumber.toRoman(b.level()) : " ";
+            book[i] = dynamicRows.get(i).getBookInstance();
+//            book[i] = (b != null) ? b.enchantment().getDisplayName() + " " + RomanNumber.toRoman(b.level()) : " ";
         }
 
         HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
         String[] sample = new String[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            String raw = stripFormatting(book[i]);
-            String padding = FontMappings.getPadding(raw);
-            sample[i] = FontMappings.INSTANCE.replaceAll(raw, fontMaps[i]) + padding;
+            String display = getDisplayText(book[i]);
+            String padding = FontMappings.getPadding(display);
+            sample[i] = FontMappings.INSTANCE.replaceAll(display, fontMaps[i]) + padding;
         }
         return ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(193, true) + sample[0]  + sample[1]  + sample[2]);
     }
 
-    private String stripFormatting(String formatted) {
-        var maxLength = 13;
-        if (formatted.length() < maxLength) {
-            return formatted; // already small enough
+    private String getDisplayText(@Nullable BookInstance bookInstance) {
+        if (bookInstance == null) {
+            return "";
         }
-        var numeralIndex = formatted.lastIndexOf(" ") + 1;
-        return formatted.substring(0, Math.min(maxLength, numeralIndex - 1)) + "...";
+        var name = bookInstance.enchantment().getDisplayName();
+        int maxLength = 13;
+        if (name.length() <= maxLength) { // can comfortably fit full name and level on screen
+            return name + " " + RomanNumber.toRoman(bookInstance.level());
+        }
+        return name.substring(0, maxLength) + "...";
     }
 
     private DynamicGuiElement getDynamicBookElement(DynamicRow dynamicRow, Column column) {

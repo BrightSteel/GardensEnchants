@@ -9,6 +9,9 @@ public class Listeners {
     public static void registerListeners() {
         register(new Events());
         register(new AnvilListener());
+        register(new EntityListener());
+        register(new VillagerListener());
+        register(new LootListener());
     }
 
     private static void register(Listener listener) {

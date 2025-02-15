@@ -7,6 +7,7 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
@@ -19,6 +20,7 @@ public class CustomEnchantment extends GardensEnchantment {
     private final String id;
     private int maxLevel = 1;
     private boolean isVisibleInTable = true;
+    private List<GardensEnchantment> conflictingEnchantments = new ArrayList<>();
 
     private CustomEnchantment(String id) {
         this.id = id;
@@ -31,7 +33,7 @@ public class CustomEnchantment extends GardensEnchantment {
             if (compound != null) {
                 var enchants = compound.getCompound(ENCHANTS_KEY);
                 if (enchants != null) {
-                    return compound.hasTag(id);
+                    return enchants.hasTag(id);
                 }
             }
             return false;
@@ -64,7 +66,7 @@ public class CustomEnchantment extends GardensEnchantment {
         return NBT.get(itemStack, nbt -> {
             var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {
-                var enchants = nbt.getCompound(ENCHANTS_KEY);
+                var enchants = compound.getCompound(ENCHANTS_KEY);
                 if (enchants != null) {
                     return enchants.getInteger(id);
                 }
@@ -85,7 +87,14 @@ public class CustomEnchantment extends GardensEnchantment {
 
     @Override
     public boolean conflictsWith(GardensEnchantment ench) {
-        return false; // todo impl later
+        if (conflictingEnchantments.contains(ench)) {
+            return true;
+        }
+        if (ench instanceof CustomEnchantment customEnchantment) {
+            // check their list to avoid having to list conflicts twice each time...
+            return customEnchantment.conflictingEnchantments.contains(this);
+        }
+        return false;
     }
 
     public static class Builder {
@@ -98,6 +107,7 @@ public class CustomEnchantment extends GardensEnchantment {
         private Boolean isVisibleInTable;
         private List<Component> lore;
         private String bookIdentifier;
+        private List<GardensEnchantment> conflictingEnchantments;
 
         public Builder(String id) {
             this.id = id;
@@ -138,6 +148,11 @@ public class CustomEnchantment extends GardensEnchantment {
             return this;
         }
 
+        public Builder conflictsWith(GardensEnchantment... gardensEnchantments) {
+            this.conflictingEnchantments = List.of(gardensEnchantments);
+            return this;
+        }
+
         public CustomEnchantment build() {
             var customEnchant = new CustomEnchantment(id);
             if (rarity != null) {
@@ -163,6 +178,9 @@ public class CustomEnchantment extends GardensEnchantment {
             }
             if (bookIdentifier != null) {
                 customEnchant.bookIdentifier = bookIdentifier;
+            }
+            if (conflictingEnchantments != null) {
+                customEnchant.conflictingEnchantments = conflictingEnchantments;
             }
             return customEnchant;
         }

@@ -1,19 +1,18 @@
 package com.gardensmc.gardensenchants.command;
 
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EnchantCommand implements TabExecutor {
@@ -29,9 +28,10 @@ public class EnchantCommand implements TabExecutor {
             return true;
         }
 
-        var enchant = GardensEnchantments.INSTANCE.getEnchantment(args[0].toLowerCase());
+        var enchantName = args[0].toLowerCase();
+        var enchant = GardensEnchantments.INSTANCE.getEnchantment(enchantName);
         if (enchant == null) {
-            player.sendMessage(ChatColor.RED + "Could not find the enchant " + args[0]);
+            player.sendMessage(ChatColor.RED + "Could not find the enchant " + enchantName);
             return true;
         }
 
@@ -48,11 +48,11 @@ public class EnchantCommand implements TabExecutor {
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() != Material.AIR) {
             if (!enchant.canEnchant(item)) {
-                player.sendMessage(ChatColor.RED + "You cannot apply " + args[0] + " to this item!");
+                player.sendMessage(ChatColor.RED + "You cannot apply " + enchantName + " to this item!");
                 return true;
             }
             new GardensEnchantHandler(item).enchant(enchant, level);
-            player.sendMessage(ChatColor.GREEN + "Added " + args[0] + " to your item");
+            player.sendMessage(ChatColor.GREEN + "Added " + enchantName + " to your item");
         }
         else {
             player.sendMessage(ChatColor.RED + "Cannot enchant air!");
@@ -69,13 +69,6 @@ public class EnchantCommand implements TabExecutor {
             return List.of("Level");
         }
 
-        List<String> values = new ArrayList<>();
-
-        for (Enchantment enchantment : Enchantment.values()) {
-            String key = enchantment.getKey().getKey();
-            values.add(key);
-        }
-
-        return values;
+        return GardensEnchantments.INSTANCE.getEnchantments().stream().map(GardensEnchantment::getId).toList();
     }
 }

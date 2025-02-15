@@ -58,6 +58,16 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.DIVINE)
             .isVisibleInTable(false));
+    public static final CustomEnchantment EXPLOSIVE = register("explosive", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOW)
+            .rarity(EnchantRarity.UNIQUE)
+            .maxLevel(4));
+    public static final CustomEnchantment BARRAGE = register("barrage", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOW)
+            .conflictsWith(EXPLOSIVE)
+            .rarity(EnchantRarity.UNIQUE)
+            .maxLevel(3)
+    );
 
     private static CustomEnchantment register(String id) {
         return register(id, builder -> {});

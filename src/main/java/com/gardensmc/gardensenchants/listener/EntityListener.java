@@ -1,0 +1,79 @@
+package com.gardensmc.gardensenchants.listener;
+
+import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.enchantment.custom.LingeringEnchantHandler;
+import com.gardensmc.gardensenchants.probability.ChanceResultPair;
+import com.gardensmc.gardensenchants.probability.ProbabilityRoller;
+import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.concurrent.ThreadLocalRandom;
+
+public class EntityListener implements Listener {
+
+    @EventHandler(ignoreCancelled = true)
+    public void onShootArrow(EntityShootBowEvent e) {
+        var bow = e.getBow();
+        if (e.getProjectile() instanceof Arrow arrow) {
+            handleBowExplosion(arrow, bow);
+            handleBowBarrage(arrow, bow);
+        }
+    }
+
+    private void handleBowBarrage(Arrow arrow, ItemStack bow) {
+        var barrage = CustomEnchantments.BARRAGE;
+        var level = barrage.getEnchantmentLevel(bow);
+        if (level > 0) {
+            for (int i = 0; i < 3; i++) {
+                Bukkit.getScheduler().runTaskLater(
+                        GardensEnchants.plugin,
+                        () -> duplicateArrow(arrow), (i + 1) * 5
+                );
+            }
+        }
+    }
+
+    private void duplicateArrow(Arrow arrow) {
+        Arrow clone = (Arrow) arrow.getWorld().spawnEntity(
+                arrow.getLocation(),
+                arrow.getType()
+        );
+        clone.setVelocity(arrow.getVelocity());
+        clone.setColor(arrow.getColor());
+        clone.setBasePotionType(arrow.getBasePotionType());
+    }
+
+    private void handleBowExplosion(Entity arrow, ItemStack bow                                                           ) {
+        var explosive = CustomEnchantments.EXPLOSIVE;
+        var explosiveLevel = explosive.getEnchantmentLevel(bow);
+        if (explosiveLevel > 0) {
+            new LingeringEnchantHandler(arrow).putLingeringEnchant(explosive.getId(), explosiveLevel);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onArrowHit(EntityDamageByEntityEvent e) {
+        if (e.getDamager() instanceof Arrow arrow) {
+            var lingeringExplosiveLevel = new LingeringEnchantHandler(arrow).getLingeringEnchant(
+                    CustomEnchantments.EXPLOSIVE.getId()
+            );
+            if (lingeringExplosiveLevel > 0) {
+                arrow.getWorld().createExplosion(
+                        e.getEntity(),
+                        lingeringExplosiveLevel,
+                        true,
+                        false
+                );
+            }
+        }
+    }
+
+}

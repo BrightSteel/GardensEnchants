@@ -70,7 +70,8 @@ public class VanillaEnchantment extends GardensEnchantment {
         if (ench instanceof VanillaEnchantment vanilla) {
             return enchantment.conflictsWith(vanilla.enchantment);
         }
-        return false; // todo impl later
+        // call conflictsWith on customEnchantment
+        return ench.conflictsWith(this);
     }
 
 }

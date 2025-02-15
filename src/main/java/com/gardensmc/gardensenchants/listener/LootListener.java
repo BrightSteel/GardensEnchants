@@ -1,0 +1,80 @@
+package com.gardensmc.gardensenchants.listener;
+
+import org.bukkit.Material;
+import org.bukkit.block.Chest;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.LootContext;
+import org.bukkit.loot.LootTable;
+import org.bukkit.loot.Lootable;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class LootListener implements Listener {
+
+    @EventHandler(ignoreCancelled = true)
+    public void onInteractLootChest(PlayerInteractEvent e) {
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            var block = e.getClickedBlock();
+            if (block != null && block.getType() == Material.CHEST) {
+                Chest chest = (Chest) block.getState();
+                if (chest instanceof Lootable lootable && lootable.getLootTable() != null) {
+                    System.out.println("Creating loot table");
+                    var inventory = chest.getBlockInventory();
+                    inventory.setStorageContents(getLootContents(
+                            lootable.getLootTable(),
+                            inventory.getSize(),
+                            new LootContext
+                                    .Builder(chest.getLocation())
+                                    .build())
+                    );
+                    lootable.clearLootTable();
+                }
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onLootChestBreak(BlockBreakEvent e) {
+        var block = e.getBlock();
+        if (block.getType() == Material.CHEST) {
+            Chest chest = (Chest) block.getState();
+            if (chest instanceof Lootable lootable && lootable.getLootTable() != null) {
+                System.out.println("Dropping loot table");
+                e.setDropItems(false);
+                var loot = getLootContents(lootable.getLootTable(), 0, new LootContext
+                        .Builder(chest.getLocation())
+                        .build()
+                );
+                Arrays.stream(loot).forEach(itemStack -> block.getWorld().dropItemNaturally(
+                        block.getLocation(),
+                        itemStack
+                ));
+            }
+        }
+    }
+
+    private ItemStack[] getLootContents(LootTable lootTable, int invSize, LootContext lootContext) {
+        var air = new ItemStack(Material.AIR);
+        var loot = lootTable.populateLoot(null, lootContext)
+                .stream()
+                .map(itemStack -> {
+                    if (itemStack.getType() == Material.ENCHANTED_BOOK) {
+                        return VillagerListener.getCustomEnchantBook(itemStack);
+                    }
+                    return itemStack;
+                })
+                .collect(Collectors.toList());
+        var remainingSlots = invSize - loot.size();
+        for (int i = 0; i < remainingSlots; i++) {
+            loot.add(air.clone());
+        }
+        Collections.shuffle(loot);
+        return loot.toArray(ItemStack[]::new);
+    }
+}

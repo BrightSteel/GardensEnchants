@@ -30,6 +30,10 @@ public class GardensEnchantments {
         return enchantmentsByRarity.containsKey(rarity) ? enchantmentsByRarity.get(rarity) : new ArrayList<>();
     }
 
+    public List<GardensEnchantment> getEnchantments() {
+        return gardensEnchantments.values().stream().toList();
+    }
+
     public void registerEnchantments() {
         // register vanilla enchants
         gardensEnchantments.putAll(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
