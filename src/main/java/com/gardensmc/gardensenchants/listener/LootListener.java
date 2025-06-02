@@ -1,5 +1,7 @@
 package com.gardensmc.gardensenchants.listener;
 
+import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.event.EventHandler;
@@ -24,7 +26,6 @@ public class LootListener implements Listener {
             if (block != null && block.getType() == Material.CHEST) {
                 Chest chest = (Chest) block.getState();
                 if (chest instanceof Lootable lootable && lootable.getLootTable() != null) {
-                    System.out.println("Creating loot table");
                     var inventory = chest.getBlockInventory();
                     inventory.setStorageContents(getLootContents(
                             lootable.getLootTable(),
@@ -45,16 +46,20 @@ public class LootListener implements Listener {
         if (block.getType() == Material.CHEST) {
             Chest chest = (Chest) block.getState();
             if (chest instanceof Lootable lootable && lootable.getLootTable() != null) {
-                System.out.println("Dropping loot table");
                 e.setDropItems(false);
                 var loot = getLootContents(lootable.getLootTable(), 0, new LootContext
                         .Builder(chest.getLocation())
                         .build()
                 );
-                Arrays.stream(loot).forEach(itemStack -> block.getWorld().dropItemNaturally(
-                        block.getLocation(),
-                        itemStack
-                ));
+                var tool = PlayerUtil.getHeldItem(e.getPlayer());
+                if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
+                    PlayerUtil.giveItems(e.getPlayer(), List.of(loot));
+                } else {
+                    Arrays.stream(loot).forEach(itemStack -> block.getWorld().dropItemNaturally(
+                            block.getLocation(),
+                            itemStack
+                    ));
+                }
             }
         }
     }

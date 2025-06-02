@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.command;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
+import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -24,7 +25,11 @@ public class EnchantCommand implements TabExecutor {
         }
 
         if (args.length < 1) {
-            player.sendMessage(ChatColor.RED + "Please specify which enchant you'd like to apply");
+            if (player.hasPermission("gardens.enchant.open")) {
+                new EnchantingMenu(player).open();
+            } else {
+                player.sendMessage(ChatColor.RED + "No permission to use this command");
+            }
             return true;
         }
 

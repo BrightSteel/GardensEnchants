@@ -133,6 +133,9 @@ public class EnchantRestricts {
     public static final EnchantRestrict FISHING_ROD = new EnchantRestrict.Builder("fishing_rod")
             .withMaterial(Material.FISHING_ROD).withIcon('\uE256').build();
 
+    public static final EnchantRestrict ELYTRA = new EnchantRestrict.Builder("elytra")
+            .withMaterial(Material.ELYTRA).withIcon('\uE257').build();
+
     public static final EnchantRestrict TOOLS = new EnchantRestrict.Builder("tools")
             .withChildren(
                     PICKAXE,

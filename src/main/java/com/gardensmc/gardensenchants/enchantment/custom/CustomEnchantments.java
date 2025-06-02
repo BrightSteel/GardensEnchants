@@ -12,13 +12,14 @@ public class CustomEnchantments {
     public static final Map<String, CustomEnchantment> customEnchantments = new HashMap<>();
 
     public static final CustomEnchantment SKULL_STEALER = register("skull_stealer", builder -> builder
+            .rarity(EnchantRarity.UNIQUE)
             .enchantRestrict(EnchantRestricts.WEAPON));
     public static final CustomEnchantment TIMBER = register( "timber", builder -> builder
             .enchantRestrict(EnchantRestricts.AXE));
     public static final CustomEnchantment VEIN_MINER = register("vein_miner", builder -> builder
             .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment BUBBLE_HEAD = register("bubble_head", builder -> builder
-            .rarity(EnchantRarity.UNIQUE)
+            .rarity(EnchantRarity.MYSTICAL)
             .enchantRestrict(EnchantRestricts.HELMET));
     public static final CustomEnchantment LIFE_STEAL = register("life_steal", builder -> builder
             .enchantRestrict(EnchantRestricts.WEAPON)
@@ -65,6 +66,47 @@ public class CustomEnchantments {
     public static final CustomEnchantment BARRAGE = register("barrage", builder -> builder
             .enchantRestrict(EnchantRestricts.BOW)
             .conflictsWith(EXPLOSIVE)
+            .rarity(EnchantRarity.UNIQUE)
+            .maxLevel(3)
+    );
+    public static final CustomEnchantment SPRINTER = register("sprinter", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOOTS)
+            .rarity(EnchantRarity.UNIQUE)
+            .maxLevel(3)
+    );
+    public static final CustomEnchantment CLOAK = register("cloak", builder -> builder
+            .enchantRestrict(EnchantRestricts.ARMOR)
+            .rarity(EnchantRarity.MYSTICAL)
+    );
+    public static final CustomEnchantment FLUTTER = register("flutter", builder -> builder
+            .enchantRestrict(EnchantRestricts.ELYTRA)
+            .rarity(EnchantRarity.MYSTICAL)
+    );
+    public static final CustomEnchantment FLIPPERS = register("flippers", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOOTS)
+            .rarity(EnchantRarity.MYSTICAL)
+    );
+    public static final CustomEnchantment SIPHON = register("siphon", builder -> builder
+            .enchantRestrict(EnchantRestricts.TOOLS)
+            .rarity(EnchantRarity.UNIQUE)
+    );
+    public static final CustomEnchantment ROCKET_BOOTS = register("rocket_boots", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOOTS)
+            .rarity(EnchantRarity.DIVINE)
+            .maxLevel(4)
+    );
+    public static final CustomEnchantment ESCAPE_ARTIST = register("escape_artist", builder -> builder
+            .enchantRestrict(EnchantRestricts.BOOTS)
+            .rarity(EnchantRarity.UNIQUE)
+            .maxLevel(2)
+    );
+    public static final CustomEnchantment ORB_BOOST = register("orb_boost", builder -> builder
+            .enchantRestrict(EnchantRestricts.CHESTPLATE)
+            .rarity(EnchantRarity.MYSTICAL)
+            .maxLevel(3)
+    );
+    public static final CustomEnchantment MUNCHER = register("muncher", builder -> builder
+            .enchantRestrict(EnchantRestricts.HELMET)
             .rarity(EnchantRarity.UNIQUE)
             .maxLevel(3)
     );

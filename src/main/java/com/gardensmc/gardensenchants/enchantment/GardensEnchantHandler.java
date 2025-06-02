@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants.enchantment;
 
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.utils.MessageUtil;
 import de.tr7zw.nbtapi.NBT;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -22,6 +23,7 @@ public class GardensEnchantHandler {
     private final ItemStack item;
     public static final String ITEM_NBT_KEY = "GardensEnchants";
     private static final String SLOTS_KEY = "slots";
+    private static final String CUSTOM_LORE_KEY = "customLore";
     private static final int DEFAULT_SLOTS = 4;
 
     public boolean isEnchantable(GardensEnchantment enchantment) {
@@ -68,6 +70,7 @@ public class GardensEnchantHandler {
     }
 
     private void applyPostEnchantChanges() {
+        storeCustomLore();
         var meta = item.getItemMeta();
         // todo - add enchantment glint, this is a new tag in 1.21
         meta.addItemFlags(
@@ -77,6 +80,20 @@ public class GardensEnchantHandler {
         );
         meta.lore(getLore());
         item.setItemMeta(meta);
+    }
+
+    public boolean hasEnchantNBT() {
+        return NBT.get(item, nbt -> (boolean) nbt.hasTag(ITEM_NBT_KEY));
+    }
+
+    private void storeCustomLore() {
+        var customLore = item.getItemMeta().lore();
+        if (customLore == null || customLore.isEmpty()) {
+            return;
+        }
+        if (!hasEnchantNBT()) {
+            setCustomLore(customLore.stream().map(MessageUtil::toMiniMessage).toList());
+        }
     }
 
     public void removeEnchant(GardensEnchantment enchantment) {
@@ -117,8 +134,20 @@ public class GardensEnchantHandler {
     private List<Component> getLore() {
         var enchantments = getEnchantments();
         var slots = getSlots();
+        var customLore = getCustomLore();
         var enchantCount = enchantments.size();
         var lore = new ArrayList<Component>();
+        if (!customLore.isEmpty()) {
+            lore.addAll(customLore
+                    .stream()
+                    .map(s -> Component.text()
+                            .decoration(TextDecoration.ITALIC, false)
+                            .append(MessageUtil.fromMiniMessage(s))
+                            .build()
+                    )
+                    .toList()
+            );
+        }
         lore.add(Component.empty());
         lore.add(Component.text()
                 .content("Enchant Slots: ")
@@ -129,7 +158,7 @@ public class GardensEnchantHandler {
                         .color(NamedTextColor.GOLD))
                 .build()
         );
-        lore.add(Component.empty());
+//        lore.add(Component.empty());
         lore.addAll(enchantments.stream().map(EnchantmentInstance::toLore).toList());
         var remainingSlots = slots - enchantCount;
         if (remainingSlots > 0) {
@@ -185,6 +214,67 @@ public class GardensEnchantHandler {
                 return itemNBT.getInteger(SLOTS_KEY);
             }
             return DEFAULT_SLOTS;
+        });
+    }
+
+    public void addCustomLore(String line) {
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            // get will create list if needed
+            var stringList = itemNBT.getStringList(CUSTOM_LORE_KEY);
+            stringList.add(line);
+        });
+        refreshLore();
+    }
+
+    // input -1 to remove last line
+    // returns text removed
+    public String removeCustomLore(int line) {
+        var text = NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            // get will create list if needed
+            var stringList = itemNBT.getStringList(CUSTOM_LORE_KEY);
+            if (line == -1) {
+                var i = stringList.size() - 1;
+                var lore = stringList.get(i);
+                stringList.remove(i);
+                return lore;
+            } else {
+                var lore = stringList.get(line);
+                stringList.remove(line);
+                return lore;
+            }
+        });
+        refreshLore();
+        return text;
+    }
+
+    public void removeCustomLore() {
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            itemNBT.removeKey(CUSTOM_LORE_KEY);
+        });
+        refreshLore();
+    }
+
+    public void setCustomLore(List<String> customLore) {
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            // get will create list if needed
+            var stringList = itemNBT.getStringList(CUSTOM_LORE_KEY);
+            stringList.clear();
+            stringList.addAll(customLore);
+        });
+        refreshLore();
+    }
+
+    public List<String> getCustomLore() {
+        return NBT.get(item, nbt -> {
+            var itemNBT = nbt.getCompound(ITEM_NBT_KEY);
+            if (itemNBT != null && itemNBT.hasTag(CUSTOM_LORE_KEY)) {
+                return itemNBT.getStringList(CUSTOM_LORE_KEY).toListCopy();
+            }
+            return Collections.emptyList();
         });
     }
 

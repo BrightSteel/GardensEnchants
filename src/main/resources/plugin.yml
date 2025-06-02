@@ -19,6 +19,9 @@ commands:
   disenchant:
     description: Remove enchantment from held item
     usage: /<command>
+  lore:
+    description: Modify lore on held item
+    usage: /<command>
 depend:
   - Vault
   - GardensFurniture

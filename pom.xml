@@ -115,13 +115,18 @@
             <id>SilkSpawners-Repo</id>
             <url>https://repo.dustplanet.de/artifactory/libs-release-local</url>
         </repository>
+        <repository>
+            <id>phoenix</id>
+            <url>https://nexus.phoenixdevt.fr/repository/maven-public/</url>
+        </repository>
+
     </repositories>
 
     <dependencies>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.1-R0.1-SNAPSHOT</version>
+            <version>1.21.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -175,7 +180,7 @@
         <dependency>
             <groupId>de.themoep</groupId>
             <artifactId>inventorygui</artifactId>
-            <version>1.6.4-SNAPSHOT</version>
+            <version>1.6.5-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -234,13 +239,7 @@
         <dependency>
             <groupId>de.tr7zw</groupId>
             <artifactId>item-nbt-api-plugin</artifactId>
-            <version>2.14.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.comphenix.protocol</groupId>
-            <artifactId>ProtocolLib</artifactId>
-            <version>4.8.0</version>
-            <scope>provided</scope>
+            <version>2.15.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
@@ -248,6 +247,7 @@
             <version>1.7.1</version>
             <scope>provided</scope>
         </dependency>
+
     </dependencies>
 
 </project>

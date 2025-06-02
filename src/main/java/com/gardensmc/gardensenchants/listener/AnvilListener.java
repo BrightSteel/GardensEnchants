@@ -3,6 +3,7 @@ package com.gardensmc.gardensenchants.listener;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
+import com.gardensmc.gardensenchants.relic.RelicHandler;
 import com.gardensmc.gardensenchants.rune.RuneFactory;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.ChatColor;
@@ -35,6 +36,23 @@ public class AnvilListener implements Listener {
         }
         inv.setRepairCost(runeHandler.getApplyCost(itemPrimary));
         e.setResult(runeHandler.apply(itemPrimary));
+    }
+
+    @EventHandler
+    public void onPrepareAnvilWithRelic(PrepareAnvilEvent e) {
+        AnvilInventory inv = e.getInventory();
+        ItemStack[] contents = inv.getContents();
+        var itemPrimary = contents[0];
+        var itemSecondary = contents[1];
+        if (itemPrimary == null || itemSecondary == null) {
+            return;
+        }
+        var relicHandler = RelicHandler.createRelicHandler(itemSecondary);
+        if (relicHandler == null || !relicHandler.canApply(itemPrimary)) {
+            return;
+        }
+        inv.setRepairCost(relicHandler.getApplyCost(itemPrimary));
+        e.setResult(relicHandler.apply(itemPrimary));
     }
 
     @EventHandler

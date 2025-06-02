@@ -9,9 +9,11 @@ import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.inventory.ItemStack;
 

@@ -125,7 +125,10 @@ public class Events implements Listener {
                 EntityType.GHAST
         };
         if (e.getDamager() instanceof Player player) {
-            ItemStack weapon = player.getInventory().getItemInMainHand();
+            ItemStack weapon = PlayerUtil.getHeldItem(player);
+            if (weapon == null) {
+                return;
+            }
 
             if (Arrays.asList(netherTypes).contains(e.getEntity().getType())) {
                 if (NETHERLING.hasEnchantment(weapon)) {
@@ -326,10 +329,11 @@ public class Events implements Listener {
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();
         if (block_name.endsWith("ORE")) {
-            if (!CustomEnchantments.SMELTER.hasEnchantment(player.getInventory().getItemInMainHand())) {
+            var heldItem = PlayerUtil.getHeldItem(player);
+            if (heldItem == null || !CustomEnchantments.SMELTER.hasEnchantment(heldItem)) {
                 return;
             }
-            int fortune = player.getInventory().getItemInMainHand().getEnchantmentLevel(Enchantment.FORTUNE);
+            int fortune = heldItem.getEnchantmentLevel(Enchantment.FORTUNE);
             Material drop = null;
             int amount = 1 + ThreadLocalRandom.current().nextInt(0, fortune + 1);
 
@@ -480,8 +484,8 @@ public class Events implements Listener {
     public void onPlayerKill(PlayerDeathEvent e) {
         Player killer = e.getEntity().getKiller();
         if (killer != null) {
-            ItemStack weapon = killer.getInventory().getItemInMainHand();
-            if (CustomEnchantments.SKULL_STEALER.hasEnchantment(weapon)) {
+            ItemStack weapon = PlayerUtil.getHeldItem(killer);
+            if (weapon != null && CustomEnchantments.SKULL_STEALER.hasEnchantment(weapon)) {
                 int ench_level = SKULL_STEALER.getEnchantmentLevel(weapon);
 //                int percent = ench_level == 1 ? 15 : 15 * ench_level;
                 if (ProbabilityUtil.roll(25)) {

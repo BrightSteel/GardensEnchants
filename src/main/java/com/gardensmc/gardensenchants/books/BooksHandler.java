@@ -214,7 +214,7 @@ public class BooksHandler {
                     .color(enchantment.getRarity().getTextColor())
                     .append(Component.text(enchantment.getRarity().getTag() + " ").color(NamedTextColor.WHITE))
                     .append(display)
-                    .append(Component.text(" " + RomanNumber.toRoman(level)))
+                    .append(Component.text(enchantment.getMaxLevel() == 1 ? "" : " " + RomanNumber.toRoman(level)))
                     .build());
             book.setItemMeta(meta);
         }

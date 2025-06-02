@@ -1,0 +1,7 @@
+crown:
+  equipment:
+    silver_sword: royal_sword
+    silver_hoe: royal_hoe
+skull:
+  equipment:
+    silver_sword: skull_sword

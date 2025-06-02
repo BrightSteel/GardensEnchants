@@ -28,6 +28,9 @@ public class CustomEnchantment extends GardensEnchantment {
 
     @Override
     public boolean hasEnchantment(ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
         return NBT.get(itemStack, nbt -> {
             var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {

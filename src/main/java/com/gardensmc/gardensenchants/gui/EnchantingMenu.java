@@ -6,6 +6,7 @@ import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.utils.OraxenShift;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -142,9 +143,13 @@ public class EnchantingMenu extends Menu {
         var name = bookInstance.enchantment().getDisplayName();
         int maxLength = 13;
         if (name.length() <= maxLength) { // can comfortably fit full name and level on screen
-            return name + " " + RomanNumber.toRoman(bookInstance.level());
+            return name + getLevelText(bookInstance);
         }
         return name.substring(0, maxLength) + "...";
+    }
+
+    private String getLevelText(BookInstance bookInstance) {
+        return bookInstance.enchantment().getMaxLevel() == 1 ? "" : " " + RomanNumber.toRoman(bookInstance.level());
     }
 
     private DynamicGuiElement getDynamicBookElement(DynamicRow dynamicRow, Column column) {

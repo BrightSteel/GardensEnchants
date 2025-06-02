@@ -12,6 +12,8 @@ public class Listeners {
         register(new EntityListener());
         register(new VillagerListener());
         register(new LootListener());
+        register(new PlayerListener());
+        register(new BlockListener());
     }
 
     private static void register(Listener listener) {

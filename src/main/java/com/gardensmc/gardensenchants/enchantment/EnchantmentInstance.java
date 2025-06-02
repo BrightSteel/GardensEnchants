@@ -30,10 +30,14 @@ public class EnchantmentInstance implements Comparable<EnchantmentInstance> {
     public Component toLore() {
         return Component
                 .text()
-                .content("+ " + enchantment.getDisplayName() + " " + RomanNumber.toRoman(level))
+                .content("+ " + enchantment.getDisplayName() + getLevelText())
                 .color(enchantment.getRarity().getTextColor())
                 .decoration(TextDecoration.ITALIC, false)
                 .build();
+    }
+
+    private String getLevelText() {
+        return enchantment.getMaxLevel() == 1 ? "" : " " + RomanNumber.toRoman(level);
     }
 
     @Override
