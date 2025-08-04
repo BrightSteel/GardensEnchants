@@ -4,14 +4,13 @@ import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
-import com.gardensmc.gardensenchants.utils.MessageUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import de.themoep.inventorygui.*;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,18 +19,15 @@ import java.util.stream.Collectors;
 
 public class EnchantingBooksMenu extends Menu {
 
-    private Player viewer;
-
     public static String[] layout = new String[]{
-            "bbbbbbbbb",
-            "bbbbbbbbb",
-            "bbbbbbbbb",
+            " bbbbbbb ",
+            " bbbbbbb ",
+            " bbbbbbb ",
             "   p n   "
     };
 
     public EnchantingBooksMenu(Player viewer) {
-        super(layout, "Enchanting Books", viewer);
-        this.viewer = viewer;
+        super(layout, "<white><font:gardens:default>" + getShift(-8) + "\u0121", viewer);
     }
 
     @Override
@@ -45,8 +41,8 @@ public class EnchantingBooksMenu extends Menu {
                 .collect(Collectors.toList());
         grp.addElements(books);
         gui.addElement(grp);
-        gui.addElement(new GuiPageElement('p', new ItemStack(Material.PAPER), GuiPageElement.PageAction.PREVIOUS, "Previous"));
-        gui.addElement(new GuiPageElement('n', new ItemStack(Material.PAPER), GuiPageElement.PageAction.NEXT, "Next"));
+        gui.addElement(buildBackButton(() -> new EnchantingMenu(viewer), "<gold>Back to Enchanting Table"));
+        gui.addElement(buildNextButton());
     }
 
     private ItemStack buildBook(GardensEnchantment enchant) {
@@ -54,17 +50,24 @@ public class EnchantingBooksMenu extends Menu {
         var meta = book.getItemMeta();
         var maxLvl = RomanNumber.toRoman(enchant.getMaxLevel());
         if (meta != null) {
-            var display = meta.displayName();
-            if (display == null || MessageUtil.isBlank(display)) {
-                display = Component.text(enchant.getDisplayName());
-            }
+            var display = Component.text(enchant.getDisplayName());
             meta.displayName(Component.text()
                     .decoration(TextDecoration.ITALIC, false)
                     .color(enchant.getRarity().getTextColor())
-                    .append(Component.text(enchant.getRarity().getTag() + " ").color(NamedTextColor.WHITE))
                     .append(display)
                     .build());
-            var lore = enchant.getLore()
+            var lore = new ArrayList<Component>();
+            var permittedIcons = enchant.getPermittedItemIcons();
+            if (!permittedIcons.isEmpty()) {
+                lore.add(Component.text()
+                        .decoration(TextDecoration.ITALIC, false)
+                        .color(NamedTextColor.WHITE)
+                        .font(Key.key("gardens:default"))
+                        .append(Component.text(StringUtils.join(permittedIcons, " ")))
+                        .build()
+                );
+            }
+            lore.addAll(enchant.getLore()
                     .stream()
                     .map(component -> Component.text()
                             .append(component)
@@ -73,22 +76,19 @@ public class EnchantingBooksMenu extends Menu {
                             .decoration(TextDecoration.ITALIC, false)
                             .color(NamedTextColor.GRAY) // default color
                             .build())
-                    .collect(Collectors.toList());
+                    .toList());
+            lore.add(Component
+                    .text(enchant.getRarity().getTag() + "\u011E")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false)
+                    .font(Key.key("gardens:default"))
+            );
             lore.add(Component.text("")); // space
             lore.add(Component.text()
                     .decoration(TextDecoration.ITALIC, false)
                     .color(NamedTextColor.GRAY)
                     .append(Component.text("Max Level: " + maxLvl))
                     .build());
-            var permittedIcons = enchant.getPermittedItemIcons();
-            if (!permittedIcons.isEmpty()) {
-                lore.add(Component.text()
-                        .decoration(TextDecoration.ITALIC, false)
-                        .color(NamedTextColor.WHITE)
-                        .append(Component.text(StringUtils.join(permittedIcons, " ")))
-                        .build()
-                );
-            }
             if (!enchant.isVisibleInTable()) {
                 lore.add(Component
                         .text("Un-Available in Table", NamedTextColor.DARK_GRAY)

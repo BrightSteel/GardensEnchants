@@ -15,7 +15,7 @@ import java.util.logging.Level;
 @Getter
 public class VanillaOverride {
 
-    private EnchantRarity enchantRarity = EnchantRarity.ORDINARY;
+    private EnchantRarity enchantRarity = EnchantRarity.COMMON;
     private final String display;
     private List<Component> lore = Collections.emptyList();
     private final boolean isDisabled;

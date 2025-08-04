@@ -12,6 +12,7 @@ import java.util.List;
 public class VanillaEnchantment extends GardensEnchantment {
 
     private final Enchantment enchantment;
+    private final boolean isVisibleInTable;
 
     public VanillaEnchantment(
             Enchantment enchantment,
@@ -19,10 +20,12 @@ public class VanillaEnchantment extends GardensEnchantment {
             String displayName,
             List<Component> lore,
             String bookIdentifier,
-            EnchantRestrict enchantRestrict
+            EnchantRestrict enchantRestrict,
+            boolean isVisibleInTable
     ) {
         super(rarity, displayName, lore, bookIdentifier, enchantRestrict);
         this.enchantment = enchantment;
+        this.isVisibleInTable = isVisibleInTable;
     }
 
     @Override
@@ -62,7 +65,7 @@ public class VanillaEnchantment extends GardensEnchantment {
 
     @Override
     public boolean isVisibleInTable() {
-        return true;
+        return isVisibleInTable;
     }
 
     @Override

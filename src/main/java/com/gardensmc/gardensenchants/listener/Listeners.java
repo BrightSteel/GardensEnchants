@@ -14,6 +14,8 @@ public class Listeners {
         register(new LootListener());
         register(new PlayerListener());
         register(new BlockListener());
+        register(new GrindstoneListener());
+        register(new QuickShopListener());
     }
 
     private static void register(Listener listener) {

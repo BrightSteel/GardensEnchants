@@ -1,11 +1,14 @@
 package com.gardensmc.gardensenchants.listener;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.relic.RelicHandler;
 import com.gardensmc.gardensenchants.rune.RuneFactory;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
@@ -75,6 +78,10 @@ public class AnvilListener implements Listener {
             }
             var enchantment = bookInstance.enchantment();
             var itemClone = item.clone();
+            var rename = inv.getRenameText();
+            if (rename != null && !rename.isBlank()) {
+                itemClone.editMeta(meta -> meta.customName(MiniMessage.miniMessage().deserialize(rename)));
+            }
             var enchantmentHandler = new GardensEnchantHandler(itemClone);
             if (enchantmentHandler.isEnchantable(enchantment)) {
                 // check if item already contains enchantment at same level, then we should attempt to upgrade it
@@ -173,6 +180,11 @@ public class AnvilListener implements Listener {
         if (bookInstance == null) {
             return;
         }
+        if (primaryItem.getType() == Material.ENCHANTED_BOOK) {
+            return; // book combining
+        }
+        // for some reason, during renames it doesn't remove the book. Lets do it manually
+        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> e.getInventory().setItem(1, new ItemStack(Material.AIR)), 1);
         if (ProbabilityUtil.roll(bookInstance.calculateDestructionChance())) {
             // add original item to inventory
             e.getWhoClicked().getInventory().addItem(primaryItem);
@@ -251,6 +263,9 @@ public class AnvilListener implements Listener {
         }
         if (itemPrimary.getType() != itemSecondary.getType()) {
             return false;
+        }
+        if (itemPrimary.getType() == Material.ENCHANTED_BOOK) {
+            return false; // combining books instead
         }
         // if result is empty AND we have no custom changes to second item that can apply to first,
         // we fail as result is pointless

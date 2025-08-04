@@ -5,9 +5,13 @@ import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import de.tr7zw.nbtapi.NBT;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
@@ -28,7 +32,7 @@ public class CustomEnchantment extends GardensEnchantment {
 
     @Override
     public boolean hasEnchantment(ItemStack itemStack) {
-        if (itemStack == null) {
+        if (itemStack == null || itemStack.getType() == Material.AIR) {
             return false;
         }
         return NBT.get(itemStack, nbt -> {
@@ -49,6 +53,12 @@ public class CustomEnchantment extends GardensEnchantment {
             var compound = nbt.getOrCreateCompound(ITEM_NBT_KEY).getOrCreateCompound(ENCHANTS_KEY);
             compound.setInteger(id, level);
         });
+        if (id.equals(CustomEnchantments.ETERNAL.id)) {
+            if (itemStack.getItemMeta() instanceof Damageable damageable) {
+                damageable.setDamage(0);
+                itemStack.setItemMeta(damageable);
+            }
+        }
     }
 
     @Override
@@ -66,6 +76,9 @@ public class CustomEnchantment extends GardensEnchantment {
 
     @Override
     public int getEnchantmentLevel(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType() == Material.AIR) {
+            return 0;
+        }
         return NBT.get(itemStack, nbt -> {
             var compound = nbt.getCompound(ITEM_NBT_KEY);
             if (compound != null) {
@@ -143,6 +156,11 @@ public class CustomEnchantment extends GardensEnchantment {
 
         public Builder lore(List<Component> lore) {
             this.lore = lore;
+            return this;
+        }
+
+        public Builder lore(String... lore) {
+            this.lore = Arrays.stream(lore).map(s -> MiniMessage.miniMessage().deserialize(s)).toList();
             return this;
         }
 

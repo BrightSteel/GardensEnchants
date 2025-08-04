@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.database.Tables;
@@ -64,9 +65,7 @@ public class GardensEnchants extends JavaPlugin {
         protocolManager = ProtocolLibrary.getProtocolManager();
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        // todo - enable economy
-//        assert rsp != null;
-//        econ = rsp.getProvider();
+        econ = rsp.getProvider();
 
         Objects.requireNonNull(Bukkit.getPluginCommand("getbook")).setExecutor(new GetBookCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("givebook")).setExecutor(new GiveBookCommand());
@@ -85,6 +84,7 @@ public class GardensEnchants extends JavaPlugin {
     }
 
     private void tickPlayer(Player player) {
+        OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId()).tick(2);
         if (player.isSneaking()) {
             if (player.isOnGround()) {
                 handleJumpBoost(player);

@@ -127,23 +127,24 @@ public class EnchantRestricts {
     public static final EnchantRestrict ENCHANTED_BOOK = new EnchantRestrict.Builder("enchanted_book")
             .withMaterial(Material.ENCHANTED_BOOK).withIcon('\uE250').build();
 
-    public static final EnchantRestrict WAND = new EnchantRestrict.Builder("wand")
-            .withCustomItemSuffix("wand").withIcon('\uE24B').build();
-
     public static final EnchantRestrict FISHING_ROD = new EnchantRestrict.Builder("fishing_rod")
             .withMaterial(Material.FISHING_ROD).withIcon('\uE256').build();
 
     public static final EnchantRestrict ELYTRA = new EnchantRestrict.Builder("elytra")
             .withMaterial(Material.ELYTRA).withIcon('\uE257').build();
 
-    public static final EnchantRestrict TOOLS = new EnchantRestrict.Builder("tools")
+    public static final EnchantRestrict BASIC_TOOLS = new EnchantRestrict.Builder("basic_tools")
             .withChildren(
                     PICKAXE,
                     AXE,
                     SHOVEL,
-                    SWORD,
-                    HOE,
-                    WAND
+                    HOE
+            ).build();
+
+    public static final EnchantRestrict TOOLS = new EnchantRestrict.Builder("tools")
+            .withChildren(
+                    BASIC_TOOLS,
+                    SWORD
             ).build();
 
     public static final EnchantRestrict WEAPON = new EnchantRestrict.Builder("weapon")
@@ -161,12 +162,14 @@ public class EnchantRestricts {
             .withChildren(
                     ARMOR,
                     TOOLS,
+                    WEAPON,
                     MACE,
                     BOW,
                     CROSS_BOW,
                     TRIDENT,
                     SHEARS,
-                    FISHING_ROD
+                    FISHING_ROD,
+                    ELYTRA
             )
             .setIcons(Collections.emptyList())
             .build();

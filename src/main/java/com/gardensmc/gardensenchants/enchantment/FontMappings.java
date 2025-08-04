@@ -1,6 +1,6 @@
 package com.gardensmc.gardensenchants.enchantment;
 
-import com.gardensmc.gardensenchants.utils.OraxenShift;
+import com.gardensmc.gardensenchants.utils.FontShift;
 
 import java.util.HashMap;
 
@@ -224,7 +224,7 @@ public class FontMappings {
 //        int pad = width - pixels;
 //        boolean neg = (pad < 0);
 //        System.out.println("Getting pad for " + pad);
-        String shift = OraxenShift.INSTANCE.getShift(pixels, true);
+        String shift = FontShift.INSTANCE.getShift(-pixels);
         return shift;
 //        return ":offset_" + pad + ":";
     }

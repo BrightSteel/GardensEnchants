@@ -1,5 +1,6 @@
 package com.gardensmc.gardensenchants.listener;
 
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.Material;
@@ -71,6 +72,10 @@ public class LootListener implements Listener {
                 .map(itemStack -> {
                     if (itemStack.getType() == Material.ENCHANTED_BOOK) {
                         return VillagerListener.getCustomEnchantBook(itemStack);
+                    } else if (!itemStack.getEnchantments().isEmpty()) {
+                        var clone = itemStack.clone();
+                        new GardensEnchantHandler(clone).applyPostEnchantChanges();
+                        return clone;
                     }
                     return itemStack;
                 })

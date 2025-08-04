@@ -45,7 +45,7 @@ public class RelicHandler {
         cloneMeta.setItemModel(Objects.requireNonNull(resultItem).getItemMeta().getItemModel());
         // upgrade name if default
         var name = clone.getItemMeta().displayName();
-        if (name == null || PlainTextComponentSerializer.plainText().serialize(name).equalsIgnoreCase(customItem.getDisplay())) {
+        if (name == null || PlainTextComponentSerializer.plainText().serialize(name).equalsIgnoreCase(customItem.getDisplayRawFormatted())) {
             cloneMeta.displayName(resultItem.displayName());
         }
         clone.setItemMeta(cloneMeta);

@@ -14,16 +14,20 @@ import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.iface.ReadWriteItemNBT;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ThreadLocalRandom;
@@ -82,14 +86,16 @@ public class BooksHandler {
     private EnchantmentInstance getRandomEnchantment(String type) {
         var enchantRestrict = EnchantRestricts.registeredEnchantRestricts.get(type);
         if (enchantRestrict == null) {
-            GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Unable to find enchant restrict with id: " + type);
+            GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Unable to \uE11A enchant restrict with id: " + type);
             return null;
         }
-        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(ProbabilityUtil.rollRarity())
+        var rarity = ProbabilityUtil.rollRarity();
+        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(rarity)
                 .stream()
                 .filter(enchantment -> enchantment.isVisibleInTable() && enchantRestrict.isEqualOrChild(enchantment.getRestrict()))
                 .toList();
         if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
+            GardensEnchants.plugin.getLogger().severe("Could not find enchant with rarity %s for type %s!".formatted(rarity, type));
             return null;
         }
         var enchantment = enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size()));
@@ -131,7 +137,18 @@ public class BooksHandler {
         var book = bookInstance.book();
         var meta = book.getItemMeta();
         if (meta != null) {
-            var lore = bookInstance.enchantment().getLore()
+            var lore = new ArrayList<Component>();
+            var permittedIcons = bookInstance.enchantment().getPermittedItemIcons();
+            if (!permittedIcons.isEmpty()) {
+                lore.add(Component.text()
+                        .decoration(TextDecoration.ITALIC, false)
+                        .color(NamedTextColor.WHITE)
+                        .font(Key.key("gardens:default"))
+                        .append(Component.text(StringUtils.join(permittedIcons, " ")))
+                        .build()
+                );
+            }
+            lore.addAll(bookInstance.enchantment().getLore()
                     .stream()
                     .map(component -> Component.text()
                             .append(component)
@@ -140,7 +157,7 @@ public class BooksHandler {
                             .decoration(TextDecoration.ITALIC, false)
                             .color(NamedTextColor.GRAY) // default color
                             .build())
-                    .collect(Collectors.toList());
+                    .toList());
             var destruction = bookInstance.calculateDestructionChance();
             if (destruction != 0) {
                 lore.add(Component.text()
@@ -158,19 +175,17 @@ public class BooksHandler {
                 lore.add(Component.text()
                         .content(getRestorationDisplay(restorations))
                         .color(NamedTextColor.WHITE)
+                        .font(Key.key("gardens:default"))
                         .decoration(TextDecoration.ITALIC, false)
                         .build()
                 );
             }
-            var permittedIcons = bookInstance.enchantment().getPermittedItemIcons();
-            if (!permittedIcons.isEmpty()) {
-                lore.add(Component.text()
-                        .decoration(TextDecoration.ITALIC, false)
-                        .color(NamedTextColor.WHITE)
-                        .append(Component.text(StringUtils.join(permittedIcons, " ")))
-                        .build()
-                );
-            }
+            lore.add(Component
+                    .text(bookInstance.enchantment().getRarity().getTag() + "\u011E")
+                    .color(NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false)
+                    .font(Key.key("gardens:default"))
+            );
             meta.lore(lore);
             book.setItemMeta(meta);
         }
@@ -191,6 +206,7 @@ public class BooksHandler {
         if (book == null) {
             book = new ItemStack(Material.ENCHANTED_BOOK);
         }
+        book.editMeta(meta -> meta.setTooltipStyle(NamespacedKey.fromString("gardens:" + enchantment.getRarity().toString().toLowerCase())));
         return book;
     }
 
@@ -205,14 +221,10 @@ public class BooksHandler {
         // set displayName
         ItemMeta meta = book.getItemMeta();
         if (meta != null) {
-            var display = meta.displayName();
-            if (display == null || MessageUtil.isBlank(display)) {
-                display = Component.text(enchantment.getDisplayName());
-            }
+            var display = Component.text(enchantment.getDisplayName());
             meta.displayName(Component.text()
                     .decoration(TextDecoration.ITALIC, false)
                     .color(enchantment.getRarity().getTextColor())
-                    .append(Component.text(enchantment.getRarity().getTag() + " ").color(NamedTextColor.WHITE))
                     .append(display)
                     .append(Component.text(enchantment.getMaxLevel() == 1 ? "" : " " + RomanNumber.toRoman(level)))
                     .build());

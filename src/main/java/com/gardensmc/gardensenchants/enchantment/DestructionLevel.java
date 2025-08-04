@@ -9,7 +9,8 @@ public enum DestructionLevel {
     NONE,
     EASY(5, 15),
     MEDIUM(15, 30),
-    HARD(30, 60);
+    HARD(30, 45),
+    EXTREME(45, 60);
 
     private int minPercent;
     private int maxPercent;

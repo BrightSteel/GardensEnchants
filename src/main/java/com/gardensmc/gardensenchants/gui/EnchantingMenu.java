@@ -7,7 +7,8 @@ import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
-import com.gardensmc.gardensenchants.utils.OraxenShift;
+import com.gardensmc.gardensenchants.utils.ExpUtil;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.themoep.inventorygui.DynamicGuiElement;
@@ -18,10 +19,11 @@ import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
@@ -31,7 +33,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.books.BooksHandler.ENCHANT_GENERATE_COUNT;
-import static com.gardensmc.gardensenchants.utils.MessageUtil.parseIntoLegacy;
 
 public class EnchantingMenu extends Menu {
 
@@ -47,9 +48,11 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('e', 'f'),
             new DynamicRow('g', 'h')
     );
+    private static final String BG = "\u0116";
+    private static final String BG_DARK = "\u0117";
 
     public EnchantingMenu(Player viewer) {
-        super(layout, "ꐤ\uE094", viewer);
+        super(layout, "<white><font:gardens:default>" + getShift(-8) + BG_DARK, viewer);
         initElements();
     }
 
@@ -57,7 +60,7 @@ public class EnchantingMenu extends Menu {
         // blank item to allow shift clicking book into inventory
         gui.addElement(new StaticGuiElement(
                 'a',
-                blankItem,
+                blankHiddenItem,
                 " "
         ));
         var inventory = Bukkit.createInventory(null, InventoryType.CHEST);
@@ -83,7 +86,7 @@ public class EnchantingMenu extends Menu {
                     onClose(); // run on-close since we aren't actually closing the menu
                     return open(() -> new EnchantingBooksMenu(viewer));
                 },
-                parseIntoLegacy("<blue>View Enchanting Books")
+                "<blue>View Enchanting Books"
         ));
     }
 
@@ -105,6 +108,7 @@ public class EnchantingMenu extends Menu {
                 if (enchantment == null) {
                     break;
                 }
+                System.out.println("Constructing book: " + enchantment.getEnchantment().getDisplayName());
                 dynamicRow.bookInstance = BooksHandler.INSTANCE.buildBook(enchantment);
             }
             title = getPopulatedTitle();
@@ -112,11 +116,10 @@ public class EnchantingMenu extends Menu {
             // remove enchantment instances
             dynamicRows.forEach(dynamicRow -> dynamicRow.setBookInstance(null));
             // blank title
-            title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094");
+            title = "<white><font:gardens:default>" + getShift(-8) + BG_DARK;
         }
         gui.draw();
-        // update current title, looks like gui#setTitle requires a show or draw to be called after that re-creates inventory
-        viewer.getOpenInventory().setTitle(title);
+        PlayerUtil.sendInventoryTitleChange(viewer.getOpenInventory(), MiniMessage.miniMessage().deserialize(title));
     }
 
     private String getPopulatedTitle() {
@@ -133,7 +136,9 @@ public class EnchantingMenu extends Menu {
             String padding = FontMappings.getPadding(display);
             sample[i] = FontMappings.INSTANCE.replaceAll(display, fontMaps[i]) + padding;
         }
-        return ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(193, true) + sample[0]  + sample[1]  + sample[2]);
+//        return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193);
+
+        return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
     }
 
     private String getDisplayText(@Nullable BookInstance bookInstance) {
@@ -158,16 +163,28 @@ public class EnchantingMenu extends Menu {
                 c,
                 getBookDisplayItem(dynamicRow.bookInstance, column),
                 click -> {
-                    if (dynamicRow.getBookInstance() != null) {
-                        bookStorage.setStorageItem(
-                                viewer, STORAGE_SLOT, dynamicRow.getBookInstance().book()
-                        );
-                        new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).resetEnchantEntry();
+                    var bookInstance = dynamicRow.getBookInstance();
+                    if (bookInstance != null) {
+                        if (canPurchase(bookInstance.enchantment())) {
+                            chargePlayer(bookInstance.enchantment());
+                            bookStorage.setStorageItem(
+                                    viewer, STORAGE_SLOT, bookInstance.book()
+                            );
+                            new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).resetEnchantEntry();
+                        }
                     }
                     return true;
-                },
-                dynamicRow.getDisplayText()
+                }
         ));
+    }
+
+    private boolean canPurchase(GardensEnchantment enchantment) {
+        return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && ExpUtil.getExp(viewer) >= enchantment.getTableCostInXp();
+    }
+
+    private void chargePlayer(GardensEnchantment enchantment) {
+        GardensEnchants.econ.withdrawPlayer(viewer, enchantment.getTableCost());
+        ExpUtil.changeExp(viewer, -enchantment.getTableCostInXp());
     }
 
     private boolean storageIsEnchantable() {
@@ -184,7 +201,17 @@ public class EnchantingMenu extends Menu {
         if (!storageIsEnchantable()) {
             return null;
         }
-        return column == Column.DISPLAY ? blankItem : bookInstance.book();
+        var book = bookInstance.book().clone();
+        if (column == Column.DISPLAY) {
+            book.editMeta(meta -> meta.setItemModel(blankItem.getItemMeta().getItemModel()));
+        }
+        var lore = book.lore() != null ? book.lore() : new ArrayList<Component>();
+        var xpCost = bookInstance.enchantment().getTableCostInXp();
+        var cost = bookInstance.enchantment().getTableCost();
+        lore.add(toComponent((ExpUtil.getExp(viewer) >= xpCost ? "<#B7E45A>" : "<red>") + bookInstance.enchantment().getTableCostInXp() + " <white><font:gardens:default>\u011F"));
+        lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + bookInstance.enchantment().getTableCost() + " <white><font:gardens:default>\u0120"));
+        book.editMeta(meta -> meta.lore(lore));
+        return book;
     }
 
     private boolean isValidItem(ItemStack itemStack) {
@@ -205,31 +232,6 @@ public class EnchantingMenu extends Menu {
         public DynamicRow(char display, char book) {
             this.display = display;
             this.book = book;
-        }
-
-        public String[] getDisplayText() {
-            if (bookInstance == null) {
-                return null;
-            }
-            var displayName = LegacyComponentSerializer.legacyAmpersand()
-                    .serialize(bookInstance.book().displayName());
-            // displayName is wrapped with &e[...] since the component has an array...?
-            // todo - replace with a build to re-construct name from default book & enchantment
-            displayName = displayName.substring("&e[".length(), displayName.length() - 1);
-            var lore = bookInstance.book().lore();
-            if (lore == null) {
-                lore = new ArrayList<>();
-            }
-            lore.add(Component
-                    .text("1 Level(s)", NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false));
-            lore.add(Component
-                    .text("1 Amber", NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false));
-            return Stream.concat(
-                    Stream.of(displayName),
-                    lore.stream().map(component -> LegacyComponentSerializer.legacyAmpersand().serialize(component))
-            ).toArray(String[]::new);
         }
     }
 

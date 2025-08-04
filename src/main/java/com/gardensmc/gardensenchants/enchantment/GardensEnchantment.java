@@ -18,7 +18,7 @@ import java.util.Objects;
 public abstract class GardensEnchantment {
 
     @Getter
-    protected EnchantRarity rarity = EnchantRarity.ORDINARY;
+    protected EnchantRarity rarity = EnchantRarity.COMMON;
     protected String displayName;
     @Getter
     protected List<Component> lore = Collections.emptyList();
@@ -51,6 +51,14 @@ public abstract class GardensEnchantment {
     public int getCostInXP(int level) {
         var base = getRarity().getBaseCost();
         return base + (base * (level / 2));
+    }
+
+    public int getTableCost() {
+        return getRarity().getBaseCost() * 10;
+    }
+
+    public int getTableCostInXp() {
+        return getCostInXP(0);
     }
 
     public String bookIdentifier() {

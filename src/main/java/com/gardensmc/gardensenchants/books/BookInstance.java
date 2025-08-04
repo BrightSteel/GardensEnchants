@@ -20,4 +20,8 @@ public record BookInstance(
     public int calculateDestructionChance() {
         return destructionBase - (restorations * RESTORATION_MULTIPLIER);
     }
+
+    public boolean isSame(BookInstance bookInstance) {
+        return this.enchantment.equals(bookInstance.enchantment) && this.level == bookInstance.level();
+    }
 }

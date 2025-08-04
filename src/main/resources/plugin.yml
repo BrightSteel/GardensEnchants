@@ -25,3 +25,4 @@ commands:
 depend:
   - Vault
   - GardensFurniture
+  - QuickShop-Hikari

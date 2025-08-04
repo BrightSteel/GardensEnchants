@@ -1,11 +1,8 @@
 package com.gardensmc.gardensenchants.utils;
 
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
-import lombok.AllArgsConstructor;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 
 public class ProbabilityUtil {
 
@@ -14,23 +11,26 @@ public class ProbabilityUtil {
     }
 
     public static EnchantRarity rollRarity() {
-        // number between 0 and 1 exclusive
-        double num = ThreadLocalRandom.current().nextDouble();
-        // 79% chance
-        if (num <= 0.78) {
-            return EnchantRarity.ORDINARY;
+        double num = ThreadLocalRandom.current().nextDouble(); // 0 - 0.99
+        // 70% chance
+        if (num <= 0.70) {
+            return EnchantRarity.COMMON;
         }
         // 15% chance
+        else if (num <= 0.85) {
+            return EnchantRarity.UNCOMMON;
+        }
+        // 8% chance
         else if (num <= 0.93) {
-            return EnchantRarity.UNIQUE;
+            return EnchantRarity.RARE;
         }
-        // 5% chance
-        else if (num <= 0.98) {
-            return EnchantRarity.MYSTICAL;
+        // 4% chance
+        else if (num <= 0.97) {
+            return EnchantRarity.EPIC;
         }
-        // 1% chance
+        // 2% chance
         else {
-            return EnchantRarity.DIVINE;
+            return EnchantRarity.LEGENDARY;
         }
     }
 

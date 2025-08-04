@@ -8,10 +8,11 @@ import net.kyori.adventure.text.format.TextColor;
 @AllArgsConstructor
 public enum EnchantRarity {
 
-    ORDINARY(0xCFD5DD, '\uE05E', 3, DestructionLevel.NONE),
-    UNIQUE(0x4AC950, '\uE110', 4, DestructionLevel.EASY),
-    MYSTICAL(0xB756FE, '\uE111', 5, DestructionLevel.MEDIUM),
-    DIVINE(0x91E6DC, '\uE112', 6, DestructionLevel.HARD);
+    COMMON(0x939393, '\u0119', 3, DestructionLevel.NONE),
+    UNCOMMON(0x57C42D, '\u011A', 4, DestructionLevel.EASY),
+    RARE(0x386FFF, '\u011B', 5, DestructionLevel.MEDIUM),
+    EPIC(0xB26BFF, '\u011C', 6, DestructionLevel.HARD),
+    LEGENDARY(0xFFAE00, '\u011D', 7, DestructionLevel.EXTREME);
 
     private final int color;
     private final char tag;

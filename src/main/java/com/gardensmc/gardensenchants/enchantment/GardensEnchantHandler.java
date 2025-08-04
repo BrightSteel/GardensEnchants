@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +70,10 @@ public class GardensEnchantHandler {
         applyPostEnchantChanges();
     }
 
-    private void applyPostEnchantChanges() {
-        storeCustomLore();
+    public void applyPostEnchantChanges() {
+//        storeCustomLore();
         var meta = item.getItemMeta();
-        // todo - add enchantment glint, this is a new tag in 1.21
+        meta.setEnchantmentGlintOverride(true);
         meta.addItemFlags(
                 ItemFlag.HIDE_ENCHANTS,
                 ItemFlag.HIDE_UNBREAKABLE,
@@ -178,12 +179,22 @@ public class GardensEnchantHandler {
     public List<EnchantmentInstance> getEnchantments() {
         var vanillaEnchants = item.getEnchantments().entrySet()
                 .stream()
-                .map(entry -> new EnchantmentInstance(new VanillaEnchantment(entry.getKey()), entry.getValue()))
+                .map(entry -> new EnchantmentInstance(fromVanillaEnchant(entry.getKey()), entry.getValue()))
                 .toList();
         var customEnchants = getCustomEnchantments();
         return Stream.concat(vanillaEnchants.stream(), customEnchants.stream())
                 .sorted()
                 .toList();
+    }
+
+    private GardensEnchantment fromVanillaEnchant(Enchantment enchantment) {
+        // try to get registered enchantment
+        var registeredEnchant = GardensEnchantments.INSTANCE.getEnchantment(enchantment.getKey().getKey());
+        if (registeredEnchant != null) {
+            return registeredEnchant;
+        }
+        // possible for an item to have an enchant we don't allow? So lets just wrap it
+        return new VanillaEnchantment(enchantment, enchantment.isDiscoverable() && !enchantment.isCursed());
     }
 
     private List<EnchantmentInstance> getCustomEnchantments() {

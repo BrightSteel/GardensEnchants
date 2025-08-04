@@ -1,23 +1,24 @@
 package com.gardensmc.gardensenchants.listener;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.enchantment.custom.LingeringEnchantHandler;
-import com.gardensmc.gardensenchants.probability.ChanceResultPair;
-import com.gardensmc.gardensenchants.probability.ProbabilityRoller;
-import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
+import io.papermc.paper.event.entity.WardenAngerChangeEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Arrays;
 
 public class EntityListener implements Listener {
 
@@ -69,7 +70,7 @@ public class EntityListener implements Listener {
             );
             if (lingeringExplosiveLevel > 0) {
                 arrow.getWorld().createExplosion(
-                        e.getEntity(),
+                        e.getEntity().getLocation(),
                         lingeringExplosiveLevel,
                         true,
                         false
@@ -77,5 +78,9 @@ public class EntityListener implements Listener {
             }
         }
     }
+
+
+
+
 
 }

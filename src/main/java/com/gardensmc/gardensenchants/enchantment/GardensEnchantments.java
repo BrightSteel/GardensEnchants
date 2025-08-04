@@ -38,8 +38,9 @@ public class GardensEnchantments {
         // register vanilla enchants
         gardensEnchantments.putAll(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
                 .stream()
-                .filter(enchantment -> enchantment.isDiscoverable() && !enchantment.isCursed())
+//                .filter(enchantment -> enchantment.isDiscoverable() && !enchantment.isCursed())
                 .map(enchantment -> {
+                    var isVisibleInTable = enchantment.isDiscoverable() && !enchantment.isCursed();
                     var id = enchantment.getKey().getKey().toUpperCase();
                     var vanillaOverride = GardensEnchants.vanillaOverrides.get(id);
                     if (vanillaOverride != null) {
@@ -52,10 +53,11 @@ public class GardensEnchantments {
                                 vanillaOverride.getDisplay(),
                                 vanillaOverride.getLore(),
                                 vanillaOverride.getBookIdentifier(),
-                                vanillaOverride.getEnchantRestrict()
+                                vanillaOverride.getEnchantRestrict(),
+                                isVisibleInTable
                         );
                     }
-                    return new VanillaEnchantment(enchantment);
+                    return new VanillaEnchantment(enchantment, isVisibleInTable);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(VanillaEnchantment::getId, Function.identity()))

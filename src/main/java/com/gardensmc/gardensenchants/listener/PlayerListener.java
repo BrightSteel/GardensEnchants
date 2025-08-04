@@ -1,15 +1,19 @@
 package com.gardensmc.gardensenchants.listener;
 
+import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
+import com.gardensmc.gardensenchants.cache.OnlinePlayerData;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.potion.PotionEffect;
@@ -78,7 +82,13 @@ public class PlayerListener implements Listener {
         if (!(e.getTarget() instanceof Player player)) {
             return;
         }
-        if (shouldCancelTarget(player, e.getReason())) {
+        if (OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId()).isInCombat()) {
+            return;
+        }
+        if (e.getEntity().getType() == EntityType.ENDERMAN) {
+            return;
+        }
+        if (shouldCancelTarget(player)) {
             e.setCancelled(true);
         }
     }
@@ -145,6 +155,13 @@ public class PlayerListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent e) {
+        if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getPlayer().getInventory().getHelmet())) {
+            e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
+        }
+    }
+
     private int getModifiedExp(Player player, int amount) {
         var chestplate = player.getInventory().getChestplate();
         if (chestplate != null) {
@@ -194,17 +211,13 @@ public class PlayerListener implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.DOLPHINS_GRACE, 5, 1));
     }
 
-    private boolean shouldCancelTarget(Player player, EntityTargetEvent.TargetReason targetReason) {
-        var hasCloak = Arrays.stream(player.getInventory().getArmorContents()).anyMatch(armor -> {
+    private boolean shouldCancelTarget(Player player) {
+        return Arrays.stream(player.getInventory().getArmorContents()).anyMatch(armor -> {
             if (armor == null) {
                 return false;
             }
             return CustomEnchantments.CLOAK.hasEnchantment(armor);
         });
-        if (!hasCloak) {
-            return false;
-        }
-        return allowedReasons.contains(targetReason);
     }
 
     private int getModifiedFoodLevel(Player player, int baseFoodLevel) {

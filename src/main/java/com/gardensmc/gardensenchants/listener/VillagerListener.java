@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants.listener;
 
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import org.bukkit.Material;
 import org.bukkit.entity.Villager;
@@ -15,44 +16,54 @@ import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
 import java.util.List;
+import java.util.Objects;
 
-// currently just replacing vanilla book results with our custom versions
 public class VillagerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onVillagerSpawn(CreatureSpawnEvent e) {
-        if (e.getEntity() instanceof Villager villager && villager.getProfession() == Villager.Profession.LIBRARIAN) {
+        if (e.getEntity() instanceof Villager villager) {
             villager.setRecipes(regenerateRecipes(villager));
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onVillagerChangeCareer(VillagerCareerChangeEvent e) {
-        if (e.getProfession() == Villager.Profession.LIBRARIAN) {
-            e.getEntity().setRecipes(regenerateRecipes(e.getEntity()));
-        }
+        e.getEntity().setRecipes(regenerateRecipes(e.getEntity()));
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onVillagerGenerateNewTrade(VillagerAcquireTradeEvent e) {
-        if (e.getRecipe().getResult().getType() == Material.ENCHANTED_BOOK) {
-            e.setRecipe(replaceBookRecipe(e.getRecipe()));
+        var recipe = getReplacementRecipe(e.getRecipe());
+        if (recipe != null) {
+            e.setRecipe(recipe);
         }
+    }
+
+    private MerchantRecipe getReplacementRecipe(MerchantRecipe merchantRecipe) {
+        var result = merchantRecipe.getResult();
+        if (result.getType() == Material.ENCHANTED_BOOK) {
+            return replaceMerchantRecipe(merchantRecipe, getCustomEnchantBook(merchantRecipe.getResult()));
+        }
+        if (!result.getEnchantments().isEmpty()) {
+            var clone = result.clone();
+            new GardensEnchantHandler(clone).applyPostEnchantChanges();
+            return replaceMerchantRecipe(merchantRecipe, clone);
+        }
+        return null;
     }
 
     private List<MerchantRecipe> regenerateRecipes(Villager villager) {
         return villager.getRecipes().stream().map(merchantRecipe -> {
-            if (merchantRecipe.getResult().getType() == Material.ENCHANTED_BOOK) {
-                return replaceBookRecipe(merchantRecipe);
-            }
-            return new MerchantRecipe(merchantRecipe);
+            var replacement = getReplacementRecipe(merchantRecipe);
+            return Objects.requireNonNullElseGet(replacement, () -> new MerchantRecipe(merchantRecipe));
         }).toList();
     }
 
-    private MerchantRecipe replaceBookRecipe(MerchantRecipe merchantRecipe) {
+    private MerchantRecipe replaceMerchantRecipe(MerchantRecipe merchantRecipe, ItemStack newResult) {
         // no setter for result...
         var recipe = new MerchantRecipe(
-                getCustomEnchantBook(merchantRecipe.getResult()),
+                newResult,
                 merchantRecipe.getUses(),
                 merchantRecipe.getMaxUses(),
                 merchantRecipe.hasExperienceReward(),
@@ -71,6 +82,10 @@ public class VillagerListener implements Listener {
             // ignoring all but first enchantment...
             var enchantEntry = meta.getStoredEnchants().entrySet().iterator().next();
             var ench = GardensEnchantments.INSTANCE.getEnchantment(enchantEntry.getKey().getKey().getKey());
+            if (ench == null) {
+                // unregistered enchants - ie vanishing
+                return vanillaBook;
+            }
             return BooksHandler.INSTANCE.buildBook(new EnchantmentInstance(
                     ench,
                     enchantEntry.getValue()

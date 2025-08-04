@@ -1,23 +1,30 @@
 package com.gardensmc.gardensenchants.events;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
-import com.gardensmc.gardensenchants.enchantment.*;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.utils.*;
-import com.gardensmc.gardensfurniture.GardensFurniture;
-import com.gardensmc.gardensfurniture.custom.item.CustomItem;
-import de.tr7zw.nbtapi.NBTItem;
+import com.gardensmc.gardensfurniture.custom.CustomBlockManager;
+import com.gardensmc.gardensfurniture.util.ProtectionUtil;
 
+import io.papermc.paper.event.entity.EntityEquipmentChangedEvent;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -26,43 +33,27 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 
 public class Events implements Listener {
 
-    // todo re-impl
-//    @EventHandler
-//    public void onEquip(ArmorEquipEvent e) {
-//
-//        // equipping
-//        if (e.getNewArmorPiece() != null && e.getNewArmorPiece().getType() != Material.AIR) {
-//            if (e.getType() == ArmorType.BOOTS) {
-//                if (SPEEDY.hasEnchantment(e.getNewArmorPiece())) {
-//                    int lvl = SPEEDY.getEnchantmentLevel(e.getNewArmorPiece());
-//                    float newSpeed = 0.2f + (lvl * 0.025f);
-//                    e.getPlayer().setWalkSpeed(newSpeed);
-//                }
-//                if (CustomEnchantments.WINGED_BOOTS.hasEnchantment(e.getNewArmorPiece())) {
-//                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
-//                    if (nbtItem.hasKey("charge")) {
-//                        if (nbtItem.getInteger("charge") > 0) {
-//                            e.getPlayer().setAllowFlight(true);
-//                        }
-//                    }
-//                }
-//
-//            }
-//            else if (e.getType() == ArmorType.HELMET) {
-//                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getNewArmorPiece())) {
-//                    e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
-//                }
-//
-//            }
-//        }
-//
-//        // unequipping
-//        if (e.getOldArmorPiece() != null && e.getOldArmorPiece().getType() != Material.AIR) {
-//            if (e.getType() == ArmorType.BOOTS) {
-//                if (e.getPlayer().getWalkSpeed() > 0.2f) {
-//                    e.getPlayer().setWalkSpeed(0.2f);
-//                }
-//                if (e.getPlayer().getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
+    private static final int MAX_TIMBER_COUNT = 40;
+
+    @EventHandler
+    public void onEquip(EntityEquipmentChangedEvent e) {
+        if (e.getEntity() instanceof Player player) {
+            e.getEquipmentChanges().forEach(((equipmentSlot, equipmentChange) -> onEquipmentChange(player, equipmentSlot, equipmentChange)));
+        }
+    }
+
+    private void onEquipmentChange(Player player, EquipmentSlot slot, EntityEquipmentChangedEvent.EquipmentChange change) {
+        // equipping
+        var oldItem = change.oldItem();
+        var newItem = change.newItem();
+
+        // handle old item changes first to remove effects
+        if (oldItem.getType() != Material.AIR) {
+            if (slot == EquipmentSlot.FEET) {
+                if (player.getWalkSpeed() > 0.2f) {
+                    player.setWalkSpeed(0.2f);
+                }
+//                if (player.getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
 //                    String[] anywhere_req = new String[]{
 //                            "resource_world",
 //                            "nether",
@@ -74,15 +65,39 @@ public class Events implements Listener {
 //                    }
 //
 //                }
-//            }
-//            else if (e.getType() == ArmorType.HELMET) {
-//                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getOldArmorPiece())) {
-//                    e.getPlayer().removePotionEffect(PotionEffectType.NIGHT_VISION);
-//                    e.getPlayer().sendMessage("Removed night vision effect");
+            }
+            else if (slot == EquipmentSlot.HEAD) {
+                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(oldItem)) {
+                    player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                }
+            }
+        }
+
+        // handle new item second to add / re-add effect
+        if (newItem.getType() != Material.AIR) {
+            if (slot == EquipmentSlot.FEET) {
+                if (SPEEDY.hasEnchantment(newItem)) {
+                    int lvl = SPEEDY.getEnchantmentLevel(newItem);
+                    float newSpeed = 0.2f + (lvl * 0.025f);
+                    player.setWalkSpeed(newSpeed);
+                }
+//                if (CustomEnchantments.WINGED_BOOTS.hasEnchantment(newItem)) {
+//                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
+//                    if (nbtItem.hasKey("charge")) {
+//                        if (nbtItem.getInteger("charge") > 0) {
+//                            e.getPlayer().setAllowFlight(true);
+//                        }
+//                    }
 //                }
-//            }
-//        }
-//    }
+
+            }
+            else if (slot == EquipmentSlot.HEAD) {
+                if (CustomEnchantments.NIGHT_VISION.hasEnchantment(newItem)) {
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
+                }
+            }
+        }
+    }
 
     @EventHandler
     public void onDamageEvent(EntityDamageEvent e) {
@@ -125,6 +140,7 @@ public class Events implements Listener {
                 EntityType.GHAST
         };
         if (e.getDamager() instanceof Player player) {
+            OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId()).startCombatTimer();
             ItemStack weapon = PlayerUtil.getHeldItem(player);
             if (weapon == null) {
                 return;
@@ -137,7 +153,6 @@ public class Events implements Listener {
             }
 
             if (LIFE_STEAL.hasEnchantment(weapon)) {
-                // todo check if this actually works with custom enchantments, i doubt it
                 double enchant_level = LIFE_STEAL.getEnchantmentLevel(weapon);
                 if (enchant_level < 1) enchant_level = 1;
                 double hp = e.getDamage() * ((enchant_level + 1)/30);
@@ -155,6 +170,7 @@ public class Events implements Listener {
                     if (e.getEntity() instanceof LivingEntity livingEntity) {
                         // assuming this won't call EntityDamageByEntityEvent again?
                         livingEntity.damage(e.getDamage());
+                        livingEntity.getLocation().getWorld().playSound(livingEntity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1, 1);
                     }
                 }
             }
@@ -217,112 +233,131 @@ public class Events implements Listener {
 //        }
 //    }
 
-//    @EventHandler(ignoreCancelled = true)
-//    public void onTimber(BlockBreakEvent e) {
-//        if (e.getBlock().hasMetadata("Timber_TBD")) {
-//            return;
-//        }
-//
-//        Player player = e.getPlayer();
-//        if (!player.isSneaking()) {
-//            return;
-//        }
-//
-//        String block_name = e.getBlock().getType().toString().toUpperCase();
-//        if (block_name.endsWith("LOG") || block_name.endsWith("ROOTS") || block_name.endsWith("STEM") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE")) {
-//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.TIMBER)) {
-//                return;
-//            }
-//
-//            List<Block> blocks = new ArrayList<>();
-//            blocks.add(e.getBlock());
-//
-//            List<Block> destroy = new ArrayList<>();
-//            destroy.add(e.getBlock());
-//
-//            BlockFace[] faces = new BlockFace[]{
-//                    BlockFace.NORTH,
-//                    BlockFace.EAST,
-//                    BlockFace.SOUTH,
-//                    BlockFace.WEST,
-//                    BlockFace.UP,
-//                    BlockFace.DOWN
-//            };
-//
-//            for (int i = 0; i < blocks.size(); i++) {
-//                if (i >= 30) break;
-//                Block curr = blocks.get(i);
-//                for (BlockFace blockFace : faces) {
-//                    for (int j = -1; j < 2; j++) {
-//                        for (int l = -1; l < 2; l++) {
-//                            Block potential = curr.getRelative(blockFace);
-//                            potential = potential.getRelative(j, 0, l);
-//                            Block finalPotential = potential;
-//                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
-//                                blocks.add(potential);
-//                                destroy.add(potential);
-//                            }
-//                        }
-//                    }
-//
-//                }
-//            }
-//
-//            // do block breaking
-//            for (Block block : destroy) {
-//                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-//                breakIfAble(player, block);
-//            }
-//        }
-//    }
-//
-//    @EventHandler(ignoreCancelled = true)
-//    public void onVeinMiner(BlockBreakEvent e) {
-//        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
-//            return;
-//        }
-//
-//        Player player = e.getPlayer();
-//        String block_name = e.getBlock().getType().toString().toUpperCase();
-//        if (block_name.endsWith("ORE")) {
-//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.VEIN_MINER)) {
-//                return;
-//            }
-//
-//            List<Block> blocks = new ArrayList<>();
-//            blocks.add(e.getBlock());
-//
-//            List<Block> destroy = new ArrayList<>();
-//            destroy.add(e.getBlock());
-//
-//            BlockFace[] faces = new BlockFace[]{
-//                    BlockFace.NORTH,
-//                    BlockFace.EAST,
-//                    BlockFace.SOUTH,
-//                    BlockFace.WEST,
-//                    BlockFace.UP,
-//                    BlockFace.DOWN
-//            };
-//
-//            for (int i = 0; i < blocks.size(); i++) {
-//                if (i >= 12) break;
-//                Block curr = blocks.get(i);
-//                for (BlockFace blockFace : faces) {
-//                    Block potential = curr.getRelative(blockFace);
-//                    if (potential.getType() == e.getBlock().getType()) {
-//                        blocks.add(potential);
-//                        destroy.add(potential);
-//                    }
-//                }
-//            }
-//
-//            // do block breaking
-//            for (Block block : destroy) {
-//                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-//                breakIfAble(player, block);
-//            }
-//        }
-//    }
+    // we need to run this prior to furniture removing the furniture store, so low priority (runs first)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onTimber(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Timber_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+
+
+        if (!TIMBER.hasEnchantment(player.getInventory().getItemInMainHand())) {
+            return;
+        }
+
+        if (isTimberable(e.getBlock())) {
+
+            List<Block> blocks = new ArrayList<>();
+            blocks.add(e.getBlock());
+
+            List<Block> destroy = new ArrayList<>();
+            destroy.add(e.getBlock());
+
+            BlockFace[] faces = new BlockFace[]{
+                    BlockFace.NORTH,
+                    BlockFace.EAST,
+                    BlockFace.SOUTH,
+                    BlockFace.WEST,
+                    BlockFace.UP,
+                    BlockFace.DOWN
+            };
+
+            for (int i = 0; i < blocks.size(); i++) {
+                if (i >= MAX_TIMBER_COUNT) break;
+                Block curr = blocks.get(i);
+                for (BlockFace blockFace : faces) {
+                    for (int j = -1; j < 2; j++) {
+                        for (int l = -1; l < 2; l++) {
+                            Block potential = curr.getRelative(blockFace);
+                            potential = potential.getRelative(j, 0, l);
+                            Block finalPotential = potential;
+                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
+                                blocks.add(potential);
+                                destroy.add(potential);
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            // do block breaking
+            for (Block block : destroy) {
+                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+                breakIfAble(player, block);
+            }
+        }
+    }
+
+    private static final Set<Material> TIMBER_MATERIALS = Set.of(
+            Material.MUSHROOM_STEM,
+            Material.BROWN_MUSHROOM_BLOCK,
+            Material.RED_MUSHROOM_BLOCK,
+            Material.MANGROVE_ROOTS
+    );
+
+    private boolean isTimberable(Block block) {
+        String block_name = block.getType().toString().toUpperCase();
+        var isVanillaBreakable = TIMBER_MATERIALS.contains(block.getType()) || block_name.endsWith("LOG") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE");
+        if (isVanillaBreakable) {
+            return true;
+        }
+        if (block.getType() == Material.NOTE_BLOCK) {
+            var customItem = CustomBlockManager.getItemFromLeaves(block);
+            return customItem != null && customItem.getIdentifier().contains("log");
+        }
+       return false;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onVeinMiner(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        String block_name = e.getBlock().getType().toString().toUpperCase();
+        if (block_name.endsWith("ORE")) {
+            if (!VEIN_MINER.hasEnchantment(player.getInventory().getItemInMainHand())) {
+                return;
+            }
+
+            List<Block> blocks = new ArrayList<>();
+            blocks.add(e.getBlock());
+
+            List<Block> destroy = new ArrayList<>();
+            destroy.add(e.getBlock());
+
+            BlockFace[] faces = new BlockFace[]{
+                    BlockFace.NORTH,
+                    BlockFace.EAST,
+                    BlockFace.SOUTH,
+                    BlockFace.WEST,
+                    BlockFace.UP,
+                    BlockFace.DOWN
+            };
+
+            for (int i = 0; i < blocks.size(); i++) {
+                if (i >= 15) break;
+                Block curr = blocks.get(i);
+                for (BlockFace blockFace : faces) {
+                    Block potential = curr.getRelative(blockFace);
+                    if (potential.getType() == e.getBlock().getType()) {
+                        blocks.add(potential);
+                        destroy.add(potential);
+                    }
+                }
+            }
+
+            // do block breaking
+            for (Block block : destroy) {
+                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+                breakIfAble(player, block);
+            }
+        }
+    }
 
     @EventHandler(ignoreCancelled = true)
     public void onSmeltMineBlock(BlockBreakEvent e) {
@@ -356,95 +391,105 @@ public class Events implements Listener {
         }
     }
     
-    private static String[] super_break_inc = new String[] {
-            "netherrack",
-            "deepslate",
-            "stone",
-            "ore",
-            "ancient_debris",
-            "brick",
-            "granite",
-            "andesite",
-            "basalt",
-            "terracotta",
-            "diorite",
-            "tuff",
-            "calcite",
-    };
+    private static final Set<Material> SUPER_BREAK_MATERIALS = Set.of(
+            Material.AMETHYST_BLOCK,
+            Material.ANCIENT_DEBRIS,
+            Material.ANDESITE,
+            Material.BASALT,
+            Material.BRICK,
+            Material.CALCITE,
+            Material.CLAY,
+            Material.CRIMSON_NYLIUM,
+            Material.DEEPSLATE,
+            Material.DIORITE,
+            Material.DRIPSTONE_BLOCK,
+            Material.GRANITE,
+            Material.NETHER_BRICK,
+            Material.NETHERRACK,
+            Material.MAGMA_BLOCK,
+            Material.OBSIDIAN,
+            Material.SMOOTH_BASALT,
+            Material.STONE,
+            Material.TUFF,
+            Material.WARPED_NYLIUM
+    );
 
-    private static String[] super_break_exc = new String[] {
-            "stair",
-            "wall"
-    };
+    private static final Set<String> SUPER_BREAK_ENDS_WITH = Set.of(
+            "ORE",
+            "TERRACOTTA",
+            "STONE"
+    );
 
-//    @EventHandler(ignoreCancelled = true)
-//    public void onMineBlock(BlockBreakEvent e) {
-//        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
-//            return;
-//        }
-//
-//        Player player = e.getPlayer();
-//        String block_name = e.getBlock().getType().toString().toLowerCase();
-//        if ((Arrays.asList(super_break_inc).contains(block_name) || block_name.endsWith("stone") || block_name.endsWith("ore"))&& !Arrays.asList(super_break_exc).contains(block_name)) {
-//            if (!EnchantUtils.hasEnchantment(player.getInventory().getItemInMainHand(), CustomEnchantments.SUPER_BREAKER)) {
-//                return;
-//            }
-//            BlockFace facing = PlayerUtils.getBlockFaceLooking(player);
-//            if (facing == null) {
-//                return;
-//            }
-//
-//            for (int i = -1; i < 2; i++) {
-//                for (int j = -1; j < 2; j++) {
-//                    if (i == 0 && j == 0) continue;
-//                    Block target = null;
-//                    String face = facing.toString();
-//                    if (face.startsWith("NORTH") || face.startsWith("SOUTH")) { // X, Y area
-//                        target = e.getBlock().getRelative(i, j, 0);
-//                    }
-//                    else if (face.startsWith("EAST") || face.startsWith("WEST")) {
-//                        target = e.getBlock().getRelative(0, j, i);
-//                    }
-//                    else if (face.startsWith("UP") || face.startsWith("DOWN")) {
-//                        target = e.getBlock().getRelative(i, 0, j);
-//                    }
-//
-//                    if (target != null) {
-//                        // give metadata so we can avoid calling this event on this block again
-//                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-//                        breakIfAble(player, target);
-//                    }
-//                }
-//            }
-//        }
-//    }
+    private static final Set<String> SUPER_BREAK_EXC = Set.of(
+            "STAIR",
+            "WALL",
+            "SLAB"
+    );
 
-//    private void breakIfAble(Player player, Block target) {
-//
-//        LocalPlayer  lp = WorldGuardPlugin.inst().wrapPlayer(player);
-//        Location loc = new Location(lp.getWorld(), target.getX(), target.getY(), target.getZ());
-//        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-//        RegionQuery query = container.createQuery();
-//        if (query.testBuild(loc, lp)) {
-//            EntityPlayer human = ((CraftPlayer) player).getHandle();
-//            BlockPosition blockPosition = new BlockPosition(target.getX(), target.getY(), target.getZ());
-//
-//            // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
-//            // which we do by giving it metadata to mark it as such
-//            new PlayerInteractManager(human).a(blockPosition);
-//
-////            target.breakNaturally(player.getInventory().getItemInMainHand());
-//        }
-//        if (target.hasMetadata("Super_Breaker_TBD")) {
-//            target.removeMetadata("Super_Breaker_TBD", GardensEnchants.plugin);
-//        }
-//        if (target.hasMetadata("Vein_Miner_TBD")) {
-//            target.removeMetadata("Vein_Miner_TBD", GardensEnchants.plugin);
-//        }
-//        if (target.hasMetadata("Timber_TBD")) {
-//            target.removeMetadata("Timber_TBD", GardensEnchants.plugin);
-//        }
-//    }
+    @EventHandler(ignoreCancelled = true)
+    public void onMineBlock(BlockBreakEvent e) {
+        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+            return;
+        }
+
+        Player player = e.getPlayer();
+        if (canSuperBreak(e.getBlock())) {
+            if (!SUPER_BREAKER.hasEnchantment(player.getInventory().getItemInMainHand())) {
+                return;
+            }
+            BlockFace facing = PlayerUtil.getBlockFaceLooking(player);
+            if (facing == null) {
+                return;
+            }
+
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    if (i == 0 && j == 0) continue;
+                    Block target = null;
+                    String face = facing.toString();
+                    if (face.startsWith("NORTH") || face.startsWith("SOUTH")) { // X, Y area
+                        target = e.getBlock().getRelative(i, j, 0);
+                    }
+                    else if (face.startsWith("EAST") || face.startsWith("WEST")) {
+                        target = e.getBlock().getRelative(0, j, i);
+                    }
+                    else if (face.startsWith("UP") || face.startsWith("DOWN")) {
+                        target = e.getBlock().getRelative(i, 0, j);
+                    }
+
+                    if (target != null && canSuperBreak(target)) {
+                        // give metadata so we can avoid calling this event on this block again
+                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
+                        breakIfAble(player, target);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean canSuperBreak(Block block) {
+        String block_name = block.getType().toString().toUpperCase();
+        return (SUPER_BREAK_MATERIALS.contains(block.getType()) || SUPER_BREAK_ENDS_WITH.stream().anyMatch(block_name::endsWith)) && !SUPER_BREAK_EXC.contains(block_name);
+    }
+
+    private void breakIfAble(Player player, Block target) {
+        if (!ProtectionUtil.canBuild(target.getLocation(), player)) {
+            return;
+        }
+
+        // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
+        // which we do by giving it metadata to mark it as such
+        player.breakBlock(target);
+        if (target.hasMetadata("Super_Breaker_TBD")) {
+            target.removeMetadata("Super_Breaker_TBD", GardensEnchants.plugin);
+        }
+        if (target.hasMetadata("Vein_Miner_TBD")) {
+            target.removeMetadata("Vein_Miner_TBD", GardensEnchants.plugin);
+        }
+        if (target.hasMetadata("Timber_TBD")) {
+            target.removeMetadata("Timber_TBD", GardensEnchants.plugin);
+        }
+    }
 
 //    @EventHandler
 //    public void onVeinMine(PlayerVeinMineEvent e) {

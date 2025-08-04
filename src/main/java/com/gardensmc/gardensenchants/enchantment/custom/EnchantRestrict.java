@@ -53,7 +53,7 @@ public class EnchantRestrict {
     }
 
     public boolean isEqualOrChild(EnchantRestrict enchantRestrict) {
-        return enchantRestrict == this || children.contains(enchantRestrict);
+        return enchantRestrict == this || children.stream().anyMatch(child -> child.isEqualOrChild(enchantRestrict));
     }
 
     public static class Builder {
