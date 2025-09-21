@@ -2,17 +2,21 @@ package com.gardensmc.gardensenchants.enchantment.custom;
 
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
+import com.gardensmc.gardensenchants.enchantment.VanillaEnchantment;
 import de.tr7zw.nbtapi.NBT;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
 
@@ -48,15 +52,22 @@ public class CustomEnchantment extends GardensEnchantment {
     }
 
     @Override
-    public void applyEnchantment(ItemStack itemStack, int level) {
+    public void applyEnchantment(ItemStack itemStack, int level, boolean isForce) {
         NBT.modify(itemStack, nbt -> {
             var compound = nbt.getOrCreateCompound(ITEM_NBT_KEY).getOrCreateCompound(ENCHANTS_KEY);
             compound.setInteger(id, level);
         });
         if (id.equals(CustomEnchantments.ETERNAL.id)) {
+            // remove durability damage
             if (itemStack.getItemMeta() instanceof Damageable damageable) {
                 damageable.setDamage(0);
                 itemStack.setItemMeta(damageable);
+            }
+            // remove un-breaking and mending
+            Stream.of(Enchantment.UNBREAKING, Enchantment.MENDING).filter(itemStack::containsEnchantment).forEach(itemStack::removeEnchantment);
+        } else if (id.equals(CustomEnchantments.BUBBLE_HEAD.id)) {
+            if (itemStack.containsEnchantment(Enchantment.RESPIRATION)) {
+                itemStack.removeEnchantment(Enchantment.RESPIRATION);
             }
         }
     }

@@ -17,20 +17,15 @@ import de.themoep.inventorygui.StaticGuiElement;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.books.BooksHandler.ENCHANT_GENERATE_COUNT;
 
@@ -108,7 +103,6 @@ public class EnchantingMenu extends Menu {
                 if (enchantment == null) {
                     break;
                 }
-                System.out.println("Constructing book: " + enchantment.getEnchantment().getDisplayName());
                 dynamicRow.bookInstance = BooksHandler.INSTANCE.buildBook(enchantment);
             }
             title = getPopulatedTitle();
@@ -179,12 +173,12 @@ public class EnchantingMenu extends Menu {
     }
 
     private boolean canPurchase(GardensEnchantment enchantment) {
-        return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && ExpUtil.getExp(viewer) >= enchantment.getTableCostInXp();
+        return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && viewer.getLevel() >= enchantment.getTableCostInXp();
     }
 
     private void chargePlayer(GardensEnchantment enchantment) {
         GardensEnchants.econ.withdrawPlayer(viewer, enchantment.getTableCost());
-        ExpUtil.changeExp(viewer, -enchantment.getTableCostInXp());
+        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp());
     }
 
     private boolean storageIsEnchantable() {
@@ -208,7 +202,7 @@ public class EnchantingMenu extends Menu {
         var lore = book.lore() != null ? book.lore() : new ArrayList<Component>();
         var xpCost = bookInstance.enchantment().getTableCostInXp();
         var cost = bookInstance.enchantment().getTableCost();
-        lore.add(toComponent((ExpUtil.getExp(viewer) >= xpCost ? "<#B7E45A>" : "<red>") + bookInstance.enchantment().getTableCostInXp() + " <white><font:gardens:default>\u011F"));
+        lore.add(toComponent((viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + bookInstance.enchantment().getTableCostInXp() + " <white><font:gardens:default>\u011F"));
         lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + bookInstance.enchantment().getTableCost() + " <white><font:gardens:default>\u0120"));
         book.editMeta(meta -> meta.lore(lore));
         return book;

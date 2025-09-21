@@ -194,7 +194,6 @@ public class BooksHandler {
     private String getRestorationDisplay(int restorations) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.repeat(RUNE_RESTORATION + " ", restorations);
-        System.out.printf("Building with %s restorations%n", restorations);
         if (restorations < MAX_RESTORATIONS) {
             stringBuilder.repeat(RUNE_EMPTY + " ", MAX_RESTORATIONS - restorations);
         }

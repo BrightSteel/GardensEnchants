@@ -80,6 +80,9 @@ public class VillagerListener implements Listener {
     public static ItemStack getCustomEnchantBook(ItemStack vanillaBook) {
         if (vanillaBook.getItemMeta() instanceof EnchantmentStorageMeta meta) {
             // ignoring all but first enchantment...
+            if (meta.getStoredEnchants().isEmpty()) {
+                return vanillaBook; // not sure why this happens ? seeing error log in console
+            }
             var enchantEntry = meta.getStoredEnchants().entrySet().iterator().next();
             var ench = GardensEnchantments.INSTANCE.getEnchantment(enchantEntry.getKey().getKey().getKey());
             if (ench == null) {

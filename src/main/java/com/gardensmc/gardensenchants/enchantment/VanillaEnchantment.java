@@ -34,8 +34,12 @@ public class VanillaEnchantment extends GardensEnchantment {
     }
 
     @Override
-    public void applyEnchantment(ItemStack itemStack, int level) {
-        itemStack.addEnchantment(enchantment, level);
+    public void applyEnchantment(ItemStack itemStack, int level, boolean isForce) {
+        if (isForce) {
+            itemStack.addUnsafeEnchantment(enchantment, level);
+        } else {
+            itemStack.addEnchantment(enchantment, level);
+        }
     }
 
     @Override

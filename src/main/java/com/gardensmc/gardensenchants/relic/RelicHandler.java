@@ -15,26 +15,21 @@ public class RelicHandler {
     private final Relic relic;
 
     public static RelicHandler createRelicHandler(ItemStack relic) {
-        System.out.println("Creating relic handler...");
         if (relic.getAmount() != 1) {
             return null;
         }
-        System.out.println("1");
         var customItem = GardensFurniture.itemRegistry.getCustomItem(relic);
         if (customItem == null) {
             return null;
         }
-        System.out.println("Finding relic with id: "+ customItem.getIdentifier());
         var potentialRelic = GardensEnchants.relics.get(customItem.getIdentifier());
         if (potentialRelic == null) {
             return null;
         }
-        System.out.println("Created relic handler");
         return new RelicHandler(potentialRelic);
     }
 
     public ItemStack apply(ItemStack itemStack) {
-        System.out.println("Applying result...");
         var customItem = GardensFurniture.itemRegistry.getCustomItem(itemStack);
         var resultItem = GardensFurniture.itemRegistry.buildItem(
                 relic.getRelicResult(Objects.requireNonNull(customItem).getIdentifier())

@@ -25,7 +25,7 @@ public class GardensEnchantHandler {
     public static final String ITEM_NBT_KEY = "GardensEnchants";
     private static final String SLOTS_KEY = "slots";
     private static final String CUSTOM_LORE_KEY = "customLore";
-    private static final int DEFAULT_SLOTS = 4;
+    public static final int DEFAULT_SLOTS = 4;
 
     public boolean isEnchantable(GardensEnchantment enchantment) {
         if (!enchantment.canEnchant(item)) {
@@ -54,18 +54,18 @@ public class GardensEnchantHandler {
     }
 
     private void upgradeEnchant(EnchantmentInstance enchantment) {
-        enchantment.getEnchantment().applyEnchantment(item, enchantment.getLevel() + 1);
+        enchantment.getEnchantment().applyEnchantment(item, enchantment.getLevel() + 1, false);
     }
 
-    public void enchant(GardensEnchantment enchantment, int level) {
-        enchantment.applyEnchantment(item, level);
+    public void enchant(GardensEnchantment enchantment, int level, boolean isForce) {
+        enchantment.applyEnchantment(item, level, isForce);
         applyPostEnchantChanges();
     }
 
     public void enchantAll(List<EnchantmentInstance> enchantments) {
         enchantments.forEach(enchantmentInstance -> {
             var enchantment = enchantmentInstance.getEnchantment();
-            enchantment.applyEnchantment(item, enchantmentInstance.getLevel());
+            enchantment.applyEnchantment(item, enchantmentInstance.getLevel(), false);
         });
         applyPostEnchantChanges();
     }
@@ -294,6 +294,14 @@ public class GardensEnchantHandler {
             var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
             var slots = itemNBT.getOrDefault(SLOTS_KEY, DEFAULT_SLOTS);
             itemNBT.setInteger(SLOTS_KEY, ++slots);
+        });
+        refreshLore();
+    }
+
+    public void setSlots(int slots) {
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            itemNBT.setInteger(SLOTS_KEY, slots);
         });
         refreshLore();
     }

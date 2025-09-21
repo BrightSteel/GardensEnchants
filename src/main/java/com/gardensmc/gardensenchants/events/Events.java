@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants.events;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
+import com.gardensmc.gardensenchants.cache.OnlinePlayerData;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.utils.*;
@@ -140,7 +141,9 @@ public class Events implements Listener {
                 EntityType.GHAST
         };
         if (e.getDamager() instanceof Player player) {
-            OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId()).startCombatTimer();
+            if (e.getEntity() instanceof Enemy) {
+                OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId()).startCombatTimer();
+            }
             ItemStack weapon = PlayerUtil.getHeldItem(player);
             if (weapon == null) {
                 return;
@@ -163,14 +166,20 @@ public class Events implements Listener {
                 player.setHealth(newHP);
             }
 
-            if (DOUBLE_STRIKE.hasEnchantment(weapon)) {
+            var playerData = OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId());
+            if (DOUBLE_STRIKE.hasEnchantment(weapon) && !playerData.hasDoubleStrikeCooldown()) {
                 double enchant_level = DOUBLE_STRIKE.getEnchantmentLevel(weapon);
                 if (enchant_level < 1) enchant_level = 1;
                 if (ProbabilityUtil.roll(20*enchant_level)) {
                     if (e.getEntity() instanceof LivingEntity livingEntity) {
-                        // assuming this won't call EntityDamageByEntityEvent again?
-                        livingEntity.damage(e.getDamage());
-                        livingEntity.getLocation().getWorld().playSound(livingEntity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1, 1);
+                        playerData.setDoubleStrikeCooldown(10); // ensures double strike doesn't loop itself
+                        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
+                            // run with delay so player can visually see the second hit and hear it
+                            if (!livingEntity.isDead()) {
+                                livingEntity.damage(e.getDamage(), player);
+                                livingEntity.getLocation().getWorld().playSound(livingEntity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1, 1);
+                            }
+                        }, 5);
                     }
                 }
             }
@@ -273,7 +282,10 @@ public class Events implements Listener {
                             Block potential = curr.getRelative(blockFace);
                             potential = potential.getRelative(j, 0, l);
                             Block finalPotential = potential;
-                            if (potential.getType() == e.getBlock().getType() && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))) {
+                            if (potential.getType() == e.getBlock().getType()
+                                    && Objects.equals(CustomBlockManager.getItemFromLeaves(potential), CustomBlockManager.getItemFromLeaves(e.getBlock()))
+                                    && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))
+                            ) {
                                 blocks.add(potential);
                                 destroy.add(potential);
                             }

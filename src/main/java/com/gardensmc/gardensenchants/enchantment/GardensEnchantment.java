@@ -28,7 +28,7 @@ public abstract class GardensEnchantment {
 
     public abstract boolean hasEnchantment(ItemStack itemStack);
 
-    public abstract void applyEnchantment(ItemStack itemStack, int level);
+    public abstract void applyEnchantment(ItemStack itemStack, int level, boolean isForce);
 
     public abstract void removeEnchantment(ItemStack itemStack);
 

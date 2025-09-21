@@ -17,23 +17,25 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.WEAPON));
     public static final CustomEnchantment TIMBER = register( "timber", builder -> builder
             .lore("<gray>Chop down logs or leaves in one swing")
+            .rarity(EnchantRarity.RARE)
             .enchantRestrict(EnchantRestricts.AXE));
     public static final CustomEnchantment VEIN_MINER = register("vein_miner", builder -> builder
             .lore("<gray>Break entire ore veins")
+            .rarity(EnchantRarity.RARE)
             .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment BUBBLE_HEAD = register("bubble_head", builder -> builder
             .lore("<gray>Breathe underwater")
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .enchantRestrict(EnchantRestricts.HELMET));
     public static final CustomEnchantment LIFE_STEAL = register("life_steal", builder -> builder
             .enchantRestrict(EnchantRestricts.WEAPON)
-            .rarity(EnchantRarity.UNCOMMON)
+            .rarity(EnchantRarity.RARE)
             .lore("<gray>Steals some of target's health on hit")
             .maxLevel(3));
     public static final CustomEnchantment DOUBLE_STRIKE = register("double_strike", builder -> builder
             .lore("<gray>Chance of striking target twice")
             .enchantRestrict(EnchantRestricts.WEAPON)
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .maxLevel(3));
     public static final CustomEnchantment NIGHT_VISION = register("night_vision", builder -> builder
             .lore("<gray>See in the dark")
@@ -76,13 +78,13 @@ public class CustomEnchantments {
     public static final CustomEnchantment EXPLOSIVE = register("explosive", builder -> builder
             .lore("<gray>Do explosion damage on hit")
             .enchantRestrict(EnchantRestricts.BOW)
-            .rarity(EnchantRarity.UNCOMMON)
+            .rarity(EnchantRarity.RARE)
             .maxLevel(4));
     public static final CustomEnchantment BARRAGE = register("barrage", builder -> builder
             .lore("<gray>Shoot multiple arrows at the same time")
             .enchantRestrict(EnchantRestricts.BOW)
             .conflictsWith(EXPLOSIVE)
-            .rarity(EnchantRarity.UNCOMMON)
+            .rarity(EnchantRarity.RARE)
             .maxLevel(3)
     );
     public static final CustomEnchantment SPRINTER = register("sprinter", builder -> builder
@@ -99,12 +101,12 @@ public class CustomEnchantments {
     public static final CustomEnchantment FLUTTER = register("flutter", builder -> builder
             .lore("<gray>Hold shift to activate slow falling")
             .enchantRestrict(EnchantRestricts.ELYTRA)
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
     );
     public static final CustomEnchantment FLIPPERS = register("flippers", builder -> builder
             .lore("<gray>Gain Dolphin's Grace while swimming")
             .enchantRestrict(EnchantRestricts.BOOTS)
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
     );
     public static final CustomEnchantment SIPHON = register("siphon", builder -> builder
             .lore("<gray>Suck drops and xp straight into your inventory")

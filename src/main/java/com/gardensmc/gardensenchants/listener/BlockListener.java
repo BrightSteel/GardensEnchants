@@ -1,24 +1,24 @@
 package com.gardensmc.gardensenchants.listener;
 
-import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.NBTCompound;
 import de.tr7zw.nbtapi.NBTItem;
 import de.tr7zw.nbtapi.NBTTileEntity;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.List;
 
 public class BlockListener implements Listener {
 
@@ -32,13 +32,28 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) {
         var player = e.getPlayer();
         var tool = PlayerUtil.getHeldItem(player);
         if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
             player.giveExp(e.getExpToDrop());
             e.setExpToDrop(0);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSilkAmethyst(BlockBreakEvent e) {
+        if (e.getBlock().getType() == Material.BUDDING_AMETHYST) {
+            var tool = PlayerUtil.getHeldItem(e.getPlayer());
+            if (tool != null && tool.containsEnchantment(Enchantment.SILK_TOUCH)) {
+                var drop = new ItemStack(Material.BUDDING_AMETHYST);
+                if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
+                    PlayerUtil.giveItems(e.getPlayer(), List.of(drop));
+                } else {
+                    e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), drop);
+                }
+            }
         }
     }
 

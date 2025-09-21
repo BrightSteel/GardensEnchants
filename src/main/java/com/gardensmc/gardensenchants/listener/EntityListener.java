@@ -25,8 +25,8 @@ public class EntityListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onShootArrow(EntityShootBowEvent e) {
         var bow = e.getBow();
-        if (e.getProjectile() instanceof Arrow arrow) {
-            handleBowExplosion(arrow, bow);
+        if (e.getProjectile() instanceof Arrow arrow && e.getEntity() instanceof Player player) {
+            handleBowExplosion(arrow, bow, player);
             handleBowBarrage(arrow, bow);
         }
     }
@@ -52,29 +52,34 @@ public class EntityListener implements Listener {
         clone.setVelocity(arrow.getVelocity());
         clone.setColor(arrow.getColor());
         clone.setBasePotionType(arrow.getBasePotionType());
+        clone.setShooter(arrow.getShooter());
     }
 
-    private void handleBowExplosion(Entity arrow, ItemStack bow                                                           ) {
+    private void handleBowExplosion(Entity arrow, ItemStack bow, Player source) {
         var explosive = CustomEnchantments.EXPLOSIVE;
         var explosiveLevel = explosive.getEnchantmentLevel(bow);
         if (explosiveLevel > 0) {
-            new LingeringEnchantHandler(arrow).putLingeringEnchant(explosive.getId(), explosiveLevel);
+            new LingeringEnchantHandler(arrow).putLingeringEnchant(explosive.getId(), explosiveLevel, source.getUniqueId());
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onArrowHit(EntityDamageByEntityEvent e) {
         if (e.getDamager() instanceof Arrow arrow) {
-            var lingeringExplosiveLevel = new LingeringEnchantHandler(arrow).getLingeringEnchant(
+            var lingeringExplosive = new LingeringEnchantHandler(arrow).getLingeringEnchant(
                     CustomEnchantments.EXPLOSIVE.getId()
             );
-            if (lingeringExplosiveLevel > 0) {
-                arrow.getWorld().createExplosion(
-                        e.getEntity().getLocation(),
-                        lingeringExplosiveLevel,
-                        true,
-                        false
-                );
+            if (lingeringExplosive != null) {
+                var source = Bukkit.getPlayer(lingeringExplosive.source());
+                if (source != null) {
+                    arrow.getWorld().createExplosion(
+                            source,
+                            e.getEntity().getLocation(),
+                            lingeringExplosive.level(),
+                            true,
+                            false
+                    );
+                }
             }
         }
     }

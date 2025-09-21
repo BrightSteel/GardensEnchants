@@ -38,10 +38,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT")
-    paperweight.paperDevBundle("1.21.5-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
 
-    compileOnly("de.tr7zw:item-nbt-api-plugin:2.14.1")
+    compileOnly("de.tr7zw:item-nbt-api-plugin:2.15.2-SNAPSHOT")
     compileOnly("com.github.Gecolay.GSit:core:2.2.1")
     compileOnly('com.comphenix.protocol:ProtocolLib:5.3.0')
     compileOnly(fileTree("${project.rootDir}/dependencies") { include("*.jar") })

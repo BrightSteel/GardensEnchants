@@ -14,8 +14,8 @@ public final class RuneFactory {
         }
         return switch (customRuneItem.getIdentifier()) {
             case "power_up_rune" -> new PowerUpRune(rune);
-            case "restoration_rune" -> new RestorationRune(rune);
-            case "slot_increaser_rune" -> new SlotIncreaserRuneHandler(rune);
+            case "strength_rune" -> new RestorationRune(rune);
+            case "slot_rune" -> new SlotIncreaserRuneHandler(rune);
             default -> null;
         };
     }

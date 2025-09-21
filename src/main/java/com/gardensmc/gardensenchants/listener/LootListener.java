@@ -18,6 +18,8 @@ import org.bukkit.loot.Lootable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.DEFAULT_SLOTS;
+
 public class LootListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
@@ -74,7 +76,12 @@ public class LootListener implements Listener {
                         return VillagerListener.getCustomEnchantBook(itemStack);
                     } else if (!itemStack.getEnchantments().isEmpty()) {
                         var clone = itemStack.clone();
-                        new GardensEnchantHandler(clone).applyPostEnchantChanges();
+                        var enchantHandler = new GardensEnchantHandler(clone);
+                        enchantHandler.applyPostEnchantChanges();
+                        int enchantCount = enchantHandler.getEnchantments().size();
+                        if (enchantCount > DEFAULT_SLOTS) {
+                            enchantHandler.setSlots(enchantCount);
+                        }
                         return clone;
                     }
                     return itemStack;

@@ -1,7 +1,7 @@
 package com.gardensmc.gardensenchants.listener;
 
+import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
-import com.gardensmc.gardensenchants.cache.OnlinePlayerData;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.potion.PotionEffect;
@@ -72,7 +71,6 @@ public class PlayerListener implements Listener {
         var muncherLvl = CustomEnchantments.MUNCHER.getEnchantmentLevel(helmet);
         if (muncherLvl > 0) {
             var n = (int) (resultLevel + (resultLevel * muncherLvl * 0.1));
-            System.out.println("Hey ur food boost is from " + resultLevel + " to " + n);
             e.setFoodLevel(n);
         }
     }
@@ -156,7 +154,7 @@ public class PlayerListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerRespawn(PlayerRespawnEvent e) {
+    public void onPlayerRespawn(PlayerPostRespawnEvent e) {
         if (CustomEnchantments.NIGHT_VISION.hasEnchantment(e.getPlayer().getInventory().getHelmet())) {
             e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
         }
@@ -168,7 +166,6 @@ public class PlayerListener implements Listener {
             var orbBoostLvl = CustomEnchantments.ORB_BOOST.getEnchantmentLevel(chestplate);
             if (orbBoostLvl > 0) {
                 int n = (int) Math.round(amount + (amount * orbBoostLvl * 0.1));
-                System.out.println("Modified exp from " + amount + " to " + n);
                 return n;
             }
         }

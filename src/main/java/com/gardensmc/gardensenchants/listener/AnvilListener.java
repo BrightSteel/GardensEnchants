@@ -6,18 +6,22 @@ import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.relic.RelicHandler;
 import com.gardensmc.gardensenchants.rune.RuneFactory;
+import com.gardensmc.gardensenchants.utils.ExpUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.view.AnvilView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +102,7 @@ public class AnvilListener implements Listener {
 //                    if (enchantment == WINGED_BOOTS) {
 //                        nbtItem.setInteger("charge", 1800);
 //                    }
-                    enchantmentHandler.enchant(enchantment, level);
+                    enchantmentHandler.enchant(enchantment, level, false);
                     inv.setRepairCost(bookInstance.getCostInXP());
                     e.setResult(itemClone);
                 }
@@ -127,7 +131,8 @@ public class AnvilListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
+    // run prior to other combinations since this checks for a result and modifies it - only want to recieve vanilla results
     public void onCombineTools(PrepareAnvilEvent e) {
         AnvilInventory inv = e.getInventory();
         ItemStack[] contents = inv.getContents();
@@ -137,9 +142,13 @@ public class AnvilListener implements Listener {
         if (!isCombiningItems(itemPrimary, itemSecondary, vanillaResult)) {
             return;
         }
+        var slots = new GardensEnchantHandler(itemPrimary).getSlots();
         // construct result - ignoring vanilla result completely, since sometimes one won't be generated for us
         var result = itemPrimary.clone();
         var combinedEnchantResult = getCombinedEnchantments(itemPrimary, itemSecondary);
+        if (combinedEnchantResult.combinedEnchants.size() > slots) {
+            return; // prevent exceeding slot count
+        }
         // strip enchantments from result and replace with combined ones
         var resultEnchantHandler = new GardensEnchantHandler(result);
         resultEnchantHandler.clearEnchants(false);
@@ -164,7 +173,11 @@ public class AnvilListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onClickAnvilResult(InventoryClickEvent e) {
-        if (!(e.getClickedInventory() instanceof AnvilInventory)) {
+        if (!(e.getView() instanceof AnvilView anvilView)) {
+            return;
+        }
+        if (anvilView.getRepairCost() > ((Player) e.getWhoClicked()).getLevel()) {
+            // there will be a result item but won't actually be grab-able. Want to avoid removing the book in this case
             return;
         }
         if (e.getSlot() != 2) {
