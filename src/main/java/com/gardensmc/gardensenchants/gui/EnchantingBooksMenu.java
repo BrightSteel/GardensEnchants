@@ -26,12 +26,15 @@ public class EnchantingBooksMenu extends Menu {
             "   p n   "
     };
 
-    public EnchantingBooksMenu(Player viewer) {
+    private final boolean isFullBookSetup;
+
+    public EnchantingBooksMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + "\u0121", viewer);
+        this.isFullBookSetup = isFullBookSetup;
+        initElements();
     }
 
-    @Override
-    protected void initializeElements() {
+    private void initElements() {
         GuiElementGroup grp = new GuiElementGroup('b');
         Collection<GuiElement> books = Arrays.stream(EnchantRarity.values())
                 .flatMap(rarity -> GardensEnchantments.INSTANCE.getEnchantments(rarity)
@@ -41,7 +44,7 @@ public class EnchantingBooksMenu extends Menu {
                 .collect(Collectors.toList());
         grp.addElements(books);
         gui.addElement(grp);
-        gui.addElement(buildBackButton(() -> new EnchantingMenu(viewer), "<gold>Back to Enchanting Table"));
+        gui.addElement(buildBackButton(() -> new EnchantingMenu(viewer, isFullBookSetup), "<gold>Back to Enchanting Table"));
         gui.addElement(buildNextButton());
     }
 

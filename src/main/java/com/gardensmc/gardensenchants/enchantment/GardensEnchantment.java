@@ -54,11 +54,11 @@ public abstract class GardensEnchantment {
     }
 
     public int getTableCost() {
-        return getRarity().getBaseCost() * 10;
+        return rarity.getTableCost();
     }
 
     public int getTableCostInXp() {
-        return getCostInXP(0);
+        return rarity.getTableXpCost();
     }
 
     public String bookIdentifier() {

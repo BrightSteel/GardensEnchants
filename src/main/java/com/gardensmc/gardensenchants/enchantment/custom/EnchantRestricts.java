@@ -21,7 +21,8 @@ public class EnchantRestricts {
                     IRON_PICKAXE,
                     GOLDEN_PICKAXE,
                     DIAMOND_PICKAXE,
-                    NETHERITE_PICKAXE
+                    NETHERITE_PICKAXE,
+                    COPPER_PICKAXE
             )
             .withIcon('\uE248')
             .build();
@@ -33,7 +34,8 @@ public class EnchantRestricts {
                     IRON_AXE,
                     GOLDEN_AXE,
                     DIAMOND_AXE,
-                    NETHERITE_AXE
+                    NETHERITE_AXE,
+                    COPPER_AXE
             )
             .withIcon('\uE245')
             .build();
@@ -45,7 +47,8 @@ public class EnchantRestricts {
                     IRON_SHOVEL,
                     GOLDEN_SHOVEL,
                     DIAMOND_SHOVEL,
-                    NETHERITE_SHOVEL
+                    NETHERITE_SHOVEL,
+                    COPPER_SHOVEL
             ).withIcon('\uE249').build();
 
     public static final EnchantRestrict SWORD = new EnchantRestrict.Builder("sword")
@@ -55,7 +58,8 @@ public class EnchantRestricts {
                     IRON_SWORD,
                     GOLDEN_SWORD,
                     DIAMOND_SWORD,
-                    NETHERITE_SWORD
+                    NETHERITE_SWORD,
+                    COPPER_SWORD
             ).withIcon('\uE24A').build();
 
     public static final EnchantRestrict HOE = new EnchantRestrict.Builder("hoe")
@@ -65,7 +69,8 @@ public class EnchantRestricts {
                     IRON_HOE,
                     GOLDEN_HOE,
                     DIAMOND_HOE,
-                    NETHERITE_HOE
+                    NETHERITE_HOE,
+                    COPPER_HOE
             ).withIcon('\uE247').build();
 
     public static final EnchantRestrict MACE = new EnchantRestrict.Builder("mace")
@@ -79,7 +84,8 @@ public class EnchantRestricts {
                     GOLDEN_HELMET,
                     DIAMOND_HELMET,
                     NETHERITE_HELMET,
-                    TURTLE_HELMET
+                    TURTLE_HELMET,
+                    COPPER_HELMET
                     ).withIcon('\uE251').build();
 
     public static final EnchantRestrict CHESTPLATE = new EnchantRestrict.Builder("chestplate")
@@ -89,7 +95,8 @@ public class EnchantRestricts {
                     IRON_CHESTPLATE,
                     GOLDEN_CHESTPLATE,
                     DIAMOND_CHESTPLATE,
-                    NETHERITE_CHESTPLATE
+                    NETHERITE_CHESTPLATE,
+                    COPPER_CHESTPLATE
             ).withIcon('\uE252').build();
 
     public static final EnchantRestrict LEGGINGS = new EnchantRestrict.Builder("leggings")
@@ -99,7 +106,8 @@ public class EnchantRestricts {
                     IRON_LEGGINGS,
                     GOLDEN_LEGGINGS,
                     DIAMOND_LEGGINGS,
-                    NETHERITE_LEGGINGS
+                    NETHERITE_LEGGINGS,
+                    COPPER_LEGGINGS
             ).withIcon('\uE253').build();
 
     public static final EnchantRestrict BOOTS = new EnchantRestrict.Builder("boots")
@@ -109,7 +117,8 @@ public class EnchantRestricts {
                     IRON_BOOTS,
                     GOLDEN_BOOTS,
                     DIAMOND_BOOTS,
-                    NETHERITE_BOOTS
+                    NETHERITE_BOOTS,
+                    COPPER_BOOTS
             ).withIcon('\uE254').build();
 
     public static final EnchantRestrict BOW = new EnchantRestrict.Builder("bow")

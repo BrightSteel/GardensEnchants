@@ -29,6 +29,10 @@ public class LoreCommand implements TabExecutor {
         if (!(commandSender instanceof Player player)) {
             return false;
         }
+        if (!player.hasPermission("gardens.editlore")) {
+            sendError(player, "You don't have permission to use this command!");
+            return true;
+        }
         var heldItem = player.getInventory().getItemInMainHand();
         if (heldItem.getType() == Material.AIR) {
             sendError(player, "You must be holding an item to modify its lore");

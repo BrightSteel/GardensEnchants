@@ -18,6 +18,7 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
@@ -563,15 +564,45 @@ public class Events implements Listener {
 //        }
 //    }
 
+//    @EventHandler(ignoreCancelled = true)
+//    public void onInventoryOpen(InventoryOpenEvent e) {
+//        Inventory inv = e.getInventory();
+//        if (inv.getType() == InventoryType.ENCHANTING && e.getPlayer() instanceof Player player) {
+//            e.setCancelled(true);
+////            EnchantingGUI enchantingGUI = new EnchantingGUI(player);
+////            player.openInventory(enchantingGUI.getInventory());
+//
+//            new EnchantingMenu(player).open();
+//        }
+//    }
+
     @EventHandler(ignoreCancelled = true)
-    public void onInventoryOpen(InventoryOpenEvent e) {
-        Inventory inv = e.getInventory();
-        if (inv.getType() == InventoryType.ENCHANTING && e.getPlayer() instanceof Player player) {
+    public void onPlayerOpenEnchanting(PlayerInteractEvent e) {
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.ENCHANTING_TABLE) {
             e.setCancelled(true);
-//            EnchantingGUI enchantingGUI = new EnchantingGUI(player);
-//            player.openInventory(enchantingGUI.getInventory());
-            new EnchantingMenu(player).open();
+            new EnchantingMenu(e.getPlayer(), isFullBookSetup(e.getClickedBlock())).open();
         }
+    }
+
+    private boolean isFullBookSetup(Block enchantingTableBlock) {
+        var numBookShelves = 0;
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) {
+                for (int y = 0; y < 3; y++) {
+                    if (Math.abs(x) < 2 && Math.abs(z) < 2) {
+                        continue;
+                    }
+                    var block = enchantingTableBlock.getRelative(x, y, z);
+                    if (block.getType() == Material.BOOKSHELF) {
+                        numBookShelves++;
+                    }
+                    if (numBookShelves == 15) {
+                        break;
+                    }
+                }
+            }
+        }
+        return numBookShelves == 15;
     }
 
 //    @EventHandler(ignoreCancelled = true)

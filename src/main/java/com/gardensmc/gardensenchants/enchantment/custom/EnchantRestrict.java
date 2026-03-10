@@ -32,6 +32,10 @@ public class EnchantRestrict {
         this.id = id;
     }
 
+    public boolean isPermitted(Material material) {
+        return permittedMaterials.contains(material);
+    }
+
     public boolean isEnchantable(ItemStack itemStack) {
         if (permittedMaterials.contains(itemStack.getType())) {
             return true;

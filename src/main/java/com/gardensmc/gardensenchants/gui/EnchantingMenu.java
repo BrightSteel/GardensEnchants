@@ -7,7 +7,6 @@ import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
-import com.gardensmc.gardensenchants.utils.ExpUtil;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -46,8 +45,11 @@ public class EnchantingMenu extends Menu {
     private static final String BG = "\u0116";
     private static final String BG_DARK = "\u0117";
 
-    public EnchantingMenu(Player viewer) {
+    private final boolean isFullBookSetup;
+
+    public EnchantingMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + BG_DARK, viewer);
+        this.isFullBookSetup = isFullBookSetup;
         initElements();
     }
 
@@ -63,8 +65,7 @@ public class EnchantingMenu extends Menu {
                 'b',
                 inventory,
                 STORAGE_SLOT,
-                // run one tick in future to allow storage to properly update
-                () -> Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, this::update, 1),
+                this::onApplyStorage,
                 null
         );
         gui.addElement(bookStorage);
@@ -79,7 +80,7 @@ public class EnchantingMenu extends Menu {
                 GardensFurniture.itemRegistry.buildItem("enchanting_books_menu"),
                 click -> {
                     onClose(); // run on-close since we aren't actually closing the menu
-                    return open(() -> new EnchantingBooksMenu(viewer));
+                    return open(() -> new EnchantingBooksMenu(viewer, isFullBookSetup));
                 },
                 "<blue>View Enchanting Books"
         ));
@@ -93,7 +94,11 @@ public class EnchantingMenu extends Menu {
         return true;
     }
 
-    private void update() {
+    private void onApplyStorage() {
+        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, this::runUpdate, 1);
+    }
+
+    private void runUpdate() {
         String title;
         if (storageIsEnchantable()) {
             // fetch enchantment instances

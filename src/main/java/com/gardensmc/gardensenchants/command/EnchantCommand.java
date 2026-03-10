@@ -21,18 +21,23 @@ public class EnchantCommand implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
 
-        if (!commandSender.hasPermission("gardens.getbook") || !(commandSender instanceof Player player)) {
+        if (!(commandSender instanceof Player player)) {
             return false;
         }
 
         if (args.length < 1) {
             if (player.hasPermission("gardens.enchant.open")) {
-                new EnchantingMenu(player).open();
+                new EnchantingMenu(player, true).open();
             } else {
                 player.sendMessage(ChatColor.RED + "No permission to use this command");
             }
             return true;
         }
+
+        if (!commandSender.hasPermission("gardens.getbook")) {
+            return false;
+        }
+
 
         var enchantName = args[0].toLowerCase();
         var enchant = GardensEnchantments.INSTANCE.getEnchantment(enchantName);

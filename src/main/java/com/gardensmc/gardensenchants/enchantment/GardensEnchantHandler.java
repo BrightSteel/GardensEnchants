@@ -112,6 +112,11 @@ public class GardensEnchantHandler {
                 compound.removeKey(CustomEnchantment.ENCHANTS_KEY);
             }
         });
+        // remove glint override
+        var meta = item.getItemMeta();
+        meta.setEnchantmentGlintOverride(null);
+        item.setItemMeta(meta);
+        // refresh lore
         if (isRefreshLore) {
             refreshLore();
         }

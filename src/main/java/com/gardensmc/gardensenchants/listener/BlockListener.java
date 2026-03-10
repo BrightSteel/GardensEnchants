@@ -1,6 +1,7 @@
 package com.gardensmc.gardensenchants.listener;
 
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.utils.ItemUtil;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.NBTCompound;
@@ -15,10 +16,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
+
+import static com.gardensmc.gardensenchants.utils.MessageUtil.readableId;
 
 public class BlockListener implements Listener {
 
@@ -65,18 +69,8 @@ public class BlockListener implements Listener {
                 NBTTileEntity tileEntity = new NBTTileEntity(e.getBlock().getState());
                 NBTCompound nbtCompound = tileEntity.getCompound("SpawnData");
                 String entity_id = nbtCompound.getCompound("entity").getString("id");
-                String entity_name = entity_id.split(":")[1];
-
-                ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
-                ItemMeta meta = spawnerItem.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(ChatColor.BLUE + entity_name.substring(0, 1).toUpperCase() + entity_name.substring(1) + " Spawner");
-                    spawnerItem.setItemMeta(meta);
-                }
-
-                NBTItem nbtItem = new NBTItem(spawnerItem);
-                nbtItem.setString("entity_id", entity_id);
-                e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), nbtItem.getItem());
+                var item = ItemUtil.buildSpawnerItem(entity_id);
+                e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
                 e.setExpToDrop(0);
             }
         }
