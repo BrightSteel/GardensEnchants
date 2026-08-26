@@ -5,10 +5,13 @@ import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
+import org.bukkit.block.Vault;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDispenseLootEvent;
+import org.bukkit.event.block.VaultDisplayItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
@@ -67,25 +70,29 @@ public class LootListener implements Listener {
         }
     }
 
+    // Covers vaults, trial spawners, etc
+    @EventHandler(ignoreCancelled = true)
+    public void onDispenseLoot(BlockDispenseLootEvent e) {
+        e.setDispensedLoot(e.getDispensedLoot()
+                .stream()
+                .map(this::transformLoot)
+                .toList()
+        );
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onVaultDisplayLoot(VaultDisplayItemEvent e) {
+        var item = e.getDisplayItem();
+        if (item != null) {
+            e.setDisplayItem(transformLoot(item));
+        }
+    }
+
     private ItemStack[] getLootContents(LootTable lootTable, int invSize, LootContext lootContext) {
         var air = new ItemStack(Material.AIR);
         var loot = lootTable.populateLoot(null, lootContext)
                 .stream()
-                .map(itemStack -> {
-                    if (itemStack.getType() == Material.ENCHANTED_BOOK) {
-                        return VillagerListener.getCustomEnchantBook(itemStack);
-                    } else if (!itemStack.getEnchantments().isEmpty()) {
-                        var clone = itemStack.clone();
-                        var enchantHandler = new GardensEnchantHandler(clone);
-                        enchantHandler.applyPostEnchantChanges();
-                        int enchantCount = enchantHandler.getEnchantments().size();
-                        if (enchantCount > DEFAULT_SLOTS) {
-                            enchantHandler.setSlots(enchantCount);
-                        }
-                        return clone;
-                    }
-                    return itemStack;
-                })
+                .map(this::transformLoot)
                 .collect(Collectors.toList());
         var remainingSlots = invSize - loot.size();
         for (int i = 0; i < remainingSlots; i++) {
@@ -93,5 +100,21 @@ public class LootListener implements Listener {
         }
         Collections.shuffle(loot);
         return loot.toArray(ItemStack[]::new);
+    }
+
+    private ItemStack transformLoot(ItemStack itemStack) {
+        if (itemStack.getType() == Material.ENCHANTED_BOOK) {
+            return VillagerListener.getCustomEnchantBook(itemStack);
+        } else if (!itemStack.getEnchantments().isEmpty()) {
+            var clone = itemStack.clone();
+            var enchantHandler = new GardensEnchantHandler(clone);
+            enchantHandler.applyPostEnchantChanges();
+            int enchantCount = enchantHandler.getEnchantments().size();
+            if (enchantCount > DEFAULT_SLOTS) {
+                enchantHandler.setSlots(enchantCount);
+            }
+            return clone;
+        }
+        return itemStack;
     }
 }

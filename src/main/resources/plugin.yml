@@ -22,7 +22,12 @@ commands:
   lore:
     description: Modify lore on held item
     usage: /<command>
+  fixbook:
+    description: Replace held vanilla book with custom book
+    usage: /<command>
 depend:
   - Vault
   - GardensFurniture
   - QuickShop-Hikari
+softdepend:
+  - floodgate

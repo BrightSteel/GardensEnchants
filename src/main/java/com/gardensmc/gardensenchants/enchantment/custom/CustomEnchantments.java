@@ -47,9 +47,9 @@ public class CustomEnchantments {
             .rarity(EnchantRarity.RARE)
             .maxLevel(5));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
-            .lore("<gray>Mines in a 3x3 pattern")
+            .lore("<gray>Breaks blocks in a 3x3 pattern")
             .rarity(EnchantRarity.LEGENDARY)
-            .enchantRestrict(EnchantRestricts.PICKAXE));
+            .enchantRestrict(EnchantRestricts.EXCAVATION));
     public static final CustomEnchantment SMELTER = register("smelter", builder -> builder
             .lore("<gray>Auto smelts ores")
             .rarity(EnchantRarity.RARE)

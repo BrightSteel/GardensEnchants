@@ -3,26 +3,28 @@ package com.gardensmc.gardensenchants.listener;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.ItemUtil;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
-import de.tr7zw.nbtapi.NBT;
-import de.tr7zw.nbtapi.NBTCompound;
+import com.gardensmc.gardensfurniture.events.CustomBlockInteractEvent;
+import com.gardensmc.gardensfurniture.util.ProtectionUtil;
 import de.tr7zw.nbtapi.NBTItem;
-import de.tr7zw.nbtapi.NBTTileEntity;
-import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.block.Block;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
-
-import static com.gardensmc.gardensenchants.utils.MessageUtil.readableId;
 
 public class BlockListener implements Listener {
 
@@ -63,14 +65,14 @@ public class BlockListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onSpawnerBreak(BlockBreakEvent e) {
-        if (e.getBlock().getType() == Material.SPAWNER) {
+        if (e.getBlock().getState() instanceof CreatureSpawner spawner) {
             ItemStack tool = e.getPlayer().getInventory().getItemInMainHand();
             if (CustomEnchantments.SILK_TOUCH_SPAWNER.hasEnchantment(tool)) {
-                NBTTileEntity tileEntity = new NBTTileEntity(e.getBlock().getState());
-                NBTCompound nbtCompound = tileEntity.getCompound("SpawnData");
-                String entity_id = nbtCompound.getCompound("entity").getString("id");
-                var item = ItemUtil.buildSpawnerItem(entity_id);
-                e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
+                EntityType spawnedType = spawner.getSpawnedType();
+                if (spawnedType != null) {
+                    var item = ItemUtil.buildSpawnerItem(spawnedType.getKey().toString());
+                    e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
+                }
                 e.setExpToDrop(0);
             }
         }
@@ -79,14 +81,68 @@ public class BlockListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onSpawnerPlace(BlockPlaceEvent e) {
         if (e.getBlock().getType() == Material.SPAWNER) {
-            NBTItem spawnerItem = new NBTItem(e.getItemInHand());
-
-            if (!spawnerItem.hasKey("entity_id")) return;
-            String entity_id = spawnerItem.getString("entity_id");
-
-            NBT.modify(e.getBlockPlaced().getState(), nbt -> {
-                nbt.getOrCreateCompound("SpawnData").getOrCreateCompound("entity").setString("id", entity_id);
-            });
+            applySpawnerEntity(e.getItemInHand(), e.getBlockPlaced());
         }
+    }
+
+    // Right-clicking a note block (GardensFurniture custom block) is consumed by furniture, which
+    // cancels the vanilla PlayerInteractEvent, so BlockPlaceEvent never fires. Furniture instead
+    // exposes CustomBlockInteractEvent for these clicks, so we place the spawner ourselves here and
+    // cancel the event to stop furniture running its default item placement.
+    @EventHandler(ignoreCancelled = true)
+    public void onSpawnerPlaceOnCustomBlock(CustomBlockInteractEvent e) {
+        ItemStack heldItem = e.getHeldItem();
+        if (heldItem == null || heldItem.getType() != Material.SPAWNER) return;
+
+        NBTItem spawnerItem = new NBTItem(heldItem);
+        if (!spawnerItem.hasKey("entity_id")) return;
+
+        Player player = e.getPlayer();
+        Block target = e.getBlock().getRelative(e.getBlockFace());
+        if (!target.isReplaceable()) return;
+        if (!ProtectionUtil.canBuild(target.getLocation(), player)) return;
+
+        target.setType(Material.SPAWNER);
+        if (!applySpawnerEntity(heldItem, target)) {
+            // NBT was malformed; don't leave a stray empty spawner or consume the item
+            target.setType(Material.AIR);
+            return;
+        }
+
+        e.setCancelled(true); // stop furniture's default placement from also running
+
+        EquipmentSlot hand = e.getHand() == null ? EquipmentSlot.HAND : e.getHand();
+        if (hand == EquipmentSlot.OFF_HAND) {
+            player.swingOffHand();
+        } else {
+            player.swingMainHand();
+        }
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            ItemStack used = player.getInventory().getItem(hand);
+            if (used != null) {
+                used.setAmount(used.getAmount() - 1);
+                player.getInventory().setItem(hand, used);
+            }
+        }
+    }
+
+    private static boolean applySpawnerEntity(ItemStack spawnerStack, Block placed) {
+        NBTItem spawnerItem = new NBTItem(spawnerStack);
+
+        if (!spawnerItem.hasKey("entity_id")) return false;
+        String entity_id = spawnerItem.getString("entity_id");
+
+        var key = NamespacedKey.fromString(entity_id);
+        var spawnedType = key == null ? null : Registry.ENTITY_TYPE.get(key);
+        if (spawnedType == null) return false;
+
+        if (placed.getState() instanceof CreatureSpawner spawner) {
+            // setSpawnedType also clears SpawnPotentials/nextSpawnData, so the placed
+            // spawner isn't left empty (raw SpawnData NBT edits don't do this).
+            spawner.setSpawnedType(spawnedType);
+            spawner.update(true, false);
+            return true;
+        }
+        return false;
     }
 }

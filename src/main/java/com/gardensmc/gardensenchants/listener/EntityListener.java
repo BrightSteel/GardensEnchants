@@ -7,6 +7,7 @@ import com.gardensmc.gardensenchants.enchantment.custom.LingeringEnchantHandler;
 import io.papermc.paper.event.entity.WardenAngerChangeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -50,9 +51,16 @@ public class EntityListener implements Listener {
                 arrow.getType()
         );
         clone.setVelocity(arrow.getVelocity());
-        clone.setColor(arrow.getColor());
-        clone.setBasePotionType(arrow.getBasePotionType());
+        // Copy the whole pickup item stack so the clone inherits the exact potion
+        // contents AND the tipped-arrow duration scale (POTION_DURATION_SCALE).
+        // Rebuilding via setBasePotionType leaves the scale at 1.0, which makes
+        // potion effects last 8x longer than the real arrow (e.g. 5s -> 40s).
+        clone.setItemStack(arrow.getItemStack());
+        clone.setCritical(arrow.isCritical());
         clone.setShooter(arrow.getShooter());
+        // Barrage clones are bonus projectiles, not free ammo: never let them be
+        // collected, otherwise one arrow (especially with Infinity) becomes several.
+        clone.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
     }
 
     private void handleBowExplosion(Entity arrow, ItemStack bow, Player source) {

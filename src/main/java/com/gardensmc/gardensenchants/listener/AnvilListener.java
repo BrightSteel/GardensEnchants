@@ -4,6 +4,7 @@ import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
+import com.gardensmc.gardensenchants.events.GardensEnchantItemEvent;
 import com.gardensmc.gardensenchants.relic.RelicHandler;
 import com.gardensmc.gardensenchants.rune.RuneFactory;
 import com.gardensmc.gardensenchants.utils.ExpUtil;
@@ -16,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
@@ -209,6 +211,10 @@ public class AnvilListener implements Listener {
             }
             // notify user of destructionBase
             e.getWhoClicked().sendMessage(ChatColor.RED + "Enchantment Destructed!");
+        } else if (e.getWhoClicked() instanceof Player player) {
+            Bukkit.getPluginManager().callEvent(
+                    new GardensEnchantItemEvent(player, e.getCurrentItem(), bookInstance)
+            );
         }
     }
 
@@ -239,8 +245,15 @@ public class AnvilListener implements Listener {
                 resultEnchantments.add(enchantment);
             }
         }
-        // add remaining enchantments from secondary, since we removed any matching
-        resultEnchantments.addAll(enchantmentsOnSecondary);
+        // add remaining enchantments from secondary, discarding any that conflict with a kept (left) enchant.
+        // like vanilla, we still charge for conflicting enchants even though they're dropped from the result
+        var compatibleSecondary = enchantmentsOnSecondary
+                .stream()
+                .filter(secondary -> enchantmentsOnPrimary
+                        .stream()
+                        .noneMatch(primary -> conflicts(primary, secondary)))
+                .toList();
+        resultEnchantments.addAll(compatibleSecondary);
         cost += enchantmentsOnSecondary
                 .stream()
                 .reduce(0,
@@ -248,6 +261,12 @@ public class AnvilListener implements Listener {
                         Integer::sum
                 );
         return new CombinedEnchantResult(resultEnchantments, cost);
+    }
+
+    private boolean conflicts(EnchantmentInstance left, EnchantmentInstance right) {
+        var leftEnchant = left.getEnchantment();
+        var rightEnchant = right.getEnchantment();
+        return leftEnchant.conflictsWith(rightEnchant) || rightEnchant.conflictsWith(leftEnchant);
     }
 
     private int getCombinedLevel(EnchantmentInstance enchantment, EnchantmentInstance matchingEnchantment) {

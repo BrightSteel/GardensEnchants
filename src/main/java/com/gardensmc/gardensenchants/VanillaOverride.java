@@ -36,12 +36,10 @@ public class VanillaOverride {
         this.bookIdentifier = overrideSection.getString("bookIdentifier");
         var enchantRestrictId = overrideSection.getString("enchantRestrict");
         if (enchantRestrictId != null) {
-            // probably should have these in a map registered by an ID, but im lazy so...
-            try {
-                this.enchantRestrict = (EnchantRestrict) EnchantRestricts.class
-                        .getDeclaredField(enchantRestrictId.toUpperCase())
-                        .get(null);
-            } catch (Exception e) {
+            var registeredRestrict = EnchantRestricts.registeredEnchantRestricts.get(enchantRestrictId.toLowerCase());
+            if (registeredRestrict != null) {
+                this.enchantRestrict = registeredRestrict;
+            } else {
                 GardensEnchants.plugin.getLogger().log(
                         Level.SEVERE,
                         "Unknown enchant restrict %s defined in override, ignoring!".formatted(enchantRestrictId)
