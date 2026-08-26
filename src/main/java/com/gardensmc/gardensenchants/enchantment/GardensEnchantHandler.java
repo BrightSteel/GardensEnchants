@@ -38,7 +38,14 @@ public class GardensEnchantHandler {
         if (hasConflicts) {
             return false;
         }
-        return enchants.size() < getSlots();
+        // enchants that this enchantment replaces (e.g. eternal removes unbreaking/mending)
+        // free up their slot, so don't count them against the limit
+        var replacedIds = enchantment.getReplacedEnchantmentIds();
+        var freedSlots = enchants
+                .stream()
+                .filter(enchantmentInstance -> replacedIds.contains(enchantmentInstance.getEnchantment().getId()))
+                .count();
+        return (enchants.size() - freedSlots) < getSlots();
     }
 
     public List<EnchantmentInstance> getUpgradeableEnchantments() {
