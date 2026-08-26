@@ -48,6 +48,15 @@ public abstract class GardensEnchantment {
 
     public abstract boolean conflictsWith(GardensEnchantment ench);
 
+    /**
+     * Ids of enchantments that are removed from an item when this enchantment is applied
+     * (e.g. eternal replaces vanilla unbreaking/mending). These don't count against the
+     * item's slot limit since applying this enchant frees them.
+     */
+    public java.util.Set<String> getReplacedEnchantmentIds() {
+        return Collections.emptySet();
+    }
+
     public int getCostInXP(int level) {
         var base = getRarity().getBaseCost();
         return base + (base * (level / 2));

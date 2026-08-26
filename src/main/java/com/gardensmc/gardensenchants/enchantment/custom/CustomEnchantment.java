@@ -15,7 +15,10 @@ import org.bukkit.inventory.meta.Damageable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler.ITEM_NBT_KEY;
@@ -63,13 +66,12 @@ public class CustomEnchantment extends GardensEnchantment {
                 damageable.setDamage(0);
                 itemStack.setItemMeta(damageable);
             }
-            // remove un-breaking and mending
-            Stream.of(Enchantment.UNBREAKING, Enchantment.MENDING).filter(itemStack::containsEnchantment).forEach(itemStack::removeEnchantment);
-        } else if (id.equals(CustomEnchantments.BUBBLE_HEAD.id)) {
-            if (itemStack.containsEnchantment(Enchantment.RESPIRATION)) {
-                itemStack.removeEnchantment(Enchantment.RESPIRATION);
-            }
         }
+        // remove any enchantments this enchant replaces (e.g. eternal removes unbreaking/mending)
+        getReplacedEnchantments()
+                .stream()
+                .filter(itemStack::containsEnchantment)
+                .forEach(itemStack::removeEnchantment);
     }
 
     @Override
@@ -110,6 +112,26 @@ public class CustomEnchantment extends GardensEnchantment {
     @Override
     public boolean isVisibleInTable() {
         return isVisibleInTable;
+    }
+
+    /**
+     * Vanilla enchantments removed from an item when this enchant is applied.
+     */
+    private Set<Enchantment> getReplacedEnchantments() {
+        if (id.equals(CustomEnchantments.ETERNAL.id)) {
+            return Set.of(Enchantment.UNBREAKING, Enchantment.MENDING);
+        } else if (id.equals(CustomEnchantments.BUBBLE_HEAD.id)) {
+            return Set.of(Enchantment.RESPIRATION);
+        }
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Set<String> getReplacedEnchantmentIds() {
+        return getReplacedEnchantments()
+                .stream()
+                .map(enchantment -> enchantment.getKey().getKey())
+                .collect(Collectors.toSet());
     }
 
     @Override
