@@ -13,7 +13,6 @@ public class EnchantRestricts {
 
     public static final Map<String, EnchantRestrict> registeredEnchantRestricts = new HashMap<>();
 
-    // WARNING - careful when changing any names in/of this class. It's accessed via reflection from VanillaOverride.java
     public static final EnchantRestrict PICKAXE = new EnchantRestrict.Builder("pickaxe")
             .withMaterials(
                     WOODEN_PICKAXE,
@@ -121,6 +120,20 @@ public class EnchantRestricts {
                     COPPER_BOOTS
             ).withIcon('\uE254').build();
 
+    public static final EnchantRestrict SPEAR = new EnchantRestrict.Builder("spear")
+            .withMaterials(
+                    WOODEN_SPEAR,
+                    STONE_SPEAR,
+                    IRON_SPEAR,
+                    COPPER_SPEAR,
+                    GOLDEN_SPEAR,
+                    DIAMOND_SPEAR,
+                    NETHERITE_SPEAR
+            ).build();
+
+    public static final EnchantRestrict SHIELD = new EnchantRestrict.Builder("shield")
+            .withMaterial(Material.SHIELD).build();
+
     public static final EnchantRestrict BOW = new EnchantRestrict.Builder("bow")
             .withMaterial(Material.BOW).withIcon('\uE24C').build();
 
@@ -159,6 +172,9 @@ public class EnchantRestricts {
     public static final EnchantRestrict WEAPON = new EnchantRestrict.Builder("weapon")
             .withChildren(SWORD, AXE).build();
 
+    public static final EnchantRestrict EXCAVATION = new EnchantRestrict.Builder("excavation")
+            .withChildren(PICKAXE, SHOVEL).build();
+
     public static final EnchantRestrict ARMOR = new EnchantRestrict.Builder("armor")
             .withChildren(
                     HELMET,
@@ -178,7 +194,9 @@ public class EnchantRestricts {
                     TRIDENT,
                     SHEARS,
                     FISHING_ROD,
-                    ELYTRA
+                    ELYTRA,
+                    SPEAR,
+                    SHIELD
             )
             .setIcons(Collections.emptyList())
             .build();

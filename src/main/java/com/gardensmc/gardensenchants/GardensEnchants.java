@@ -73,6 +73,7 @@ public class GardensEnchants extends JavaPlugin {
         Objects.requireNonNull(Bukkit.getPluginCommand("mobhead")).setExecutor(new MobHeadCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("disenchant")).setExecutor(new DisenchantCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("lore")).setExecutor(new LoreCommand());
+        Objects.requireNonNull(Bukkit.getPluginCommand("fixbook")).setExecutor(new FixBookCommand());
 
         Tables.initializeClass();
         Bukkit.getScheduler().runTaskTimer(

@@ -2,8 +2,8 @@ package com.gardensmc.gardensenchants.events;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
-import com.gardensmc.gardensenchants.cache.OnlinePlayerData;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.gui.BedrockEnchantingMenu;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.utils.*;
 import com.gardensmc.gardensfurniture.custom.CustomBlockManager;
@@ -21,7 +21,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -404,7 +403,7 @@ public class Events implements Listener {
         }
     }
     
-    private static final Set<Material> SUPER_BREAK_MATERIALS = Set.of(
+    private static final Set<Material> SUPER_BREAK_STONE_MATERIALS = Set.of(
             Material.AMETHYST_BLOCK,
             Material.ANCIENT_DEBRIS,
             Material.ANDESITE,
@@ -427,6 +426,27 @@ public class Events implements Listener {
             Material.WARPED_NYLIUM
     );
 
+    private static final Set<Material> SUPER_BREAK_DIRT_MATERIALS = Set.of(
+            Material.DIRT,
+            Material.GRASS_BLOCK,
+            Material.COARSE_DIRT,
+            Material.PODZOL,
+            Material.MYCELIUM,
+            Material.MUD,
+            Material.MUDDY_MANGROVE_ROOTS,
+            Material.ROOTED_DIRT,
+            Material.SAND,
+            Material.RED_SAND,
+            Material.GRAVEL,
+            Material.SNOW_BLOCK,
+            Material.POWDER_SNOW,
+            Material.CLAY,
+            Material.SOUL_SAND,
+            Material.SOUL_SOIL,
+            Material.MOSS_BLOCK,
+            Material.MOSS_CARPET
+    );
+
     private static final Set<String> SUPER_BREAK_ENDS_WITH = Set.of(
             "ORE",
             "TERRACOTTA",
@@ -446,8 +466,9 @@ public class Events implements Listener {
         }
 
         Player player = e.getPlayer();
-        if (canSuperBreak(e.getBlock())) {
-            if (!SUPER_BREAKER.hasEnchantment(player.getInventory().getItemInMainHand())) {
+        var tool = player.getInventory().getItemInMainHand();
+        if (canSuperBreak(e.getBlock(), tool)) {
+            if (!SUPER_BREAKER.hasEnchantment(tool)) {
                 return;
             }
             BlockFace facing = PlayerUtil.getBlockFaceLooking(player);
@@ -470,7 +491,7 @@ public class Events implements Listener {
                         target = e.getBlock().getRelative(i, 0, j);
                     }
 
-                    if (target != null && canSuperBreak(target)) {
+                    if (target != null && canSuperBreak(target, tool)) {
                         // give metadata so we can avoid calling this event on this block again
                         target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
                         breakIfAble(player, target);
@@ -480,9 +501,12 @@ public class Events implements Listener {
         }
     }
 
-    private boolean canSuperBreak(Block block) {
+    private boolean canSuperBreak(Block block, ItemStack tool) {
         String block_name = block.getType().toString().toUpperCase();
-        return (SUPER_BREAK_MATERIALS.contains(block.getType()) || SUPER_BREAK_ENDS_WITH.stream().anyMatch(block_name::endsWith)) && !SUPER_BREAK_EXC.contains(block_name);
+        if (tool.getType().toString().toUpperCase().contains("SHOVEL")) {
+            return SUPER_BREAK_DIRT_MATERIALS.contains(block.getType());
+        }
+        return (SUPER_BREAK_STONE_MATERIALS.contains(block.getType()) || SUPER_BREAK_ENDS_WITH.stream().anyMatch(block_name::endsWith)) && !SUPER_BREAK_EXC.contains(block_name);
     }
 
     private void breakIfAble(Player player, Block target) {
@@ -580,7 +604,13 @@ public class Events implements Listener {
     public void onPlayerOpenEnchanting(PlayerInteractEvent e) {
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.ENCHANTING_TABLE) {
             e.setCancelled(true);
-            new EnchantingMenu(e.getPlayer(), isFullBookSetup(e.getClickedBlock())).open();
+            var player = e.getPlayer();
+            if (BedrockEnchantingMenu.isBedrockPlayer(player)) {
+                // Bedrock clients can't render the Java menu; require a held book and use a Geyser form.
+                BedrockEnchantingMenu.open(player);
+            } else {
+                new EnchantingMenu(player, isFullBookSetup(e.getClickedBlock())).open();
+            }
         }
     }
 

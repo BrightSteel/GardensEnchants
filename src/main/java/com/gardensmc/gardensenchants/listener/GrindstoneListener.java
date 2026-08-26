@@ -61,6 +61,7 @@ public class GrindstoneListener implements Listener {
 
     @EventHandler
     public void onGrindstoneClick(InventoryClickEvent e) {
+        if (e.getClick().isShiftClick()) return;
         if (e.getClickedInventory() instanceof GrindstoneInventory grindstone) {
             var cursor = e.getView().getCursor();
             if (!isEmpty(cursor)) {
