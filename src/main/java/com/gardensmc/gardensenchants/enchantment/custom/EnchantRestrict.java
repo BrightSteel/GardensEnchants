@@ -36,6 +36,33 @@ public class EnchantRestrict {
         return permittedMaterials.contains(material);
     }
 
+    /**
+     * A leaf restrict is a concrete item type (e.g. sword, pickaxe) that permits items
+     * directly rather than delegating to child restricts.
+     */
+    public boolean isLeaf() {
+        return children.isEmpty();
+    }
+
+    /**
+     * Whether this restrict permits the item directly (by material or custom identifier),
+     * without recursing into child restricts. Used to resolve the specific type an item
+     * belongs to - i.e. the same type its matching typed book would use.
+     */
+    public boolean isDirectlyPermitted(ItemStack itemStack) {
+        if (permittedMaterials.contains(itemStack.getType())) {
+            return true;
+        }
+        if (!permittedCustomIdentifiers.isEmpty() || !permittedCustomIdSuffixes.isEmpty()) {
+            var customItem = GardensFurniture.itemRegistry.getCustomItem(itemStack);
+            if (customItem != null) {
+                var identifier = customItem.getIdentifier();
+                return permittedCustomIdentifiers.contains(identifier) || permittedCustomIdSuffixes.contains(identifier);
+            }
+        }
+        return false;
+    }
+
     public boolean isEnchantable(ItemStack itemStack) {
         if (permittedMaterials.contains(itemStack.getType())) {
             return true;
@@ -58,6 +85,17 @@ public class EnchantRestrict {
 
     public boolean isEqualOrChild(EnchantRestrict enchantRestrict) {
         return enchantRestrict == this || children.stream().anyMatch(child -> child.isEqualOrChild(enchantRestrict));
+    }
+
+    /**
+     * Whether this restrict and the given one share any item type. Unlike {@link #isEqualOrChild},
+     * this handles groups that aren't nested in each other - e.g. "all" and "excavation" both
+     * contain pickaxes, even though excavation isn't a child of all.
+     */
+    public boolean overlaps(EnchantRestrict enchantRestrict) {
+        return isEqualOrChild(enchantRestrict)
+                || enchantRestrict.isEqualOrChild(this)
+                || children.stream().anyMatch(child -> child.overlaps(enchantRestrict));
     }
 
     public static class Builder {

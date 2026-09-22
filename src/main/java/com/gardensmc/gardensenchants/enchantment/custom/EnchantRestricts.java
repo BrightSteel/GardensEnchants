@@ -1,6 +1,8 @@
 package com.gardensmc.gardensenchants.enchantment.custom;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,6 +14,21 @@ import static org.bukkit.Material.DIAMOND_CHESTPLATE;
 public class EnchantRestricts {
 
     public static final Map<String, EnchantRestrict> registeredEnchantRestricts = new HashMap<>();
+
+    /**
+     * Resolves the concrete (leaf) restrict an item belongs to - e.g. a diamond sword resolves
+     * to {@link #SWORD}. This is the same restrict its matching typed book uses, so inserting a
+     * tool into the enchanting table yields the same enchant pool as inserting that typed book.
+     * Returns null if no leaf restrict directly permits the item.
+     */
+    @Nullable
+    public static EnchantRestrict getMatchingType(ItemStack itemStack) {
+        return registeredEnchantRestricts.values().stream()
+                .filter(EnchantRestrict::isLeaf)
+                .filter(restrict -> restrict.isDirectlyPermitted(itemStack))
+                .findFirst()
+                .orElse(null);
+    }
 
     public static final EnchantRestrict PICKAXE = new EnchantRestrict.Builder("pickaxe")
             .withMaterials(

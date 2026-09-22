@@ -92,7 +92,9 @@ public class BooksHandler {
         var rarity = ProbabilityUtil.rollRarity();
         var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(rarity)
                 .stream()
-                .filter(enchantment -> enchantment.isVisibleInTable() && enchantRestrict.isEqualOrChild(enchantment.getRestrict()))
+                // eligible if the enchant can go on any item this type covers
+                // (e.g. a pickaxe or an "all" book can roll "excavation" enchants)
+                .filter(enchantment -> enchantment.isVisibleInTable() && enchantRestrict.overlaps(enchantment.getRestrict()))
                 .toList();
         if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
             GardensEnchants.plugin.getLogger().severe("Could not find enchant with rarity %s for type %s!".formatted(rarity, type));

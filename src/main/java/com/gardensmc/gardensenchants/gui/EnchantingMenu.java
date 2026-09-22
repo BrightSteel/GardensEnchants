@@ -6,7 +6,9 @@ import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
+import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -102,7 +104,7 @@ public class EnchantingMenu extends Menu {
         String title;
         if (storageIsEnchantable()) {
             // fetch enchantment instances
-            var enchantments = new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).getEnchantmentInstances();
+            var enchantments = new EnchantEntryHandler(viewer.getUniqueId(), getInsertedType()).getEnchantmentInstances();
             for (var dynamicRow : dynamicRows) {
                 var enchantment = enchantments.poll();
                 if (enchantment == null) {
@@ -162,19 +164,47 @@ public class EnchantingMenu extends Menu {
                 c,
                 getBookDisplayItem(dynamicRow.bookInstance, column),
                 click -> {
-                    var bookInstance = dynamicRow.getBookInstance();
-                    if (bookInstance != null) {
-                        if (canPurchase(bookInstance.enchantment())) {
-                            chargePlayer(bookInstance.enchantment());
-                            bookStorage.setStorageItem(
-                                    viewer, STORAGE_SLOT, bookInstance.book()
-                            );
-                            new EnchantEntryHandler(viewer.getUniqueId(), getInsertedBookType()).resetEnchantEntry();
-                        }
-                    }
+                    purchase(dynamicRow.getBookInstance());
                     return true;
                 }
         ));
+    }
+
+    /**
+     * Applies the selected enchant to the inserted item. When a book is inserted the item becomes
+     * the corresponding enchant book (existing behaviour); when a tool is inserted the enchant is
+     * applied directly to the tool.
+     */
+    private void purchase(@Nullable BookInstance bookInstance) {
+        if (bookInstance == null) {
+            return;
+        }
+        var type = getInsertedType();
+        var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
+        if (type == null || storageItem == null) {
+            return;
+        }
+        var enchantment = bookInstance.enchantment();
+        if (storageItem.getType() == Material.BOOK) {
+            // book -> becomes the corresponding enchant book, left in the slot
+            if (!canPurchase(enchantment)) {
+                return;
+            }
+            chargePlayer(enchantment);
+            bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
+        } else {
+            // tool -> enchant applied directly and left in the slot. once enchanted it no longer
+            // generates offers (see getInsertedType), so the player grabs the finished tool out.
+            var tool = storageItem.clone();
+            var enchantHandler = new GardensEnchantHandler(tool);
+            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment)) {
+                return;
+            }
+            chargePlayer(enchantment);
+            enchantHandler.enchant(enchantment, bookInstance.level(), false);
+            bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
+        }
+        new EnchantEntryHandler(viewer.getUniqueId(), type).resetEnchantEntry();
     }
 
     private boolean canPurchase(GardensEnchantment enchantment) {
@@ -187,13 +217,37 @@ public class EnchantingMenu extends Menu {
     }
 
     private boolean storageIsEnchantable() {
-        var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
-        return storageItem != null && storageItem.getType() == Material.BOOK && storageItem.getAmount() == 1;
+        return getInsertedType() != null;
     }
 
-    private String getInsertedBookType() {
+    /**
+     * Resolves the enchant-restrict type for the item in the storage slot, or null if it can't be
+     * enchanted here. Books (including typed books) use the typed-book type; tools resolve to the
+     * same type their matching typed book would use, so a sword yields the sword enchant pool.
+     */
+    @Nullable
+    private String getInsertedType() {
         var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
-        return TypedBooksHandler.getTypeFromBook(storageItem);
+        if (storageItem == null || storageItem.getAmount() != 1) {
+            return null;
+        }
+        if (storageItem.getType() == Material.BOOK) {
+            return TypedBooksHandler.getTypeFromBook(storageItem);
+        }
+        if (storageItem.getType() == Material.ENCHANTED_BOOK) {
+            // vanilla/enchanted books aren't enchantable tools here
+            return null;
+        }
+        var restrict = EnchantRestricts.getMatchingType(storageItem);
+        if (restrict == null || hasEnchantments(storageItem)) {
+            // only clean, unenchanted tools may be enchanted here (mirrors the vanilla table)
+            return null;
+        }
+        return restrict.getId();
+    }
+
+    private boolean hasEnchantments(ItemStack item) {
+        return !new GardensEnchantHandler(item).getEnchantments().isEmpty();
     }
 
     private ItemStack getBookDisplayItem(BookInstance bookInstance, Column column) {
