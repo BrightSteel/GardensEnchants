@@ -12,20 +12,20 @@ public class ProbabilityUtil {
 
     public static EnchantRarity rollRarity() {
         double num = ThreadLocalRandom.current().nextDouble(); // 0 - 0.99
-        // 70% chance
-        if (num <= 0.70) {
+        // 71% chance
+        if (num <= 0.71) {
             return EnchantRarity.COMMON;
         }
         // 15% chance
-        else if (num <= 0.85) {
+        else if (num <= 0.86) {
             return EnchantRarity.UNCOMMON;
         }
         // 8% chance
-        else if (num <= 0.93) {
+        else if (num <= 0.94) {
             return EnchantRarity.RARE;
         }
         // 4% chance
-        else if (num <= 0.97) {
+        else if (num <= 0.98) {
             return EnchantRarity.EPIC;
         }
         // 2% chance
