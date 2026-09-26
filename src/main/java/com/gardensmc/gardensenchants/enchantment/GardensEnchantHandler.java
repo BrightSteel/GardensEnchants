@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @AllArgsConstructor
@@ -230,11 +231,18 @@ public class GardensEnchantHandler {
                     if (enchants == null) {
                         return Collections.emptyList();
                     }
+                    // skip ids that no longer exist (e.g. winged_boots) instead of failing on the whole item
                     return enchants.getKeys()
                             .stream()
-                            .map(key -> new EnchantmentInstance(
-                                    CustomEnchantments.customEnchantments.get(key),
-                                    enchants.getInteger(key)))
+                            .map(key -> {
+                                var enchantment = CustomEnchantments.customEnchantments.get(key);
+                                if (enchantment == null) {
+                                    GardensEnchantments.INSTANCE.warnUnknown(key);
+                                    return null;
+                                }
+                                return new EnchantmentInstance(enchantment, enchants.getInteger(key));
+                            })
+                            .filter(Objects::nonNull)
                             .toList();
                 });
     }

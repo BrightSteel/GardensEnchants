@@ -122,10 +122,7 @@ public class BooksHandler {
             var enchantId = bookNBT.getString(ENCHANTMENT_KEY);
             var enchantment = GardensEnchantments.INSTANCE.getEnchantment(enchantId);
             if (enchantment == null) {
-                GardensEnchants.plugin.getLogger().log(
-                        Level.WARNING,
-                        "Enchantment with id %s does not exist".formatted(enchantId)
-                );
+                GardensEnchantments.INSTANCE.warnUnknown(enchantId);
                 return null;
             }
             return new BookInstance(
