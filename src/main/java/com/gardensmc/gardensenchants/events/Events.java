@@ -348,7 +348,8 @@ public class Events implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // MONITOR: the ingots are dropped by hand, so only do it once the break can't be cancelled any more
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onSmeltMineBlock(BlockBreakEvent e) {
         Player player = e.getPlayer();
         String block_name = e.getBlock().getType().toString().toUpperCase();

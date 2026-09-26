@@ -17,6 +17,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDropItemEvent;
@@ -38,7 +39,9 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // Drops and XP are handed out at MONITOR, once no other plugin can still cancel the break.
+    // Doing it earlier let a later cancel keep the block and the reward (repeatable).
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBlockBreak(BlockBreakEvent e) {
         var player = e.getPlayer();
         var tool = PlayerUtil.getHeldItem(player);
@@ -48,7 +51,7 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onSilkAmethyst(BlockBreakEvent e) {
         if (e.getBlock().getType() == Material.BUDDING_AMETHYST) {
             var tool = PlayerUtil.getHeldItem(e.getPlayer());
@@ -63,8 +66,20 @@ public class BlockListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // zero the spawner XP before Siphon (MONITOR) would pay it out
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onSpawnerBreakXp(BlockBreakEvent e) {
+        if (e.getBlock().getType() == Material.SPAWNER
+                && CustomEnchantments.SILK_TOUCH_SPAWNER.hasEnchantment(e.getPlayer().getInventory().getItemInMainHand())) {
+            e.setExpToDrop(0);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onSpawnerBreak(BlockBreakEvent e) {
+        if (e.getBlock().getType() != Material.SPAWNER) {
+            return; // avoid a block state snapshot on every break
+        }
         if (e.getBlock().getState() instanceof CreatureSpawner spawner) {
             ItemStack tool = e.getPlayer().getInventory().getItemInMainHand();
             if (CustomEnchantments.SILK_TOUCH_SPAWNER.hasEnchantment(tool)) {
@@ -73,7 +88,6 @@ public class BlockListener implements Listener {
                     var item = ItemUtil.buildSpawnerItem(spawnedType.getKey().toString());
                     e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
                 }
-                e.setExpToDrop(0);
             }
         }
     }
