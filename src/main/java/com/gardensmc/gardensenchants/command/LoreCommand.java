@@ -24,6 +24,9 @@ import static com.gardensmc.gardensenchants.utils.MessageUtil.sendMessage;
 
 public class LoreCommand implements TabExecutor {
 
+    // bounds the markup (colour/gradient tags) around the 50 visible characters
+    private static final int MAX_RAW_LORE_LENGTH = 256;
+
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
         if (!(commandSender instanceof Player player)) {
@@ -56,8 +59,8 @@ public class LoreCommand implements TabExecutor {
             return;
         }
         var text = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
-        var line = MessageUtil.fromMiniMessage(text);
-        if (MessageUtil.toPlainText(line).length() >= 50) {
+        var line = MessageUtil.fromPlayerInput(text);
+        if (text.length() > MAX_RAW_LORE_LENGTH || MessageUtil.toPlainText(line).length() >= 50) {
             sendError(player, "Lore is too long!");
             return;
         }
@@ -67,7 +70,8 @@ public class LoreCommand implements TabExecutor {
                 sendError(player, "Cannot add more than 5 lines of lore!");
                 return;
             }
-            enchantHandler.addCustomLore(text);
+            // store the sanitised line, since custom lore is re-read with the full MiniMessage parser
+            enchantHandler.addCustomLore(MessageUtil.toMiniMessage(line));
         } else {
             var meta = itemStack.getItemMeta();
             if (meta.hasLore() && meta.lore().size() >= 5) {

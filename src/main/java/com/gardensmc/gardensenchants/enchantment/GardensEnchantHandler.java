@@ -32,11 +32,20 @@ public class GardensEnchantHandler {
             return false;
         }
         var enchants = getEnchantments();
-        var hasConflicts = enchants
+        // an enchant already on the item is an upgrade: it can't conflict with itself (Bukkit says
+        // vanilla enchants do) and it doesn't take another slot
+        var others = enchants
+                .stream()
+                .filter(enchantmentInstance -> !enchantmentInstance.getEnchantment().getId().equals(enchantment.getId()))
+                .toList();
+        var hasConflicts = others
                 .stream()
                 .anyMatch(enchantmentInstance -> enchantmentInstance.getEnchantment().conflictsWith(enchantment));
         if (hasConflicts) {
             return false;
+        }
+        if (others.size() != enchants.size()) {
+            return true;
         }
         // enchants that this enchantment replaces (e.g. eternal removes unbreaking/mending)
         // free up their slot, so don't count them against the limit
