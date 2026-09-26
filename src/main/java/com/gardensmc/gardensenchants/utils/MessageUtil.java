@@ -6,7 +6,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.command.CommandSender;
 
@@ -41,12 +40,6 @@ public class MessageUtil {
         return String.join(" ", capitalized);
     }
 
-    public static String parseIntoLegacy(String message) {
-        var mm = MiniMessage.miniMessage();
-        var component = mm.deserialize(message);
-        return LegacyComponentSerializer.legacyAmpersand().serialize(component);
-    }
-
     public static Component parseIntoComponent(String message) {
         return MiniMessage.miniMessage().deserialize(message);
     }
@@ -57,11 +50,6 @@ public class MessageUtil {
 
     public static String toMiniMessage(Component component) {
         return MiniMessage.miniMessage().serialize(component);
-    }
-
-    public static boolean isBlank(Component component) {
-        var str = PlainTextComponentSerializer.plainText().serialize(component);
-        return str.isBlank();
     }
 
     public static void sendMessage(CommandSender user, String message) {

@@ -51,7 +51,6 @@ public class GardensEnchantments {
         // register vanilla enchants
         gardensEnchantments.putAll(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
                 .stream()
-//                .filter(enchantment -> enchantment.isDiscoverable() && !enchantment.isCursed())
                 .map(enchantment -> {
                     var isVisibleInTable = enchantment.isDiscoverable() && !enchantment.isCursed();
                     var id = enchantment.getKey().getKey().toUpperCase();

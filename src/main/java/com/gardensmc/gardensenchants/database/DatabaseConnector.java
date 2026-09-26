@@ -10,8 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +26,9 @@ public class DatabaseConnector {
         thread.setDaemon(true);
         return thread;
     });
-    public HikariConfig hikariConfig = new HikariConfig();
 
     private DatabaseConnector() {
+        HikariConfig hikariConfig = new HikariConfig();
         ConfigurationSection configSection = Objects.requireNonNull(GardensEnchants.plugin.getConfig().getConfigurationSection("database"));
         String db = configSection.getString("databaseName");
         String host = configSection.getString("host");
@@ -104,32 +102,4 @@ public class DatabaseConnector {
         dataSource.close();
     }
 
-    public Collection<MySQLEntry> queryCollection(String query, MySQLEntry mySQLEntry, Object... obj) throws SQLException {
-        Collection<MySQLEntry> collection = new ArrayList<>();
-        Connection connection = DatabaseConnector.INSTANCE.getConnection();
-        PreparedStatement ps = connection.prepareStatement(query);
-        for(int i = 0; i < obj.length; i++) {
-            ps.setObject(i + 1, obj[i]);
-        }
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            MySQLEntry entry = mySQLEntry.clone();
-            entry.populate(rs);
-            collection.add(entry);
-        }
-
-        rs.close();
-        ps.close();
-        connection.close();
-        return collection;
-    }
-
-    public void establishConnection() {
-        try {
-            var connection = DatabaseConnector.INSTANCE.getConnection();
-            connection.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

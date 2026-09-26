@@ -3,17 +3,13 @@ package com.gardensmc.gardensenchants;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.command.*;
-import com.gardensmc.gardensenchants.database.EnchantTable;
 import com.gardensmc.gardensenchants.database.DatabaseConnector;
 import com.gardensmc.gardensenchants.database.Tables;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
-import com.gardensmc.gardensenchants.events.Events;
 import com.gardensmc.gardensenchants.gui.Menu;
 import com.gardensmc.gardensenchants.listener.Listeners;
-import com.gardensmc.gardensenchants.listener.PlayerListener;
 import com.gardensmc.gardensenchants.relic.Relic;
-import com.gardensmc.gardensenchants.relic.RelicHandler;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -22,13 +18,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,10 +45,6 @@ public class GardensEnchants extends JavaPlugin {
     @Override
     public void onEnable() {
 
-//        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-//        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
-
-//        EnchantTable.loadTable();
         saveDefaultConfig();
         loadVanillaOverrides();
         loadRelics();
@@ -185,19 +173,4 @@ public class GardensEnchants extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(file);
     }
 
-//    @Override
-//    public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, @NotNull byte[] message) {
-//        if (!channel.equals("BungeeCord")) return;
-//        DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(message));
-//        try {
-//            String subchannel = inputStream.readUTF();
-//
-//            if (subchannel.equals("GardensResetEnchantCache")) {
-//                String uuid = inputStream.readUTF();
-//                EnchantCache.refreshPacket(UUID.fromString(uuid));
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

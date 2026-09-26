@@ -43,10 +43,6 @@ public abstract class AsyncCache<K, V> {
         cache.synchronous().invalidate(key);
     }
 
-    public void removeAll() {
-        cache.synchronous().invalidateAll();
-    }
-
     protected abstract CompletableFuture<V> createCacheEntry(K key);
 
 }

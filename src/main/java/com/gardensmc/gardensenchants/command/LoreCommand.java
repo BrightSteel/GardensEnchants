@@ -180,7 +180,6 @@ public class LoreCommand implements TabExecutor {
         if (!(commandSender instanceof Player player)) {
             return Collections.emptyList();
         }
-//        System.out.println("Args: " + String.join(", ", strings));
         var arg = strings[0];
         if (arg.isEmpty()) {
             return List.of("add", "remove", "clear");

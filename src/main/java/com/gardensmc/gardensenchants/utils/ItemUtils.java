@@ -3,9 +3,7 @@ package com.gardensmc.gardensenchants.utils;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.gardensmc.gardensenchants.GardensEnchants;
-import com.gardensmc.gardensfurniture.GardensFurniture;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -44,23 +42,7 @@ public class ItemUtils {
     private static PlayerProfile getProfile(String base64) {
         PlayerProfile profile = Bukkit.getServer().createProfile(UUID.randomUUID());
         profile.setProperty(new ProfileProperty("textures", base64));
-//        profile.complete();
         return profile;
-    }
-
-    public static ItemStack getCustomItem(String id) {
-        ItemStack stack = new ItemStack(Material.PAPER);
-//        CustomStack customStack = CustomStack.getInstance(namespace);
-        ItemStack customItem = GardensFurniture.itemRegistry.buildItem(id);
-//        ItemBuilder itemBuilder = OraxenItems.getItemById(id);
-        if (customItem != null) {
-            stack = customItem;
-        }
-        return stack;
-    }
-
-    public static ItemStack getBlankItem() {
-        return getCustomItem("blank");
     }
 
     /**

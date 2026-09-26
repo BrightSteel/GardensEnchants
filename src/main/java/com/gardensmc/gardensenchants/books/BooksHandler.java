@@ -6,7 +6,6 @@ import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
-import com.gardensmc.gardensenchants.utils.MessageUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
@@ -20,7 +19,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -34,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BooksHandler {
@@ -152,15 +149,6 @@ public class BooksHandler {
         var level = ThreadLocalRandom.current().nextInt(1, enchantment.getMaxLevel() + 1);
         return new EnchantmentInstance(enchantment, level);
     }
-
-//    public BookInstance generateRandomBook() {
-//        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(ProbabilityUtil.rollRarity());
-//        if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
-//            return null;
-//        }
-//        var level = 1; // todo impl random level
-//        return buildBook(enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size())), level);
-//    }
 
     public void applyRestoration(BookInstance bookInstance, int amount) {
         NBT.modify(bookInstance.book(), nbt -> {

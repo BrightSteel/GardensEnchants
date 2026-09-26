@@ -11,7 +11,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,15 +179,6 @@ public class GardensEnchantHandler {
         item.setItemMeta(meta);
     }
 
-    @Nullable
-    public EnchantmentInstance getEnchantmentInstance(GardensEnchantment enchantment, ItemStack itemStack) {
-        return getEnchantments()
-                .stream()
-                .filter(enchantmentInstance -> enchantmentInstance.getEnchantment().getId().equals(enchantment.getId()))
-                .findFirst()
-                .orElse(null);
-    }
-
     private List<Component> getLore() {
         var enchantments = getEnchantments();
         var slots = getSlots();
@@ -216,7 +206,6 @@ public class GardensEnchantHandler {
                         .color(NamedTextColor.GOLD))
                 .build()
         );
-//        lore.add(Component.empty());
         lore.addAll(enchantments.stream().map(EnchantmentInstance::toLore).toList());
         var remainingSlots = slots - enchantCount;
         if (remainingSlots > 0) {

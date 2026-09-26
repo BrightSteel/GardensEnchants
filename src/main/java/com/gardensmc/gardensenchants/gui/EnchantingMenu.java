@@ -170,7 +170,6 @@ public class EnchantingMenu extends Menu {
         BookInstance[] book = new BookInstance[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < book.length; i++) {
             book[i] = dynamicRows.get(i).getBookInstance();
-//            book[i] = (b != null) ? b.enchantment().getDisplayName() + " " + RomanNumber.toRoman(b.level()) : " ";
         }
 
         HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
@@ -180,7 +179,6 @@ public class EnchantingMenu extends Menu {
             String padding = FontMappings.getPadding(display);
             sample[i] = FontMappings.INSTANCE.replaceAll(display, fontMaps[i]) + padding;
         }
-//        return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193);
 
         return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
     }
@@ -316,15 +314,6 @@ public class EnchantingMenu extends Menu {
         lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + bookInstance.enchantment().getTableCost() + " <white><font:gardens:default>\u0120"));
         book.editMeta(meta -> meta.lore(lore));
         return book;
-    }
-
-    private boolean isValidItem(ItemStack itemStack) {
-        var isEmpty = itemStack == null || itemStack.getType() == Material.AIR;
-        return isEmpty || (isBook(itemStack.getType()) && itemStack.getAmount() == 1);
-    }
-
-    private boolean isBook(Material material) {
-        return material == Material.BOOK || material == Material.ENCHANTED_BOOK;
     }
 
     @Getter

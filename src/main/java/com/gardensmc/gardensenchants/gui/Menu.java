@@ -47,7 +47,6 @@ public class Menu {
         guis.add(gui);
         this.blankItem = GardensFurniture.itemRegistry.buildItem("blank");
         this.blankHiddenItem = GardensFurniture.itemRegistry.buildItem("blank_hidden");
-        initializeElements();
     }
 
     protected final Component toComponent(String s) {
@@ -79,9 +78,6 @@ public class Menu {
         );
     }
 
-    protected void initializeElements() {
-    }
-
     public void open() { gui.show(viewer); }
 
     public boolean open(Supplier<Menu> menuSupplier) {
@@ -102,6 +98,5 @@ public class Menu {
     protected static String getShift(int shift) {
         return FontShift.INSTANCE.getShift(shift);
     }
-
 
 }

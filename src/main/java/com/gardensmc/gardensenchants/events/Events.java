@@ -66,18 +66,6 @@ public class Events implements Listener {
                         && player.getWalkSpeed() == getSpeedyWalkSpeed(SPEEDY.getEnchantmentLevel(oldItem))) {
                     player.setWalkSpeed(0.2f);
                 }
-//                if (player.getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
-//                    String[] anywhere_req = new String[]{
-//                            "resource_world",
-//                            "nether",
-//                            "end"
-//                    };
-//                    if (Arrays.asList(anywhere_req).contains(e.getPlayer().getWorld().getName().toLowerCase()) || !e.getPlayer().hasPermission("gardens.fly")) {
-//                        e.getPlayer().setFlying(false);
-//                        e.getPlayer().setAllowFlight(false);
-//                    }
-//
-//                }
             }
             else if (slot == EquipmentSlot.HEAD) {
                 if (CustomEnchantments.NIGHT_VISION.hasEnchantment(oldItem)) {
@@ -97,14 +85,6 @@ public class Events implements Listener {
                     int lvl = SPEEDY.getEnchantmentLevel(newItem);
                     player.setWalkSpeed(getSpeedyWalkSpeed(lvl));
                 }
-//                if (CustomEnchantments.WINGED_BOOTS.hasEnchantment(newItem)) {
-//                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
-//                    if (nbtItem.hasKey("charge")) {
-//                        if (nbtItem.getInteger("charge") > 0) {
-//                            e.getPlayer().setAllowFlight(true);
-//                        }
-//                    }
-//                }
 
             }
             else if (slot == EquipmentSlot.HEAD) {
@@ -206,62 +186,6 @@ public class Events implements Listener {
             }
         }
     }
-
-
-//    @EventHandler
-//    public void onPlayerJoin(PlayerJoinEvent e) {
-//        new EnchantCache(e.getPlayer().getUniqueId()).loadCache();
-//
-//        EnchantUtils.refreshEnchants(e.getPlayer());
-//    }
-
-//    @EventHandler
-//    public void onDisconnect(PlayerQuitEvent e) {
-//        EnchantCache.remove(e.getPlayer().getUniqueId());
-//    }
-
-//    @EventHandler
-//    public static void onApplyRune(PrepareAnvilEvent e) {
-//        // todo update these to use new anvilView?
-//        AnvilInventory inv = e.getInventory();
-//        ItemStack[] contents = inv.getContents();
-//
-//        ItemStack item = contents[0];
-//        ItemStack rune = contents[1];
-//        if (item != null && rune != null) {
-//            CustomItem customItem = GardensFurniture.itemRegistry.getCustomItem(rune);
-//            if (customItem == null || (!customItem.getIdentifier().equalsIgnoreCase("amber") && rune.getAmount() != 1)) return;
-////            if (rune.getAmount() != 1) return;
-//            // attempt to get rune
-////            CustomItem customItem = CustomRegister.INSTANCE.itemRegistry.getCustomItem(rune);
-////            if (customItem != null) {
-//            ItemStack result = null;
-//                switch (customItem.getIdentifier()) {
-//                    case "slot_increaser_rune" -> result = RuneUtil.getRuneResult(Rune.SLOT_INCREASER, item);
-//                    case "power_up_rune" -> result = RuneUtil.getRuneResult(Rune.POWER_UP, item);
-//                    case "restoration_rune" -> result = RuneUtil.getRuneResult(Rune.RESTORATION, item);
-//                    case "amber" -> result = RuneUtil.amberUpgrade(item, rune);
-//                }
-//                if (result != null) {
-//                    inv.setRepairCost(3);
-//                    e.setResult(result);
-//                }
-////            }
-//        }
-//    }
-
-
-
-
-//    @EventHandler
-//    public void onSilkTouchSpawner(SilkSpawnersSpawnerBreakEvent e) {
-//        e.getPlayer().sendMessage("WAP");
-//        if (!EnchantUtils.hasEnchantment(e.getPlayer().getInventory().getItemInMainHand(), CustomEnchantments.SILK_TOUCH_SPAWNER)) {
-////            e.setCancelled(true);
-//            e.getPlayer().sendMessage("Cancelling drop");
-//            e.setDrop(new ItemStack(Material.AIR));
-//        }
-//    }
 
     // we need to run this prior to furniture removing the furniture store, so low priority (runs first)
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
@@ -502,33 +426,6 @@ public class Events implements Listener {
                 && SUPER_BREAK_EXC.stream().noneMatch(block_name::contains);
     }
 
-//    @EventHandler
-//    public void onVeinMine(PlayerVeinMineEvent e) {
-//        ItemStack itemStack = e.getItem();
-//
-//        String block_name = e.getBlock().getType().name();
-//        boolean isWood =  (block_name.endsWith("WOOD") || block_name.endsWith("LOG") || block_name.endsWith("ROOTS"));
-//        if (itemStack != null) {
-//            String item_name = itemStack.getType().name();
-//            if (isWood) {
-//                if (item_name.endsWith("AXE")) {
-//                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.TIMBER)) {
-//                        return;
-//                    }
-//                }
-//            }
-//            else {
-//                if (item_name.endsWith("PICKAXE")) {
-//                    if (EnchantUtils.hasEnchantment(itemStack, CustomEnchantments.VEIN_MINER)) {
-//                        return;
-//                    }
-//                }
-//            }
-//        }
-//
-//        e.setCancelled(true);
-//    }
-
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent e) {
         if (CustomEnchantments.ETERNAL.hasEnchantment(e.getItem())) {
@@ -543,7 +440,6 @@ public class Events implements Listener {
             ItemStack weapon = PlayerUtil.getHeldItem(killer);
             if (weapon != null && CustomEnchantments.SKULL_STEALER.hasEnchantment(weapon)) {
                 int ench_level = SKULL_STEALER.getEnchantmentLevel(weapon);
-//                int percent = ench_level == 1 ? 15 : 15 * ench_level;
                 if (ProbabilityUtil.roll(25)) {
                     e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(), ItemUtils.getHead(e.getEntity().getUniqueId()));
 
@@ -552,27 +448,6 @@ public class Events implements Listener {
             }
         }
     }
-
-//    @EventHandler
-//    public void onInteract(PlayerInteractEvent e) {
-//        if (e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.ENCHANTING_TABLE) {
-//            e.setCancelled(true);
-//            EnchantMenu enchantMenu = new EnchantMenu(e.getPlayer());
-//            enchantMenu.open();
-//        }
-//    }
-
-//    @EventHandler(ignoreCancelled = true)
-//    public void onInventoryOpen(InventoryOpenEvent e) {
-//        Inventory inv = e.getInventory();
-//        if (inv.getType() == InventoryType.ENCHANTING && e.getPlayer() instanceof Player player) {
-//            e.setCancelled(true);
-////            EnchantingGUI enchantingGUI = new EnchantingGUI(player);
-////            player.openInventory(enchantingGUI.getInventory());
-//
-//            new EnchantingMenu(player).open();
-//        }
-//    }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerOpenEnchanting(PlayerInteractEvent e) {
@@ -612,219 +487,6 @@ public class Events implements Listener {
         }
         return numBookShelves == 15;
     }
-
-//    @EventHandler(ignoreCancelled = true)
-//    public void onClickEnchanting(InventoryClickEvent e) {
-//        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
-//        var slot = e.getSlot();
-//        if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-//            Inventory clicked = e.getClickedInventory();
-//            if (clicked != null && clicked.getType() == InventoryType.PLAYER) {
-//                if (e.getInventory().getItem(1) != null) {
-//                    e.setCancelled(true);
-//                    return;
-//                }
-//            } else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
-//                if (slot != 1) {
-//                    e.setCancelled(true);
-//                    return;
-//                }
-//            }
-//        } else if (e.getClickedInventory() != null && e.getClickedInventory().getHolder() instanceof EnchantingGUI) {
-//            ItemStack selection = null;
-//            if (slot != 1 && e.getWhoClicked() instanceof Player player) {
-//                if (slot > 2 && slot < 9) {
-//                    selection = e.getInventory().getItem(8);
-//                } else if (slot > 11 && slot < 18) {
-//                    selection = e.getInventory().getItem(17);
-//                } else if (slot > 20 && slot < 27) {
-//                    selection = e.getInventory().getItem(26);
-//                } else if (slot == 19) {
-//                    new EnchantingBooksMenu(player).open();
-//                }
-//                // todo account for xp and money
-//                if (selection != null) {
-//                    int playerLevels = ExpUtil.getExp(player);
-//                    NBTItem nbtItem = new NBTItem(selection);
-//                    int amber = nbtItem.getInteger("amber");
-//                    int xp = nbtItem.getInteger("xp");
-//
-//                    if (playerLevels >= xp && GardensEnchants.econ.getBalance(player) >= amber) {
-//                        ExpUtil.changeExp(player, -xp);
-//                        GardensEnchants.econ.withdrawPlayer(player, amber);
-//
-////                            new EnchantCache(player.getUniqueId()).resetEnchant();
-//                        ItemStack enchantTarget = e.getInventory().getItem(1);
-//                        if (enchantTarget != null) {
-//                            int amount = enchantTarget.getAmount();
-//                            if (amount > 1) {
-//                                enchantTarget.setAmount(amount - 1);
-//                                e.getInventory().getViewers().get(0).getInventory().addItem(enchantTarget);
-//                            }
-//                            // remove costs from lore before enchanting target
-//                            ItemMeta meta = selection.getItemMeta();
-//                            if (meta != null) {
-//                                List<String> lore = meta.getLore();
-//                                if (lore != null) {
-//                                    // remove last 3 lines
-//                                    for (int i = 0; i < 3; i++) {
-//                                        lore.remove(lore.size() - 1);
-//                                    }
-//                                }
-//                                meta.setLore(lore);
-//                                selection.setItemMeta(meta);
-//                            }
-//                            e.getInventory().setItem(1, selection);
-//                        }
-//
-//                        updateEnchantingGUI(player, e.getInventory());
-//                    }
-//                }
-//
-//                e.setCancelled(true);
-//            }
-//        }
-//
-//        if (e.getWhoClicked() instanceof Player player) {
-//            if (e.getRawSlot() == 1) {
-//                if (e.getAction().name().contains("PLACE") || e.getAction().name().contains("PICKUP") || e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-//                    updateEnchantingGUI(player, e.getInventory());
-//                }
-//
-//            }
-//            else if (e.getRawSlot() >= 27 && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-//                updateEnchantingGUI(player, e.getInventory());
-//            }
-//        }
-//    }
-
-//    private void updateEnchantingGUI(Player player, Inventory inv) {
-//
-//        Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
-//
-//
-//            String title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE094");
-//
-//            if (itemIsEnchantable(inv.getItem(1))) {
-//                BookInstance[] books = genBooks(inv, player);
-//                String[] book = new String[3];
-//                for (int i = 0; i < book.length; i++) {
-//                    var b = books[i];
-//                    book[i] = (b != null) ? b.enchantment().getEnchantment().getDisplayName() + " " + RomanNumber.toRoman(b.enchantment().getLevel()) : " ";
-//                }
-//
-//                HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
-//                String[] sample = new String[3];
-//                for (int i = 0; i < 3; i++) {
-//                     String raw = stripFormatting(book[i]);
-//                     String padding = FontMappings.getPadding(raw);
-//                     sample[i] = FontMappings.INSTANCE.replaceAll(raw, fontMaps[i]) + padding;
-//                }
-//                title = ChatColor.translateAlternateColorCodes('&', "&fꐤ\uE05F" + OraxenShift.INSTANCE.getShift(193, true) + sample[0]  + sample[1]  + sample[2]);
-//
-//            }
-//            else {
-//                removeBooks(inv);
-//            }
-//            player.getOpenInventory().setTitle(title);
-//
-//        }, 1);
-//    }
-
-//    private String stripFormatting(String formatted) {
-//        var maxLength = 12;
-//        if (formatted.length() < maxLength) {
-//            return formatted; // already small enough
-//        }
-//        var numeralIndex = formatted.lastIndexOf(" ") + 1;
-//        var numeral = formatted.substring(numeralIndex);
-//        return formatted.substring(0, Math.min(maxLength, numeralIndex)) + " " + numeral;
-//    }
-
-//    // places books into inventory
-//    private BookInstance[] genBooks(Inventory inv, Player player) {
-//        ItemStack display = ItemUtils.getBlankItem();
-////        int playerLevels = ExpUtil.getExp(player);
-////        double playerBal = GardensEnchants.econ.getBalance(player);
-//        // cost and amber
-//        // costs
-//        var books = new BookInstance[3];
-//        for (int i = 0; i < books.length; i++) {
-//            var bookInstance = BooksHandler.INSTANCE.generateRandomBook();
-//            var book = bookInstance.book();
-//            int amber = 1;
-//            int xp = 1;
-//            var meta = book.getItemMeta();
-//            if (meta != null) {
-//                var lore = meta.lore() != null ? meta.lore() : new ArrayList<Component>();
-//                lore.add(Component
-//                        .text("\uE01F " + amber)
-//                        .color(NamedTextColor.WHITE)
-//                        .decoration(TextDecoration.ITALIC, false));
-//                lore.add(Component
-//                        .text("\uE10F " + xp)
-//                        .color(NamedTextColor.WHITE)
-//                        .decoration(TextDecoration.ITALIC, false));
-//                meta.lore(lore);
-//            }
-//            book.setItemMeta(meta);
-//            NBT.modify(book, nbt -> {
-//                nbt.setInteger("amber", amber);
-//                nbt.setInteger("xp", xp);
-//            });
-//            books[i] = bookInstance;
-//        }
-//
-//        inv.setItem(8, books[0].book());
-//        inv.setItem(17, books[1].book());
-//        inv.setItem(26, books[2].book());
-//
-//        int row = 0;
-//        for (BookInstance bookInstance : books) {
-//            var bookClone = bookInstance.book().clone().withType(display.getType());
-//            bookClone.getItemMeta().setCustomModelData(display.getItemMeta().getCustomModelData());
-//            var rowOffset = row * 9;
-//            for (int i = rowOffset + 3; i < rowOffset + 8; i++) {
-//                inv.setItem(i, bookClone);
-//            }
-//            row++;
-//        }
-//        return books;
-//    }
-//
-//    private void removeBooks(Inventory inv) {
-//        for (int j = 0; j < 3; j++) {
-//            for (int i = 3; i < 9; i++) {
-//                inv.setItem(i + (j * 9), null);
-//            }
-//        }
-//    }
-//
-//    private boolean itemIsEnchantable(ItemStack item) {
-//        return item != null && item.getType() == Material.BOOK;
-//    }
-
-//    @EventHandler
-//    public void onDrag(InventoryDragEvent e) {
-//        if (!(e.getInventory().getHolder() instanceof EnchantingGUI)) return;
-////
-//        if (e.getRawSlots().stream().anyMatch(integer -> integer < 27 && integer != 1)) {
-//            e.setCancelled(true);
-//        }
-//
-//        if (e.getWhoClicked() instanceof Player player) {
-//            if (e.getRawSlots().contains(1)) {
-//                updateEnchantingGUI(player, e.getInventory());
-//            }
-//        }
-//
-////        if (e.getWhoClicked() instanceof Player player) {
-////            ItemStack bookSlot = e.getInventory().getItem(1);
-////            if (bookSlot != null)
-////                updateEnchantingGUI(bookSlot, player);
-////        }
-//
-//    }
 
     @EventHandler(ignoreCancelled = true)
     public void onMobDeath(EntityDeathEvent e) {
@@ -883,43 +545,6 @@ public class Events implements Listener {
         return variant + type;
     }
 
-
-//    @EventHandler
-//    public void onMove(InventoryMoveItemEvent e) {
-//        if (!(e.getDestination().getHolder() instanceof EnchantingGUI)) return;
-//        System.out.println("moved " + e.getItem().getType().name());
-//    }
-
-//    @EventHandler
-//    private void onPrepareGrindstone(PrepareResultEvent e) {
-//        if (e.getInventory() instanceof GrindstoneInventory inv) {
-//            if (Arrays.stream(e.getInventory().getContents()).anyMatch(itemStack ->
-//                itemStack.getType() == Material.ENCHANTED_BOOK && itemStack.hasItemMeta() && itemStack.getItemMeta().hasCustomModelData()
-//            )) {
-//                if (e.getResult() != null) {
-//                    ItemMeta meta = e.getResult().getItemMeta();
-//                    if (!meta.getDisplayName().equalsIgnoreCase("Book")) {
-//                        meta.setDisplayName("Book");
-//                        e.getResult().setItemMeta(meta);
-//                        e.setResult(e.getResult());
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-//    @EventHandler
-//    public void onClickGrindstone(InventoryClickEvent e) {
-//        if (e.getClickedInventory() != null && e.getClickedInventory() instanceof GrindstoneInventory inv) {
-//            if (e.getSlotType() == InventoryType.SlotType.RESULT) {
-//                ItemStack result = inv.getItem(e.getSlot());
-//                if (result != null && result.getType() == Material.BOOK) {
-//                    System.out.println("Grindstone resulted!");
-//                }
-//            }
-//        }
-//    }
-
     @EventHandler
     public void arrowFire(EntityDamageByEntityEvent e) {
 
@@ -935,25 +560,5 @@ public class Events implements Listener {
             }
         }
     }
-
-//    @EventHandler
-//    public void onVillagerInteract(PlayerInteractAtEntityEvent e) {
-//        if (e.getRightClicked() instanceof Villager villager) {
-//            List<MerchantRecipe> recipes = villager.getRecipes();
-//            MerchantRecipe[] array = recipes.toArray(new MerchantRecipe[0]);
-//            for (int i = 0; i < array.length; i++) {
-//                MerchantRecipe recipe = array[i];
-//                ItemStack result = recipe.getResult();
-//                if (result.getType() == Material.ENCHANTED_BOOK) {
-//                    ItemMeta meta = result.getItemMeta();
-//                    if (meta != null) {
-//                        if (meta.hasEnchants()) {
-//                            meta.getEnchants()
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
 }
