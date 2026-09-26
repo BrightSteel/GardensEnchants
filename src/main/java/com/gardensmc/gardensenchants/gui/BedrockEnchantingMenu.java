@@ -158,7 +158,10 @@ public class BedrockEnchantingMenu {
             return;
         }
 
-        chargePlayer(viewer, enchantment);
+        if (!chargePlayer(viewer, enchantment)) {
+            message(viewer, "<red>You don't have enough acorns! This enchantment costs <white>" + cost + "<red> acorns.");
+            return;
+        }
         // Consume one book from the held stack and hand over the enchanted book.
         if (held.getAmount() == 1) {
             viewer.getInventory().setItemInMainHand(bookInstance.book());
@@ -175,9 +178,17 @@ public class BedrockEnchantingMenu {
         return item != null && item.getType() == Material.BOOK;
     }
 
-    private static void chargePlayer(Player viewer, GardensEnchantment enchantment) {
-        GardensEnchants.econ.withdrawPlayer(viewer, enchantment.getTableCost());
+    /**
+     * Takes the table cost. False if the economy refused it (the balance changed since the check), in
+     * which case nothing is taken. A free enchant skips the economy, which refuses zero withdrawals.
+     */
+    static boolean chargePlayer(Player viewer, GardensEnchantment enchantment) {
+        var cost = enchantment.getTableCost();
+        if (cost > 0 && !GardensEnchants.econ.withdrawPlayer(viewer, cost).transactionSuccess()) {
+            return false;
+        }
         viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp());
+        return true;
     }
 
     /**

@@ -235,20 +235,18 @@ public class EnchantingMenu extends Menu {
         var enchantment = bookInstance.enchantment();
         if (storageItem.getType() == Material.BOOK) {
             // book -> becomes the corresponding enchant book, left in the slot
-            if (!canPurchase(enchantment)) {
+            if (!canPurchase(enchantment) || !chargePlayer(enchantment)) {
                 return;
             }
-            chargePlayer(enchantment);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
         } else {
             // tool -> enchant applied directly and left in the slot. once enchanted it no longer
             // generates offers (see getInsertedType), so the player grabs the finished tool out.
             var tool = storageItem.clone();
             var enchantHandler = new GardensEnchantHandler(tool);
-            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment)) {
+            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment) || !chargePlayer(enchantment)) {
                 return;
             }
-            chargePlayer(enchantment);
             enchantHandler.enchant(enchantment, bookInstance.level(), false);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
         }
@@ -260,9 +258,9 @@ public class EnchantingMenu extends Menu {
         return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && viewer.getLevel() >= enchantment.getTableCostInXp();
     }
 
-    private void chargePlayer(GardensEnchantment enchantment) {
-        GardensEnchants.econ.withdrawPlayer(viewer, enchantment.getTableCost());
-        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp());
+    // false if the economy refused the payment (e.g. the balance changed since canPurchase)
+    private boolean chargePlayer(GardensEnchantment enchantment) {
+        return BedrockEnchantingMenu.chargePlayer(viewer, enchantment);
     }
 
     private boolean storageIsEnchantable() {
