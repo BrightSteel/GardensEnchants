@@ -10,6 +10,7 @@ import com.gardensmc.gardensfurniture.custom.CustomBlockManager;
 
 import io.papermc.paper.event.entity.EntityEquipmentChangedEvent;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
@@ -177,11 +178,10 @@ public class Events implements Listener {
                 double enchant_level = LIFE_STEAL.getEnchantmentLevel(weapon);
                 if (enchant_level < 1) enchant_level = 1;
                 double hp = e.getDamage() * ((enchant_level + 1)/30);
-                double newHP = player.getHealth() + hp;
-                if (newHP > 20) {
-                    newHP = 20;
-                }
-                player.setHealth(newHP);
+                // cap at the player's real max health; setHealth throws above it
+                var maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
+                double max = maxHealth != null ? maxHealth.getValue() : 20;
+                player.setHealth(Math.min(player.getHealth() + hp, max));
             }
 
             var playerData = OnlinePlayerCache.INSTANCE.getPlayerData(player.getUniqueId());
