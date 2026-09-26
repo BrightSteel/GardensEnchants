@@ -1,7 +1,5 @@
 package com.gardensmc.gardensenchants;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.command.*;
@@ -41,7 +39,6 @@ import java.util.logging.Level;
 public class GardensEnchants extends JavaPlugin {
 
     public static GardensEnchants plugin;
-    public static ProtocolManager protocolManager;
 
     public static Economy econ;
     public static Map<String, VanillaOverride> vanillaOverrides;
@@ -66,7 +63,6 @@ public class GardensEnchants extends JavaPlugin {
         ItemUtils.loadMobHeads();
         GardensEnchantments.INSTANCE.registerEnchantments();
         BooksHandler.INSTANCE.buildTablePools();
-        protocolManager = ProtocolLibrary.getProtocolManager();
 
         // the table needs both the economy and the database; if either is missing only the table
         // is turned off, instead of the whole plugin (and every enchant effect) failing to enable
