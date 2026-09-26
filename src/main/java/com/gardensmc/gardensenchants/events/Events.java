@@ -7,7 +7,6 @@ import com.gardensmc.gardensenchants.gui.BedrockEnchantingMenu;
 import com.gardensmc.gardensenchants.gui.EnchantingMenu;
 import com.gardensmc.gardensenchants.utils.*;
 import com.gardensmc.gardensfurniture.custom.CustomBlockManager;
-import com.gardensmc.gardensfurniture.util.ProtectionUtil;
 
 import io.papermc.paper.event.entity.EntityEquipmentChangedEvent;
 import org.bukkit.*;
@@ -23,7 +22,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -34,7 +32,16 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 
 public class Events implements Listener {
 
+    // how many blocks Timber expands from; the number actually broken is capped by AreaBreaker
     private static final int MAX_TIMBER_COUNT = 40;
+    private static final BlockFace[] AREA_FACES = new BlockFace[]{
+            BlockFace.NORTH,
+            BlockFace.EAST,
+            BlockFace.SOUTH,
+            BlockFace.WEST,
+            BlockFace.UP,
+            BlockFace.DOWN
+    };
 
     @EventHandler
     public void onEquip(EntityEquipmentChangedEvent e) {
@@ -245,61 +252,45 @@ public class Events implements Listener {
     // we need to run this prior to furniture removing the furniture store, so low priority (runs first)
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onTimber(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Timber_TBD")) {
+        Player player = e.getPlayer();
+        if (AreaBreaker.isBreaking(player)) {
             return;
         }
-
-        Player player = e.getPlayer();
-
 
         if (!TIMBER.hasEnchantment(player.getInventory().getItemInMainHand())) {
             return;
         }
 
-        if (isTimberable(e.getBlock())) {
+        var origin = e.getBlock();
+        if (isTimberable(origin)) {
+            var originType = origin.getType();
+            var originCustomItem = CustomBlockManager.getItemFromLeaves(origin);
 
             List<Block> blocks = new ArrayList<>();
-            blocks.add(e.getBlock());
-
-            List<Block> destroy = new ArrayList<>();
-            destroy.add(e.getBlock());
-
-            BlockFace[] faces = new BlockFace[]{
-                    BlockFace.NORTH,
-                    BlockFace.EAST,
-                    BlockFace.SOUTH,
-                    BlockFace.WEST,
-                    BlockFace.UP,
-                    BlockFace.DOWN
-            };
+            Set<Block> found = new HashSet<>();
+            blocks.add(origin);
+            found.add(origin);
 
             for (int i = 0; i < blocks.size(); i++) {
                 if (i >= MAX_TIMBER_COUNT) break;
                 Block curr = blocks.get(i);
-                for (BlockFace blockFace : faces) {
+                for (BlockFace blockFace : AREA_FACES) {
                     for (int j = -1; j < 2; j++) {
                         for (int l = -1; l < 2; l++) {
-                            Block potential = curr.getRelative(blockFace);
-                            potential = potential.getRelative(j, 0, l);
-                            Block finalPotential = potential;
-                            if (potential.getType() == e.getBlock().getType()
-                                    && Objects.equals(CustomBlockManager.getItemFromLeaves(potential), CustomBlockManager.getItemFromLeaves(e.getBlock()))
-                                    && blocks.stream().noneMatch(block -> block.getLocation().equals(finalPotential.getLocation()))
+                            Block potential = curr.getRelative(blockFace).getRelative(j, 0, l);
+                            if (potential.getType() == originType
+                                    && !found.contains(potential)
+                                    && Objects.equals(CustomBlockManager.getItemFromLeaves(potential), originCustomItem)
                             ) {
+                                found.add(potential);
                                 blocks.add(potential);
-                                destroy.add(potential);
                             }
                         }
                     }
-
                 }
             }
 
-            // do block breaking
-            for (Block block : destroy) {
-                block.setMetadata("Timber_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-                breakIfAble(player, block);
-            }
+            AreaBreaker.breakBlocks(player, origin, blocks);
         }
     }
 
@@ -325,49 +316,35 @@ public class Events implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onVeinMiner(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+        Player player = e.getPlayer();
+        if (AreaBreaker.isBreaking(player)) {
             return;
         }
 
-        Player player = e.getPlayer();
-        String block_name = e.getBlock().getType().toString().toUpperCase();
+        var origin = e.getBlock();
+        String block_name = origin.getType().toString().toUpperCase();
         if (block_name.endsWith("ORE")) {
             if (!VEIN_MINER.hasEnchantment(player.getInventory().getItemInMainHand())) {
                 return;
             }
 
             List<Block> blocks = new ArrayList<>();
-            blocks.add(e.getBlock());
-
-            List<Block> destroy = new ArrayList<>();
-            destroy.add(e.getBlock());
-
-            BlockFace[] faces = new BlockFace[]{
-                    BlockFace.NORTH,
-                    BlockFace.EAST,
-                    BlockFace.SOUTH,
-                    BlockFace.WEST,
-                    BlockFace.UP,
-                    BlockFace.DOWN
-            };
+            Set<Block> found = new HashSet<>();
+            blocks.add(origin);
+            found.add(origin);
 
             for (int i = 0; i < blocks.size(); i++) {
                 if (i >= 15) break;
                 Block curr = blocks.get(i);
-                for (BlockFace blockFace : faces) {
+                for (BlockFace blockFace : AREA_FACES) {
                     Block potential = curr.getRelative(blockFace);
-                    if (potential.getType() == e.getBlock().getType()) {
+                    if (potential.getType() == origin.getType() && found.add(potential)) {
                         blocks.add(potential);
-                        destroy.add(potential);
                     }
                 }
             }
 
-            // do block breaking
-            for (Block block : destroy) {
-                block.setMetadata("Vein_Miner_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-                breakIfAble(player, block);
-            }
+            AreaBreaker.breakBlocks(player, origin, blocks);
         }
     }
 
@@ -461,11 +438,11 @@ public class Events implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onMineBlock(BlockBreakEvent e) {
-        if (e.getBlock().hasMetadata("Super_Breaker_TBD") || e.getBlock().hasMetadata("Vein_Miner_TBD")) {
+        Player player = e.getPlayer();
+        if (AreaBreaker.isBreaking(player)) {
             return;
         }
 
-        Player player = e.getPlayer();
         var tool = player.getInventory().getItemInMainHand();
         if (canSuperBreak(e.getBlock(), tool)) {
             if (!SUPER_BREAKER.hasEnchantment(tool)) {
@@ -476,6 +453,7 @@ public class Events implements Listener {
                 return;
             }
 
+            List<Block> targets = new ArrayList<>();
             for (int i = -1; i < 2; i++) {
                 for (int j = -1; j < 2; j++) {
                     if (i == 0 && j == 0) continue;
@@ -492,12 +470,11 @@ public class Events implements Listener {
                     }
 
                     if (target != null && canSuperBreak(target, tool)) {
-                        // give metadata so we can avoid calling this event on this block again
-                        target.setMetadata("Super_Breaker_TBD", new FixedMetadataValue(GardensEnchants.plugin, true));
-                        breakIfAble(player, target);
+                        targets.add(target);
                     }
                 }
             }
+            AreaBreaker.breakBlocks(player, e.getBlock(), targets);
         }
     }
 
@@ -506,26 +483,8 @@ public class Events implements Listener {
         if (tool.getType().toString().toUpperCase().contains("SHOVEL")) {
             return SUPER_BREAK_DIRT_MATERIALS.contains(block.getType());
         }
-        return (SUPER_BREAK_STONE_MATERIALS.contains(block.getType()) || SUPER_BREAK_ENDS_WITH.stream().anyMatch(block_name::endsWith)) && !SUPER_BREAK_EXC.contains(block_name);
-    }
-
-    private void breakIfAble(Player player, Block target) {
-        if (!ProtectionUtil.canBuild(target.getLocation(), player)) {
-            return;
-        }
-
-        // break block, this calls block break event so need 2 ensure it doesnt keep calling our firehammer hting
-        // which we do by giving it metadata to mark it as such
-        player.breakBlock(target);
-        if (target.hasMetadata("Super_Breaker_TBD")) {
-            target.removeMetadata("Super_Breaker_TBD", GardensEnchants.plugin);
-        }
-        if (target.hasMetadata("Vein_Miner_TBD")) {
-            target.removeMetadata("Vein_Miner_TBD", GardensEnchants.plugin);
-        }
-        if (target.hasMetadata("Timber_TBD")) {
-            target.removeMetadata("Timber_TBD", GardensEnchants.plugin);
-        }
+        return (SUPER_BREAK_STONE_MATERIALS.contains(block.getType()) || SUPER_BREAK_ENDS_WITH.stream().anyMatch(block_name::endsWith))
+                && SUPER_BREAK_EXC.stream().noneMatch(block_name::contains);
     }
 
 //    @EventHandler
