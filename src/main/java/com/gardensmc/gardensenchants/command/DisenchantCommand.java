@@ -1,20 +1,16 @@
 package com.gardensmc.gardensenchants.command;
 
-import de.tr7zw.nbtapi.NBTCompound;
-import de.tr7zw.nbtapi.NBTCompoundList;
-import de.tr7zw.nbtapi.NBTItem;
+import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 public class DisenchantCommand implements TabExecutor {
 
@@ -24,17 +20,25 @@ public class DisenchantCommand implements TabExecutor {
         if (!(commandSender instanceof Player player) || !commandSender.hasPermission("gardens.disenchant")) return false;
 
         if (args.length > 0) {
-            String enchant = args[0];
-            ItemStack main = player.getInventory().getItemInMainHand();
-            List<Enchantment> enchs = main.getEnchantments().keySet().stream().filter(e -> e.getKey().toString().equalsIgnoreCase(enchant)).toList();
+            // accepts "sharpness", "minecraft:sharpness" or a custom enchant id
+            String enchant = args[0].toLowerCase().replaceFirst("^minecraft:", "");
+            var main = player.getInventory().getItemInMainHand();
+            if (main.getType() == Material.AIR) {
+                player.sendMessage(ChatColor.RED + "You must be holding an item!");
+                return true;
+            }
+            // goes through the enchant handler so custom enchants and the lore are handled too.
+            // (the old NBTItem edit only saw custom_data on 1.20.5+ and changed nothing)
+            var enchantHandler = new GardensEnchantHandler(main);
+            var instance = enchantHandler.getEnchantments()
+                    .stream()
+                    .filter(enchantmentInstance -> enchantmentInstance.getEnchantment().getId().equals(enchant))
+                    .findFirst()
+                    .orElse(null);
 
-            if (!enchs.isEmpty()) {
-                NBTItem nbtItem = new NBTItem(main);
-                NBTCompoundList lst = nbtItem.getCompoundList("Enchantments");
-                lst.removeIf(comp -> comp.getString("id").equals(enchant));
-                player.getInventory().setItemInMainHand(nbtItem.getItem());
-
-                player.sendMessage(ChatColor.GREEN + "Removed " + enchs.get(0).getKey().toString());
+            if (instance != null) {
+                enchantHandler.removeEnchant(instance.getEnchantment());
+                player.sendMessage(ChatColor.GREEN + "Removed " + instance.getEnchantment().getId());
             }
             else {
                 player.sendMessage(ChatColor.RED + "Item does not have enchantment " + enchant + " !");
@@ -47,10 +51,15 @@ public class DisenchantCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
         if (!(commandSender instanceof Player player)) {
-            return null;
+            return List.of();
         }
-
-        Set<Enchantment> enchants = player.getInventory().getItemInMainHand().getEnchantments().keySet();
-        return enchants.stream().map(e -> e.getKey().toString()).toList();
+        var main = player.getInventory().getItemInMainHand();
+        if (main.getType() == Material.AIR) {
+            return List.of();
+        }
+        return new GardensEnchantHandler(main).getEnchantments()
+                .stream()
+                .map(enchantmentInstance -> enchantmentInstance.getEnchantment().getId())
+                .toList();
     }
 }

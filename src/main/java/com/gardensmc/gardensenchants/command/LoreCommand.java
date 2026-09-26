@@ -108,6 +108,15 @@ public class LoreCommand implements TabExecutor {
             }
         }
         var enchantHandler = new GardensEnchantHandler(itemStack);
+        int loreSize = getLoreSize(enchantHandler, itemStack);
+        if (loreSize == 0) {
+            sendError(player, "This item has no lore!");
+            return;
+        }
+        if (line != -1 && (line < 0 || line >= loreSize)) {
+            sendError(player, "Line number must be between 0 and " + (loreSize - 1));
+            return;
+        }
         Component loreRemoved;
         if (enchantHandler.hasEnchantNBT()) {
             loreRemoved = MessageUtil.fromMiniMessage(enchantHandler.removeCustomLore(line));
@@ -119,6 +128,15 @@ public class LoreCommand implements TabExecutor {
             }
         }
         sendMessage(player, Component.text().content("Removed lore: ").append(loreRemoved).build());
+    }
+
+    // the lines /lore works on: NBT custom lore on enchanted items, plain lore otherwise
+    private int getLoreSize(GardensEnchantHandler enchantHandler, ItemStack itemStack) {
+        if (enchantHandler.hasEnchantNBT()) {
+            return enchantHandler.getCustomLore().size();
+        }
+        var lore = itemStack.getItemMeta().lore();
+        return lore == null ? 0 : lore.size();
     }
 
     private Component removeLore(ItemStack itemStack, int line) {
@@ -177,16 +195,7 @@ public class LoreCommand implements TabExecutor {
             if (arg.equalsIgnoreCase("remove")) {
                 var heldItem = player.getInventory().getItemInMainHand();
                 if (heldItem.getType() != Material.AIR) {
-                    var enchantHandler = new GardensEnchantHandler(heldItem);
-                    int loreSize = 0;
-                    if (enchantHandler.hasEnchantNBT()) {
-                        loreSize = enchantHandler.getCustomLore().size();
-                    } else {
-                        var meta = heldItem.getItemMeta();
-                        if (meta.lore() != null) {
-                            loreSize = meta.lore().size();
-                        }
-                    }
+                    int loreSize = getLoreSize(new GardensEnchantHandler(heldItem), heldItem);
                     var indices = new ArrayList<String>();
                     for (int i = 0; i < loreSize; i++) {
                         indices.add(String.valueOf(i));

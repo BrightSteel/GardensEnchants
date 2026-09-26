@@ -32,6 +32,9 @@ public class RomanNumber {
     }
 
     public static String toRoman(int number) {
+        if (number < 1) {
+            return String.valueOf(number); // no numeral; used to throw on items with a bad level
+        }
         int l =  map.floorKey(number);
         if ( number == l ) {
             return map.get(number);

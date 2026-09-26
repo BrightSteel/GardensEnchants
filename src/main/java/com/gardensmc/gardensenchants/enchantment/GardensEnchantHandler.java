@@ -143,6 +143,12 @@ public class GardensEnchantHandler {
     public void removeEnchant(GardensEnchantment enchantment) {
         adoptExistingLore();
         enchantment.removeEnchantment(item);
+        if (getEnchantments().isEmpty()) {
+            // drop the glint we added in applyPostEnchantChanges
+            var meta = item.getItemMeta();
+            meta.setEnchantmentGlintOverride(null);
+            item.setItemMeta(meta);
+        }
         refreshLore();
     }
 
