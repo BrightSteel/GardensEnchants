@@ -10,18 +10,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class DatabaseConnector {
 
     public static final DatabaseConnector INSTANCE = new DatabaseConnector();
     private final HikariDataSource dataSource;
-    public HikariConfig hikariConfig = new HikariConfig();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
+        var thread = new Thread(runnable, "GardensEnchants-DB");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private DatabaseConnector() {
+        HikariConfig hikariConfig = new HikariConfig();
         ConfigurationSection configSection = Objects.requireNonNull(GardensEnchants.plugin.getConfig().getConfigurationSection("database"));
         String db = configSection.getString("databaseName");
         String host = configSection.getString("host");
@@ -45,66 +52,54 @@ public class DatabaseConnector {
         return dataSource.getConnection();
     }
 
+    /**
+     * Single thread for all table-offer queries. Keeping them in submission order means a save
+     * queued after a purchase always lands before any later load of the same row.
+     */
+    public Executor getExecutor() {
+        return executor;
+    }
+
     public void executeUpdate(String string, Object... obj) throws SQLException {
-
-        Connection connection = dataSource.getConnection();
-
-        PreparedStatement ps = connection.prepareStatement(string);
-        for(int i = 0; i < obj.length; i++) {
-            ps.setObject(i + 1, obj[i]);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(string)) {
+            for (int i = 0; i < obj.length; i++) {
+                ps.setObject(i + 1, obj[i]);
+            }
+            ps.executeUpdate();
         }
-
-        ps.executeUpdate();
-        ps.close();
-        connection.close();
     }
 
     public <T extends MySQLEntry> T querySingleton(String query, Supplier<T> supplier, Object... obj) throws SQLException {
-        Connection connection = DatabaseConnector.INSTANCE.getConnection();
-        PreparedStatement ps = connection.prepareStatement(query);
-        for(int i = 0; i < obj.length; i++) {
-            ps.setObject(i + 1, obj[i]);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(query)) {
+            for (int i = 0; i < obj.length; i++) {
+                ps.setObject(i + 1, obj[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                T mySQLEntry = supplier.get();
+                mySQLEntry.populate(rs);
+                return mySQLEntry;
+            }
         }
-        ResultSet rs = ps.executeQuery();
-        T mySQLEntry = supplier.get();
-        if (rs.next()) {
-            mySQLEntry.populate(rs);
-        } else {
-            mySQLEntry = null;
-        }
-
-        rs.close();
-        ps.close();
-        connection.close();
-        return mySQLEntry;
     }
 
-    public Collection<MySQLEntry> queryCollection(String query, MySQLEntry mySQLEntry, Object... obj) throws SQLException {
-        Collection<MySQLEntry> collection = new ArrayList<>();
-        Connection connection = DatabaseConnector.INSTANCE.getConnection();
-        PreparedStatement ps = connection.prepareStatement(query);
-        for(int i = 0; i < obj.length; i++) {
-            ps.setObject(i + 1, obj[i]);
-        }
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            MySQLEntry entry = mySQLEntry.clone();
-            entry.populate(rs);
-            collection.add(entry);
-        }
-
-        rs.close();
-        ps.close();
-        connection.close();
-        return collection;
-    }
-
-    public void establishConnection() {
+    /**
+     * Lets queued queries finish, then closes the pool.
+     */
+    public void shutdown() {
+        executor.shutdown();
         try {
-            var connection = DatabaseConnector.INSTANCE.getConnection();
-            connection.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+        dataSource.close();
     }
+
 }

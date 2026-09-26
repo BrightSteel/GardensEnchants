@@ -71,10 +71,6 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.LEGENDARY)
             .maxLevel(3));
-//    public static final CustomEnchantment WINGED_BOOTS = register("winged_boots", builder -> builder
-//            .enchantRestrict(EnchantRestricts.BOOTS)
-//            .rarity(EnchantRarity.LEGENDARY)
-//            .isVisibleInTable(false));
     public static final CustomEnchantment EXPLOSIVE = register("explosive", builder -> builder
             .lore("<gray>Do explosion damage on hit")
             .enchantRestrict(EnchantRestricts.BOW)
@@ -137,10 +133,6 @@ public class CustomEnchantments {
             .rarity(EnchantRarity.UNCOMMON)
             .maxLevel(3)
     );
-
-    private static CustomEnchantment register(String id) {
-        return register(id, builder -> {});
-    }
 
     private static CustomEnchantment register(String id, Consumer<CustomEnchantment.Builder> builder) {
         var enchantmentBuilder = new CustomEnchantment.Builder(id);

@@ -14,10 +14,6 @@ repositories {
         url = "https://repo.papermc.io/repository/maven-public/"
     }
     maven {
-        name = "sonatype"
-        url = "https://oss.sonatype.org/content/groups/public/"
-    }
-    maven {
         name = "CodeMC"
         url = uri("https://repo.codemc.io/repository/maven-public/")
     }
@@ -28,12 +24,8 @@ repositories {
         url = "https://maven.enginehub.org/repo/"
     }
     maven {
-        url = "https://repo.dmulloy2.net/repository/public/"
-    }
-    maven {
         url = "https://repo.minebench.de/"
     }
-    maven { url 'https://mvn.lumine.io/repository/maven-public/' }
     maven {
         name = "opencollab"
         url = uri("https://repo.opencollab.dev/main/")
@@ -46,22 +38,26 @@ dependencies {
     paperweight.paperDevBundle("26.1.2.build.+")
 
     compileOnly("de.tr7zw:item-nbt-api-plugin:2.15.7")
-    compileOnly("com.github.Gecolay.GSit:core:2.2.1")
-    compileOnly('com.comphenix.protocol:ProtocolLib:5.3.0')
     compileOnly(fileTree("${project.rootDir}/dependencies") { include("*.jar") })
     implementation("de.themoep:inventorygui:1.6.4-SNAPSHOT")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.12.2")
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
 //    compileOnly("com.ghostchu:quickshop-api:6.2.0.9-RELEASE-1")
     compileOnly 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    // GardensFurniture's main class implements a Geyser API interface, so it's needed to compile against it
     compileOnly('org.geysermc.geyser:api:2.10.1-SNAPSHOT')
     compileOnly('org.geysermc.floodgate:api:2.2.4-SNAPSHOT')
 
     testCompileOnly 'org.projectlombok:lombok:1.18.46'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
+
+    // unit tests run without a server: the Paper API is only on the classpath, never started
+    testImplementation(platform("org.junit:junit-bom:5.12.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.papermc.paper:paper-api:26.1.2.build.+")
 }
 
 def targetJavaVersion = 25
@@ -90,9 +86,18 @@ tasks {
     shadowJar {
         relocate("de.themoep", "com.gardensmc.enchants.shaded.inventorygui")
         relocate("com.zaxxer", "com.gardensmc.enchants.shaded.zaxxer")
-        relocate("com.github.ben-manes", "com.gardensmc.enchants.shaded.ben-manes")
+        // the package is com.github.benmanes (the Maven group has the dash)
+        relocate("com.github.benmanes.caffeine", "com.gardensmc.enchants.shaded.caffeine")
     }
 
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
 }
 
 processResources {

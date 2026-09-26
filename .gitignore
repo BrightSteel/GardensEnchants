@@ -11,3 +11,9 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 /.idea/
 /build
+# Gradle / IDE / OS
+build/
+.gradle/
+.idea/
+*.iml
+.DS_Store

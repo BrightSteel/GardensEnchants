@@ -5,6 +5,7 @@ import com.gardensmc.gardensenchants.books.BookInstance;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
+import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
@@ -14,6 +15,7 @@ import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiStorageElement;
+import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +29,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.logging.Level;
 
 import static com.gardensmc.gardensenchants.books.BooksHandler.ENCHANT_GENERATE_COUNT;
 
@@ -48,6 +51,8 @@ public class EnchantingMenu extends Menu {
     private static final String BG_DARK = "\u0117";
 
     private final boolean isFullBookSetup;
+    // bumped on every refresh so late offer loads for an older item are ignored
+    private int updateCount;
 
     public EnchantingMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + BG_DARK, viewer);
@@ -89,9 +94,12 @@ public class EnchantingMenu extends Menu {
     }
 
     private boolean onClose() {
-        var bookItem = bookStorage.getItem(viewer, STORAGE_SLOT);
+        // empty the slot before handing the item back: the "view books" button calls this while
+        // the gui is still open for another tick, and a second click could otherwise take a copy
+        var bookItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
         if (bookItem != null) {
-            viewer.getInventory().addItem(bookItem);
+            bookStorage.setStorageItem(viewer, STORAGE_SLOT, null);
+            PlayerUtil.giveItem(viewer, bookItem);
         }
         return true;
     }
@@ -101,33 +109,67 @@ public class EnchantingMenu extends Menu {
     }
 
     private void runUpdate() {
-        String title;
-        if (storageIsEnchantable()) {
-            // fetch enchantment instances
-            var enchantments = new EnchantEntryHandler(viewer.getUniqueId(), getInsertedType()).getEnchantmentInstances();
-            for (var dynamicRow : dynamicRows) {
-                var enchantment = enchantments.poll();
-                if (enchantment == null) {
-                    break;
-                }
-                dynamicRow.bookInstance = BooksHandler.INSTANCE.buildBook(enchantment);
-            }
-            title = getPopulatedTitle();
-        } else {
-            // remove enchantment instances
-            dynamicRows.forEach(dynamicRow -> dynamicRow.setBookInstance(null));
-            // blank title
-            title = "<white><font:gardens:default>" + getShift(-8) + BG_DARK;
+        if (!isOpen()) {
+            return;
         }
+        // clear first so rows never show (or sell) offers loaded for a previous item
+        dynamicRows.forEach(dynamicRow -> dynamicRow.setBookInstance(null));
+        var type = getInsertedType();
+        int update = ++updateCount;
+        if (type != null) {
+            var entryHandler = new EnchantEntryHandler(viewer.getUniqueId(), type);
+            var loadedOffers = entryHandler.getLoadedOffers();
+            if (loadedOffers != null) {
+                showOffers(type, loadedOffers);
+                return;
+            }
+            // load offers off the main thread, then fill the rows if nothing changed meanwhile
+            entryHandler.getOffers().whenComplete((offers, throwable) -> {
+                if (!GardensEnchants.plugin.isEnabled()) {
+                    return;
+                }
+                Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> {
+                    if (update != updateCount || !isOpen() || !type.equals(getInsertedType())) {
+                        return;
+                    }
+                    if (throwable != null) {
+                        GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Failed to load enchant offers", throwable);
+                        viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>Could not load enchantments right now. Try again later!"));
+                        return;
+                    }
+                    showOffers(type, offers);
+                });
+            });
+        }
+        // blank title until offers arrive (or for items that can't be enchanted)
+        redraw("<white><font:gardens:default>" + getShift(-8) + BG_DARK);
+    }
+
+    private void showOffers(String type, List<EnchantmentInstance> offers) {
+        for (int i = 0; i < dynamicRows.size() && i < offers.size(); i++) {
+            var dynamicRow = dynamicRows.get(i);
+            dynamicRow.setBookInstance(BooksHandler.INSTANCE.buildBook(offers.get(i)));
+            dynamicRow.setOffer(offers.get(i));
+            dynamicRow.setType(type);
+        }
+        redraw(getPopulatedTitle());
+    }
+
+    private void redraw(String title) {
         gui.draw();
         PlayerUtil.sendInventoryTitleChange(viewer.getOpenInventory(), MiniMessage.miniMessage().deserialize(title));
+    }
+
+    private boolean isOpen() {
+        return viewer.isOnline()
+                && viewer.getOpenInventory().getTopInventory().getHolder() instanceof InventoryGui.Holder holder
+                && holder.getGui() == gui;
     }
 
     private String getPopulatedTitle() {
         BookInstance[] book = new BookInstance[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < book.length; i++) {
             book[i] = dynamicRows.get(i).getBookInstance();
-//            book[i] = (b != null) ? b.enchantment().getDisplayName() + " " + RomanNumber.toRoman(b.level()) : " ";
         }
 
         HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
@@ -137,7 +179,6 @@ public class EnchantingMenu extends Menu {
             String padding = FontMappings.getPadding(display);
             sample[i] = FontMappings.INSTANCE.replaceAll(display, fontMaps[i]) + padding;
         }
-//        return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193);
 
         return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
     }
@@ -164,7 +205,7 @@ public class EnchantingMenu extends Menu {
                 c,
                 getBookDisplayItem(dynamicRow.bookInstance, column),
                 click -> {
-                    purchase(dynamicRow.getBookInstance());
+                    purchase(dynamicRow);
                     return true;
                 }
         ));
@@ -175,45 +216,51 @@ public class EnchantingMenu extends Menu {
      * the corresponding enchant book (existing behaviour); when a tool is inserted the enchant is
      * applied directly to the tool.
      */
-    private void purchase(@Nullable BookInstance bookInstance) {
+    private void purchase(DynamicRow dynamicRow) {
+        var bookInstance = dynamicRow.getBookInstance();
         if (bookInstance == null) {
             return;
         }
         var type = getInsertedType();
         var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
-        if (type == null || storageItem == null) {
+        if (type == null || storageItem == null || !type.equals(dynamicRow.getType())) {
+            return;
+        }
+        // the row must still match the stored offer, so each roll can only be bought once
+        var entryHandler = new EnchantEntryHandler(viewer.getUniqueId(), type);
+        if (!entryHandler.isCurrentOffer(dynamicRows.indexOf(dynamicRow), dynamicRow.getOffer())) {
+            runUpdate();
             return;
         }
         var enchantment = bookInstance.enchantment();
         if (storageItem.getType() == Material.BOOK) {
             // book -> becomes the corresponding enchant book, left in the slot
-            if (!canPurchase(enchantment)) {
+            if (!canPurchase(enchantment) || !chargePlayer(enchantment)) {
                 return;
             }
-            chargePlayer(enchantment);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
         } else {
             // tool -> enchant applied directly and left in the slot. once enchanted it no longer
             // generates offers (see getInsertedType), so the player grabs the finished tool out.
             var tool = storageItem.clone();
             var enchantHandler = new GardensEnchantHandler(tool);
-            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment)) {
+            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment) || !chargePlayer(enchantment)) {
                 return;
             }
-            chargePlayer(enchantment);
             enchantHandler.enchant(enchantment, bookInstance.level(), false);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
         }
-        new EnchantEntryHandler(viewer.getUniqueId(), type).resetEnchantEntry();
+        entryHandler.reroll();
+        runUpdate();
     }
 
     private boolean canPurchase(GardensEnchantment enchantment) {
         return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && viewer.getLevel() >= enchantment.getTableCostInXp();
     }
 
-    private void chargePlayer(GardensEnchantment enchantment) {
-        GardensEnchants.econ.withdrawPlayer(viewer, enchantment.getTableCost());
-        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp());
+    // false if the economy refused the payment (e.g. the balance changed since canPurchase)
+    private boolean chargePlayer(GardensEnchantment enchantment) {
+        return BedrockEnchantingMenu.chargePlayer(viewer, enchantment);
     }
 
     private boolean storageIsEnchantable() {
@@ -267,20 +314,16 @@ public class EnchantingMenu extends Menu {
         return book;
     }
 
-    private boolean isValidItem(ItemStack itemStack) {
-        var isEmpty = itemStack == null || itemStack.getType() == Material.AIR;
-        return isEmpty || (isBook(itemStack.getType()) && itemStack.getAmount() == 1);
-    }
-
-    private boolean isBook(Material material) {
-        return material == Material.BOOK || material == Material.ENCHANTED_BOOK;
-    }
-
     @Getter
     private static class DynamicRow {
         private final char display, book;
         @Setter
         private BookInstance bookInstance;
+        // the stored offer and item type this row was filled from, re-checked on purchase
+        @Setter
+        private EnchantmentInstance offer;
+        @Setter
+        private String type;
 
         public DynamicRow(char display, char book) {
             this.display = display;

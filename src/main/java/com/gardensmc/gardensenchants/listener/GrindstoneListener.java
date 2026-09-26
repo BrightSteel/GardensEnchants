@@ -1,9 +1,7 @@
 package com.gardensmc.gardensenchants.listener;
 
-import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -13,6 +11,9 @@ import org.bukkit.event.inventory.PrepareGrindstoneEvent;
 import org.bukkit.inventory.GrindstoneInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GrindstoneListener implements Listener {
 
@@ -31,13 +32,19 @@ public class GrindstoneListener implements Listener {
         if (result != null) {
             var enchantHandler = new GardensEnchantHandler(result);
             if (enchantHandler.hasEnchantNBT()) {
-                enchantHandler.clearEnchants(true);
+                // curses stay, as in vanilla: a grindstone isn't a way to get rid of Binding or Vanishing
+                var curses = result.getEnchantments().entrySet().stream()
+                        .filter(entry -> entry.getKey().isCursed())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                enchantHandler.clearEnchants(false);
+                result.addUnsafeEnchantments(curses);
                 if (!isEmpty(inv.getUpperItem()) && !isEmpty(inv.getLowerItem())) {
                     var slots1 = new GardensEnchantHandler(inv.getUpperItem()).getSlots();
                     var slots2 = new GardensEnchantHandler(inv.getLowerItem()).getSlots();
                     // take larger of two slots
                     enchantHandler.setSlots(Math.max(slots1, slots2));
                 }
+                enchantHandler.refreshLore();
                 e.setResult(result);
             }
         }
@@ -59,28 +66,31 @@ public class GrindstoneListener implements Listener {
         }
     }
 
-    @EventHandler
+    // Vanilla refuses custom books in the grindstone inputs, so place them ourselves.
+    // Everything happens synchronously on a cancelled click and only ever touches input slots 0/1:
+    // a delayed swap here used to let players clone the result slot.
+    @EventHandler(ignoreCancelled = true)
     public void onGrindstoneClick(InventoryClickEvent e) {
-        if (e.getClick().isShiftClick()) return;
-        if (e.getClickedInventory() instanceof GrindstoneInventory grindstone) {
-            var cursor = e.getView().getCursor();
-            if (!isEmpty(cursor)) {
-                var book = BooksHandler.INSTANCE.getBookInstance(cursor);
-                if (book != null) {
-                    var clonedCursor = cursor.clone();
-                    var slotItem = grindstone.getItem(e.getSlot());
-                    var clonedSlotItem = slotItem == null ? null : slotItem.clone();
-                    Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
-                        // swap cursor with slot
-                        grindstone.setItem(e.getSlot(), clonedCursor);
-                        e.getView().setCursor(clonedSlotItem);
-                    }, 1);
-                }
-            }
+        if (e.getClick() != ClickType.LEFT && e.getClick() != ClickType.RIGHT) return;
+        if (!(e.getClickedInventory() instanceof GrindstoneInventory grindstone)) return;
+        int slot = e.getRawSlot();
+        if (slot != 0 && slot != 1) return;
+        var cursor = e.getView().getCursor();
+        if (isEmpty(cursor) || BooksHandler.INSTANCE.getBookInstance(cursor) == null) return;
+
+        e.setCancelled(true);
+        var slotItem = grindstone.getItem(slot);
+        if (isEmpty(slotItem)) {
+            grindstone.setItem(slot, cursor.asOne());
+            e.getView().setCursor(cursor.getAmount() > 1 ? cursor.asQuantity(cursor.getAmount() - 1) : null);
+        } else if (cursor.getAmount() == 1) {
+            // plain swap, as vanilla would do for any other item
+            grindstone.setItem(slot, cursor.clone());
+            e.getView().setCursor(slotItem.clone());
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onShiftClickIntoGrindstone(InventoryClickEvent e) {
         if (e.getClick() != ClickType.SHIFT_LEFT && e.getClick() != ClickType.SHIFT_RIGHT) {
             return;
@@ -92,14 +102,14 @@ public class GrindstoneListener implements Listener {
             } else if (isEmpty(grindstone.getLowerItem())) {
                 slot = 1;
             } else {
-                slot = -1;
+                return;
             }
-            if (slot > -1) {
-                var item = playerInventory.getItem(e.getSlot());
-                if (!isEmpty(item) && BooksHandler.INSTANCE.getBookInstance(item) != null) {
-                    grindstone.setItem(slot, item);
-                    playerInventory.setItem(e.getSlot(), null);
-                }
+            var item = playerInventory.getItem(e.getSlot());
+            if (!isEmpty(item) && BooksHandler.INSTANCE.getBookInstance(item) != null) {
+                e.setCancelled(true);
+                // one book only: taking the result clears the whole input slot
+                grindstone.setItem(slot, item.asOne());
+                playerInventory.setItem(e.getSlot(), item.getAmount() > 1 ? item.asQuantity(item.getAmount() - 1) : null);
             }
         }
     }

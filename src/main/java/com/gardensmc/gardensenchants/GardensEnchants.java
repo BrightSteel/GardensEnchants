@@ -1,18 +1,16 @@
 package com.gardensmc.gardensenchants;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
+import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.command.*;
-import com.gardensmc.gardensenchants.database.EnchantTable;
+import com.gardensmc.gardensenchants.database.DatabaseConnector;
 import com.gardensmc.gardensenchants.database.Tables;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
-import com.gardensmc.gardensenchants.events.Events;
+import com.gardensmc.gardensenchants.gui.Menu;
 import com.gardensmc.gardensenchants.listener.Listeners;
-import com.gardensmc.gardensenchants.listener.PlayerListener;
 import com.gardensmc.gardensenchants.relic.Relic;
-import com.gardensmc.gardensenchants.relic.RelicHandler;
+import com.gardensmc.gardensenchants.utils.ItemUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -20,29 +18,24 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
 
 public class GardensEnchants extends JavaPlugin {
 
     public static GardensEnchants plugin;
-    public static ProtocolManager protocolManager;
 
     public static Economy econ;
     public static Map<String, VanillaOverride> vanillaOverrides;
     public static Map<String, Relic> relics;
+    private static boolean databaseAvailable;
 
     @Override
     public void onLoad() {
@@ -52,20 +45,29 @@ public class GardensEnchants extends JavaPlugin {
     @Override
     public void onEnable() {
 
-//        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-//        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
-
-//        EnchantTable.loadTable();
         saveDefaultConfig();
         loadVanillaOverrides();
         loadRelics();
+        ItemUtils.loadMobHeads();
         GardensEnchantments.INSTANCE.registerEnchantments();
+        BooksHandler.INSTANCE.buildTablePools();
+
+        // the table needs both the economy and the database; if either is missing only the table
+        // is turned off, instead of the whole plugin (and every enchant effect) failing to enable
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        econ = rsp == null ? null : rsp.getProvider();
+        if (econ == null) {
+            getLogger().severe("No Vault economy found, the enchanting table is disabled");
+        }
+        try {
+            Tables.initializeClass();
+            databaseAvailable = true;
+        } catch (Throwable e) { // the pool and table are created in static initialisers
+            getLogger().log(Level.SEVERE, "Could not set up the database, the enchanting table is disabled", e);
+        }
+
         Listeners.registerListeners();
         PlayerSchedules.scheduleAll();
-        protocolManager = ProtocolLibrary.getProtocolManager();
-
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        econ = rsp.getProvider();
 
         Objects.requireNonNull(Bukkit.getPluginCommand("getbook")).setExecutor(new GetBookCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("givebook")).setExecutor(new GiveBookCommand());
@@ -75,13 +77,28 @@ public class GardensEnchants extends JavaPlugin {
         Objects.requireNonNull(Bukkit.getPluginCommand("lore")).setExecutor(new LoreCommand());
         Objects.requireNonNull(Bukkit.getPluginCommand("fixbook")).setExecutor(new FixBookCommand());
 
-        Tables.initializeClass();
         Bukkit.getScheduler().runTaskTimer(
                 this,
                 () -> Bukkit.getOnlinePlayers().forEach(this::tickPlayer),
                 0,
                 2
         );
+    }
+
+    @Override
+    public void onDisable() {
+        // close our menus so items in the table slot go back to their owners
+        Menu.closeAll();
+        if (databaseAvailable) {
+            DatabaseConnector.INSTANCE.shutdown();
+        }
+    }
+
+    /**
+     * Whether the enchanting table can be used (economy and database both set up).
+     */
+    public static boolean isTableAvailable() {
+        return econ != null && databaseAvailable;
     }
 
     private void tickPlayer(Player player) {
@@ -91,7 +108,8 @@ public class GardensEnchants extends JavaPlugin {
                 handleJumpBoost(player);
             }
         }
-        if (player.getHealth() <= 1.0) {
+        // 1 heart = 2 health, matching the lore ("1 heart or lower"); it used to be half a heart
+        if (player.getHealth() <= 2.0) {
             var boots = player.getInventory().getBoots();
             if (boots != null && boots.getType() != Material.AIR) {
                 var speedLvl = CustomEnchantments.ESCAPE_ARTIST.getEnchantmentLevel(boots);
@@ -115,18 +133,28 @@ public class GardensEnchants extends JavaPlugin {
 
     private void loadVanillaOverrides() {
         var config = loadConfig("vanilla_overrides.yml");
-        vanillaOverrides = config.getKeys(false).stream().collect(Collectors.toMap(
-                String::toUpperCase,
-                s -> new VanillaOverride(Objects.requireNonNull(config.getConfigurationSection(s)))
-        ));
+        vanillaOverrides = new HashMap<>();
+        for (var key : config.getKeys(false)) {
+            // one bad entry (e.g. a rarity typo) is skipped instead of stopping the plugin
+            try {
+                vanillaOverrides.put(key.toUpperCase(), new VanillaOverride(Objects.requireNonNull(config.getConfigurationSection(key))));
+            } catch (RuntimeException e) {
+                getLogger().log(Level.SEVERE, "Skipping invalid vanilla override '%s'".formatted(key), e);
+            }
+        }
     }
 
     public void loadRelics() {
         var config = GardensEnchants.plugin.loadConfig("relic_mappings.yml");
-        relics = config.getKeys(false)
-                .stream()
-                .map(key -> new Relic(key, Objects.requireNonNull(config.getConfigurationSection(key))))
-                .collect(Collectors.toMap(Relic::getId, Function.identity()));
+        relics = new HashMap<>();
+        for (var key : config.getKeys(false)) {
+            try {
+                var relic = new Relic(key, Objects.requireNonNull(config.getConfigurationSection(key)));
+                relics.put(relic.getId(), relic);
+            } catch (RuntimeException e) {
+                getLogger().log(Level.SEVERE, "Skipping invalid relic '%s'".formatted(key), e);
+            }
+        }
     }
 
     public YamlConfiguration loadConfig(String path) {
@@ -145,19 +173,4 @@ public class GardensEnchants extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(file);
     }
 
-//    @Override
-//    public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, @NotNull byte[] message) {
-//        if (!channel.equals("BungeeCord")) return;
-//        DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(message));
-//        try {
-//            String subchannel = inputStream.readUTF();
-//
-//            if (subchannel.equals("GardensResetEnchantCache")) {
-//                String uuid = inputStream.readUTF();
-//                EnchantCache.refreshPacket(UUID.fromString(uuid));
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

@@ -1,15 +1,13 @@
 package com.gardensmc.gardensenchants.command;
 
-import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +28,7 @@ public class MobHeadCommand implements TabExecutor {
                 player.sendMessage(ChatColor.RED + "Could not find a mob head for: " + type);
             }
             else {
-                player.getInventory().addItem(head);
+                PlayerUtil.giveItem(player, head);
                 player.sendMessage(ChatColor.GREEN + "Received " + type + " head!");
             }
         }
@@ -45,11 +43,9 @@ public class MobHeadCommand implements TabExecutor {
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        ConfigurationSection section = GardensEnchants.plugin.getConfig().getConfigurationSection("mob_heads");
-        if (section != null) {
-            return section.getKeys(false).stream().toList();
+        if (strings.length != 1) {
+            return List.of();
         }
-
-        return null;
+        return ItemUtils.getMobHeadTypes().stream().filter(type -> type.startsWith(strings[0].toLowerCase())).toList();
     }
 }

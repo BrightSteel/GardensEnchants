@@ -4,6 +4,7 @@ import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -33,7 +34,7 @@ public class GetBookCommand implements TabExecutor {
             return true;
         }
         ItemStack stack = BooksHandler.INSTANCE.buildBook(new EnchantmentInstance(enchantment, 1)).book();
-        player.getInventory().addItem(stack);
+        PlayerUtil.giveItem(player, stack);
         player.sendMessage(ChatColor.GREEN + "Recieved " + enchantmentName + " book");
         return true;
     }

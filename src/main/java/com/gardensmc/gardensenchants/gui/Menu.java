@@ -7,12 +7,19 @@ import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.Supplier;
 
 public class Menu {
+
+    // guis created by this plugin, so they can be closed (returning stored items) on disable
+    private static final Set<InventoryGui> guis = Collections.newSetFromMap(new WeakHashMap<>());
 
     protected Player viewer;
 
@@ -37,9 +44,9 @@ public class Menu {
                 "",
                 layout
         );
+        guis.add(gui);
         this.blankItem = GardensFurniture.itemRegistry.buildItem("blank");
         this.blankHiddenItem = GardensFurniture.itemRegistry.buildItem("blank_hidden");
-        initializeElements();
     }
 
     protected final Component toComponent(String s) {
@@ -71,9 +78,6 @@ public class Menu {
         );
     }
 
-    protected void initializeElements() {
-    }
-
     public void open() { gui.show(viewer); }
 
     public boolean open(Supplier<Menu> menuSupplier) {
@@ -82,9 +86,17 @@ public class Menu {
         return true;
     }
 
+    public static void closeAll() {
+        for (var player : Bukkit.getOnlinePlayers()) {
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof InventoryGui.Holder holder
+                    && guis.contains(holder.getGui())) {
+                player.closeInventory();
+            }
+        }
+    }
+
     protected static String getShift(int shift) {
         return FontShift.INSTANCE.getShift(shift);
     }
-
 
 }

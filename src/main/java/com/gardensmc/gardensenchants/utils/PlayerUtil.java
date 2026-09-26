@@ -16,10 +16,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 public class PlayerUtil {
 
@@ -38,21 +36,14 @@ public class PlayerUtil {
     }
 
     public static void giveItems(Player player, Collection<ItemStack> items) {
-        var emptySlots = getEmptyStorageSlots(player);
-        if (items.size() <= emptySlots) {
-            // presumably faster than individually adding each item?
-            player.getInventory().addItem(items.toArray(ItemStack[]::new));
-        } else {
-            for (ItemStack item : items) {
-                if (emptySlots > 0) {
-                    emptySlots--;
-                    player.getInventory().addItem(item);
-                } else {
-                    // drop by player
-                    player.getWorld().dropItemNaturally(player.getLocation(), item);
-                }
-            }
-        }
+        if (items.isEmpty()) return;
+        // anything that doesn't fit is dropped at the player's feet instead of being lost
+        var leftovers = player.getInventory().addItem(items.stream().map(ItemStack::clone).toArray(ItemStack[]::new));
+        leftovers.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+    }
+
+    public static void giveItem(Player player, ItemStack item) {
+        giveItems(player, List.of(item));
     }
 
     @Nullable
@@ -62,12 +53,6 @@ public class PlayerUtil {
             return null;
         }
         return item;
-    }
-
-    private static int getEmptyStorageSlots(Player player) {
-        return (int) Arrays.stream(player.getInventory().getStorageContents())
-                .filter(Objects::isNull)
-                .count();
     }
 
     /**

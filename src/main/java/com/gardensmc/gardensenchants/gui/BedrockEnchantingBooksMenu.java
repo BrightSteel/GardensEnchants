@@ -1,11 +1,13 @@
 package com.gardensmc.gardensenchants.gui;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.cumulus.util.FormImage;
@@ -93,7 +95,8 @@ public class BedrockEnchantingBooksMenu {
             } else if (idx == SLOTS + 1 && hasNext) {
                 sendPage(viewer, p + 1);
             } else if (idx == SLOTS + 2) {
-                BedrockEnchantingMenu.open(viewer);
+                // form responses arrive off the main thread; open() reads the inventory, xp and money
+                Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> BedrockEnchantingMenu.open(viewer));
             }
         });
         FloodgateApi.getInstance().sendForm(viewer.getUniqueId(), builder.build());

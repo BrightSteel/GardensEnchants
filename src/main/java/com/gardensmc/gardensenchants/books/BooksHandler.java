@@ -1,17 +1,15 @@
 package com.gardensmc.gardensenchants.books;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
+import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
-import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
 import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
-import com.gardensmc.gardensenchants.utils.MessageUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.tr7zw.nbtapi.NBT;
-import de.tr7zw.nbtapi.iface.ReadWriteItemNBT;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.key.Key;
@@ -20,7 +18,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -28,11 +25,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BooksHandler {
@@ -47,14 +45,67 @@ public class BooksHandler {
     private static final char RUNE_RESTORATION = '\uE244';
 
     public static final int ENCHANT_GENERATE_COUNT = 3;
+
+    // restrict id -> rarity -> enchants the table may offer, see buildTablePools
+    private final Map<String, Map<EnchantRarity, List<GardensEnchantment>>> tablePools = new ConcurrentHashMap<>();
     public static final int MAX_RESTORATIONS = 3;
 
-    public Queue<EnchantmentInstance> getRandomEnchantments(String type) {
-        Queue<EnchantmentInstance> enchantments = new LinkedList<>();
+    /**
+     * Rolls a fresh set of table offers for the type. Never contains nulls, but may hold fewer than
+     * {@link #ENCHANT_GENERATE_COUNT} offers if the type has no enchants at all.
+     */
+    public List<EnchantmentInstance> getRandomEnchantments(String type) {
+        List<EnchantmentInstance> enchantments = new ArrayList<>();
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            enchantments.add(getRandomEnchantment(type));
+            var enchantment = getRandomEnchantment(type);
+            if (enchantment != null) {
+                enchantments.add(enchantment);
+            }
         }
         return enchantments;
+    }
+
+    /**
+     * Precomputes the table pool for every restrict and rarity. Must run on the main thread after
+     * enchantments are registered; offers are later generated off-thread from these lists.
+     */
+    public void buildTablePools() {
+        tablePools.clear();
+        EnchantRestricts.registeredEnchantRestricts.values().forEach(restrict -> {
+            var samples = restrict.getSampleItems();
+            Map<EnchantRarity, List<GardensEnchantment>> byRarity = new EnumMap<>(EnchantRarity.class);
+            for (var rarity : EnchantRarity.values()) {
+                var pool = GardensEnchantments.INSTANCE.getEnchantments(rarity)
+                        .stream()
+                        // eligible if the enchant can go on any item this type covers
+                        // (e.g. a pickaxe or an "all" book can roll "excavation" enchants)
+                        .filter(enchantment -> enchantment.isVisibleInTable() && restrict.overlaps(enchantment.getRestrict()))
+                        // and really applies to one of them: vanilla overrides like fortune -> "tools" also cover swords
+                        .filter(enchantment -> samples.stream().anyMatch(enchantment::canEnchant))
+                        .toList();
+                byRarity.put(rarity, pool);
+            }
+            tablePools.put(restrict.getId(), byRarity);
+        });
+    }
+
+    public List<GardensEnchantment> getTablePool(String type, EnchantRarity rarity) {
+        var byRarity = tablePools.get(type);
+        return byRarity == null ? List.of() : byRarity.getOrDefault(rarity, List.of());
+    }
+
+    /**
+     * Whether a stored offer can still be offered for the type (the enchant exists, is in the pool
+     * and the level is valid). Offers stored before a config change may no longer be.
+     */
+    public boolean isValidOffer(String type, @Nullable EnchantmentInstance offer) {
+        if (offer == null || offer.getEnchantment() == null) {
+            return false;
+        }
+        var enchantment = offer.getEnchantment();
+        return offer.getLevel() >= 1
+                && offer.getLevel() <= enchantment.getMaxLevel()
+                && getTablePool(type, enchantment.getRarity()).contains(enchantment);
     }
 
     @Nullable
@@ -67,10 +118,7 @@ public class BooksHandler {
             var enchantId = bookNBT.getString(ENCHANTMENT_KEY);
             var enchantment = GardensEnchantments.INSTANCE.getEnchantment(enchantId);
             if (enchantment == null) {
-                GardensEnchants.plugin.getLogger().log(
-                        Level.WARNING,
-                        "Enchantment with id %s does not exist".formatted(enchantId)
-                );
+                GardensEnchantments.INSTANCE.warnUnknown(enchantId);
                 return null;
             }
             return new BookInstance(
@@ -83,56 +131,22 @@ public class BooksHandler {
         });
     }
 
+    @Nullable
     private EnchantmentInstance getRandomEnchantment(String type) {
-        var enchantRestrict = EnchantRestricts.registeredEnchantRestricts.get(type);
-        if (enchantRestrict == null) {
-            GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Unable to \uE11A enchant restrict with id: " + type);
+        if (!tablePools.containsKey(type)) {
+            GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Unable to find enchant restrict with id: " + type);
             return null;
         }
-        var rarity = ProbabilityUtil.rollRarity();
-        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(rarity)
-                .stream()
-                // eligible if the enchant can go on any item this type covers
-                // (e.g. a pickaxe or an "all" book can roll "excavation" enchants)
-                .filter(enchantment -> enchantment.isVisibleInTable() && enchantRestrict.overlaps(enchantment.getRestrict()))
-                .toList();
-        if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
-            GardensEnchants.plugin.getLogger().severe("Could not find enchant with rarity %s for type %s!".formatted(rarity, type));
+        // an empty rarity used to produce a null offer that bricked the table; fall back instead
+        var rarity = OfferRarity.nearestAvailable(ProbabilityUtil.rollRarity(), r -> !getTablePool(type, r).isEmpty());
+        if (rarity == null) {
+            GardensEnchants.plugin.getLogger().severe("Could not find any table enchant for type %s!".formatted(type));
             return null;
         }
+        var enchantmentPool = getTablePool(type, rarity);
         var enchantment = enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size()));
         var level = ThreadLocalRandom.current().nextInt(1, enchantment.getMaxLevel() + 1);
         return new EnchantmentInstance(enchantment, level);
-    }
-
-//    public BookInstance generateRandomBook() {
-//        var enchantmentPool = GardensEnchantments.INSTANCE.getEnchantments(ProbabilityUtil.rollRarity());
-//        if (enchantmentPool.isEmpty()) { // no enchantments registered under rarity
-//            return null;
-//        }
-//        var level = 1; // todo impl random level
-//        return buildBook(enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size())), level);
-//    }
-
-    public void applyRestoration(BookInstance bookInstance, int amount) {
-        NBT.modify(bookInstance.book(), nbt -> {
-            increaseRestorationCount(nbt, amount);
-        });
-        // refresh bookInstance
-        bookInstance = getBookInstance(bookInstance.book());
-        if (bookInstance == null) {
-            throw new RuntimeException("Failed to refresh book instance after changing destructionBase chance!");
-        }
-        refreshLore(bookInstance);
-    }
-
-    private void increaseRestorationCount(ReadWriteItemNBT nbt, int amount) {
-        var bookNBT = nbt.getCompound(BOOK_NBT_KEY);
-        if (bookNBT == null) {
-            return;
-        }
-        var restorations = bookNBT.getInteger(RESTORATIONS_KEY);
-        bookNBT.setInteger(RESTORATIONS_KEY, restorations + amount);
     }
 
     private void refreshLore(BookInstance bookInstance) {

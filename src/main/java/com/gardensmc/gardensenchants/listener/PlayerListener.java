@@ -3,9 +3,11 @@ package com.gardensmc.gardensenchants.listener;
 import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
+import com.gardensmc.gardensenchants.utils.FoodMath;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,11 +22,14 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 public class PlayerListener implements Listener {
 
-    private static final Set<EntityTargetEvent.TargetReason> allowedReasons = Set.of(
+    // the ways a mob notices a player on its own - the only targeting Cloak hides you from. A mob you hit, or a
+    // pet sent after you, still comes for you.
+    private static final Set<EntityTargetEvent.TargetReason> NATURAL_TARGET_REASONS = Set.of(
             EntityTargetEvent.TargetReason.CLOSEST_ENTITY,
             EntityTargetEvent.TargetReason.CLOSEST_PLAYER,
             EntityTargetEvent.TargetReason.RANDOM_TARGET,
@@ -45,7 +50,7 @@ public class PlayerListener implements Listener {
         if (resultLevel >= foodLevel) { // ignore food increases
             return;
         }
-        var modifiedFoodLevel = getModifiedFoodLevel(player, resultLevel);
+        var modifiedFoodLevel = getModifiedFoodLevel(player, foodLevel, resultLevel);
         if (modifiedFoodLevel != resultLevel) {
             e.setFoodLevel(modifiedFoodLevel);
         }
@@ -70,8 +75,7 @@ public class PlayerListener implements Listener {
         }
         var muncherLvl = CustomEnchantments.MUNCHER.getEnchantmentLevel(helmet);
         if (muncherLvl > 0) {
-            var n = (int) (resultLevel + (resultLevel * muncherLvl * 0.1));
-            e.setFoodLevel(n);
+            e.setFoodLevel(FoodMath.muncherFoodLevel(foodLevel, resultLevel, muncherLvl));
         }
     }
 
@@ -84,6 +88,9 @@ public class PlayerListener implements Listener {
             return;
         }
         if (e.getEntity().getType() == EntityType.ENDERMAN) {
+            return;
+        }
+        if (!NATURAL_TARGET_REASONS.contains(e.getReason())) {
             return;
         }
         if (shouldCancelTarget(player)) {
@@ -102,6 +109,11 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerKillEntity(EntityDeathEvent e) {
+        if (e instanceof PlayerDeathEvent) {
+            // PvP: the victim's drops stay on the ground. Taking them here ignored keepInventory,
+            // so a later keepInventory handler (e.g. GPFlags) left the victim a copy.
+            return;
+        }
         var damager = e.getDamageSource().getCausingEntity();
         if (damager instanceof Player player) {
             var tool = PlayerUtil.getHeldItem(player);
@@ -217,16 +229,16 @@ public class PlayerListener implements Listener {
         });
     }
 
-    private int getModifiedFoodLevel(Player player, int baseFoodLevel) {
+    private int getModifiedFoodLevel(Player player, int foodLevel, int resultLevel) {
         var boots = player.getInventory().getBoots();
         if (boots == null) {
-            return baseFoodLevel;
+            return resultLevel;
         }
         var sprinterLvl = CustomEnchantments.SPRINTER.getEnchantmentLevel(boots);
         if (sprinterLvl == 0) {
-            return baseFoodLevel;
+            return resultLevel;
         }
-        return (int) Math.round(baseFoodLevel * (1 - 0.2 * sprinterLvl));
+        return FoodMath.sprinterFoodLevel(foodLevel, resultLevel, sprinterLvl, ThreadLocalRandom.current()::nextDouble);
     }
 
     // returns leftover exp to be added to player, if any
@@ -252,6 +264,10 @@ public class PlayerListener implements Listener {
 
     private boolean canBeRepaired(ItemStack itemStack) {
         if (itemStack == null) {
+            return false;
+        }
+        // like vanilla mending, only items with Mending are repaired by the xp
+        if (!itemStack.containsEnchantment(Enchantment.MENDING)) {
             return false;
         }
         var meta = itemStack.getItemMeta();

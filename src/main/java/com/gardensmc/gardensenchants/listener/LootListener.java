@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Vault;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -46,7 +47,9 @@ public class LootListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // MONITOR: only generate loot once the break is final, otherwise a cancelled break would
+    // keep the chest (and its loot table) and could be broken again for more loot
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onLootChestBreak(BlockBreakEvent e) {
         var block = e.getBlock();
         if (block.getType() == Material.CHEST) {
@@ -57,6 +60,9 @@ public class LootListener implements Listener {
                         .Builder(chest.getLocation())
                         .build()
                 );
+                // clear the table so vanilla can't also unpack it when the chest is removed
+                lootable.clearLootTable();
+                chest.update(true, false);
                 var tool = PlayerUtil.getHeldItem(e.getPlayer());
                 if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
                     PlayerUtil.giveItems(e.getPlayer(), List.of(loot));

@@ -9,9 +9,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts.registeredEnchantRestricts;
 
@@ -30,10 +28,6 @@ public class EnchantRestrict {
 
     public EnchantRestrict(String id) {
         this.id = id;
-    }
-
-    public boolean isPermitted(Material material) {
-        return permittedMaterials.contains(material);
     }
 
     /**
@@ -79,6 +73,17 @@ public class EnchantRestrict {
         return children.stream().anyMatch(enchantRestrict -> enchantRestrict.isEnchantable(itemStack));
     }
 
+    /**
+     * One sample item per leaf type this restrict covers, used to check that an enchant really
+     * applies to the type (restricts alone don't know e.g. that fortune can't go on a sword).
+     */
+    public List<ItemStack> getSampleItems() {
+        if (isLeaf()) {
+            return permittedMaterials.isEmpty() ? List.of() : List.of(new ItemStack(permittedMaterials.getFirst()));
+        }
+        return children.stream().flatMap(child -> child.getSampleItems().stream()).toList();
+    }
+
     public List<Character> iconRepresentation() {
         return icons;
     }
@@ -118,28 +123,13 @@ public class EnchantRestrict {
             return this;
         }
 
-        public Builder withCustomItem(String identifier) {
-            this.permittedIdentifiers.add(identifier);
-            return this;
-        }
-
         public Builder withMaterials(Material... materials) {
             this.permittedMaterials.addAll(Arrays.stream(materials).toList());
             return this;
         }
 
-        public Builder withCustomItems(String... identifiers) {
-            this.permittedIdentifiers.addAll(Arrays.stream(identifiers).toList());
-            return this;
-        }
-
         public Builder withIcon(char icon) {
             this.icons.add(icon);
-            return this;
-        }
-
-        public Builder withIcons(Collection<Character> icons) {
-            this.icons.addAll(icons);
             return this;
         }
 
@@ -151,11 +141,6 @@ public class EnchantRestrict {
 
         public Builder withChildren(EnchantRestrict... enchantRestrict) {
             Arrays.stream(enchantRestrict).forEach(this::withChild);
-            return this;
-        }
-
-        public Builder withCustomItemSuffix(String suffix) {
-            this.permittedIdSuffixes.add(suffix);
             return this;
         }
 

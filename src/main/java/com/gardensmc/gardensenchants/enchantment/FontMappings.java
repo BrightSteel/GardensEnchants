@@ -12,7 +12,6 @@ public class FontMappings {
     public final HashMap<Character, Character> fontMap2 = new HashMap<>();
     public final HashMap<Character, Character> fontMap3 = new HashMap<>();
 
-
     public FontMappings() {
         initMappings();
     }
@@ -206,27 +205,19 @@ public class FontMappings {
     }
 
     private static int getPixels(String s) {
-//         gauranteed to have one space, so we don't care about that one
-//        int spaceCount = s.split(" ").length - 1 - 1;
 
         int pixels = 0;
         char[] chars = s.toCharArray();
         for (char c : chars) {
             pixels += getPixels(c);
         }
-//        pixels -= spaceCount;
         return pixels;
     }
 
     public static String getPadding(String s) {
-//        System.out.println("Filling this to " + s);
         int pixels = getPixels(s);
-//        int pad = width - pixels;
-//        boolean neg = (pad < 0);
-//        System.out.println("Getting pad for " + pad);
         String shift = FontShift.INSTANCE.getShift(-pixels);
         return shift;
-//        return ":offset_" + pad + ":";
     }
 
 }

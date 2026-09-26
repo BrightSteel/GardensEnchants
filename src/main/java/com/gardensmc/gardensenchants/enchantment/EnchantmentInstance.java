@@ -52,15 +52,6 @@ public class EnchantmentInstance implements Comparable<EnchantmentInstance> {
         return Objects.hash(enchantment.getId(), level);
     }
 
-    @Override
-    public EnchantmentInstance clone() {
-        try {
-            return (EnchantmentInstance) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public int getCombineCost() {
         return enchantment.getCostInXP(level) / 2;
     }

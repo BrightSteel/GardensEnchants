@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -20,6 +21,18 @@ public class GardensEnchantments {
 
     private static final Map<String, GardensEnchantment> gardensEnchantments = new HashMap<>();
     private static final Map<EnchantRarity, List<GardensEnchantment>> enchantmentsByRarity = new HashMap<>();
+
+    // ids already reported by warnUnknown, so each is logged once instead of on every item check
+    private static final Set<String> reportedUnknownIds = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Logs (once per id) that an item refers to an enchant that no longer exists, e.g. a removed or renamed one.
+     */
+    public void warnUnknown(String id) {
+        if (reportedUnknownIds.add(id)) {
+            GardensEnchants.plugin.getLogger().warning("Ignoring unknown enchantment id '%s' found on an item".formatted(id));
+        }
+    }
 
     @Nullable
     public GardensEnchantment getEnchantment(String id) {
@@ -38,7 +51,6 @@ public class GardensEnchantments {
         // register vanilla enchants
         gardensEnchantments.putAll(RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
                 .stream()
-//                .filter(enchantment -> enchantment.isDiscoverable() && !enchantment.isCursed())
                 .map(enchantment -> {
                     var isVisibleInTable = enchantment.isDiscoverable() && !enchantment.isCursed();
                     var id = enchantment.getKey().getKey().toUpperCase();

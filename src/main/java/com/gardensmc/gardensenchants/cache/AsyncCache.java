@@ -24,12 +24,23 @@ public abstract class AsyncCache<K, V> {
         return cache.get(key);
     }
 
-    public void remove(K key) {
-        cache.synchronous().invalidate(key);
+    /**
+     * The value if it has finished loading successfully, otherwise null. Never waits.
+     */
+    public V getIfLoaded(K key) {
+        var future = cache.getIfPresent(key);
+        if (future == null || !future.isDone() || future.isCompletedExceptionally()) {
+            return null;
+        }
+        return future.join();
     }
 
-    public void removeAll() {
-        cache.synchronous().invalidateAll();
+    public void put(K key, V value) {
+        cache.put(key, CompletableFuture.completedFuture(value));
+    }
+
+    public void remove(K key) {
+        cache.synchronous().invalidate(key);
     }
 
     protected abstract CompletableFuture<V> createCacheEntry(K key);

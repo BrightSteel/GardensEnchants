@@ -1,5 +1,5 @@
 name: GardensEnchants
-version: 1.0.0
+version: '${version}'
 author: Bright_Steel
 main: com.gardensmc.gardensenchants.GardensEnchants
 api-version: 1.20
@@ -7,27 +7,34 @@ commands:
   getbook:
     description: Get enchanting book
     usage: /<command>
+    permission: gardens.getbook
   givebook:
-    description: Give enchanting book
-    usage: /<command>
+    description: Give a player an enchant book
+    usage: /<command> <player> <enchant> [level]
+    permission: gardens.givebook
   enchant:
     description: Enchant item you are holding
     usage: /<command>
   mobhead:
     description: Get a mob head
     usage: /<command>
+    permission: gardens.mob_heads
   disenchant:
     description: Remove enchantment from held item
     usage: /<command>
+    permission: gardens.disenchant
   lore:
     description: Modify lore on held item
     usage: /<command>
+    permission: gardens.editlore
   fixbook:
     description: Replace held vanilla book with custom book
     usage: /<command>
+    permission: gardens.fixbook
 depend:
   - Vault
   - GardensFurniture
-  - QuickShop-Hikari
+  - NBTAPI
 softdepend:
   - floodgate
+  - QuickShop-Hikari

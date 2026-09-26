@@ -22,6 +22,9 @@ public record BookInstance(
     }
 
     public boolean isSame(BookInstance bookInstance) {
-        return this.enchantment.equals(bookInstance.enchantment) && this.level == bookInstance.level();
+        // destruction matters too, or a risky book would match a safe one in shops
+        return this.enchantment.equals(bookInstance.enchantment)
+                && this.level == bookInstance.level()
+                && this.calculateDestructionChance() == bookInstance.calculateDestructionChance();
     }
 }

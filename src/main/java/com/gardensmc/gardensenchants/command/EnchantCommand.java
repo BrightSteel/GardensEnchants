@@ -1,5 +1,6 @@
 package com.gardensmc.gardensenchants.command;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
@@ -18,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EnchantCommand implements TabExecutor {
+
+    // vanilla stores enchant levels up to 255
+    private static final int MAX_FORCED_LEVEL = 255;
+
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
 
@@ -26,7 +31,9 @@ public class EnchantCommand implements TabExecutor {
         }
 
         if (args.length < 1) {
-            if (player.hasPermission("gardens.enchant.open")) {
+            if (!GardensEnchants.isTableAvailable()) {
+                player.sendMessage(ChatColor.RED + "The enchanting table is unavailable right now.");
+            } else if (player.hasPermission("gardens.enchant.open")) {
                 new EnchantingMenu(player, true).open();
             } else {
                 player.sendMessage(ChatColor.RED + "No permission to use this command");
@@ -57,13 +64,24 @@ public class EnchantCommand implements TabExecutor {
         }
 
         var force = args.length >= 3 && args[2].equalsIgnoreCase("force");
+        // levels below 1 broke the lore numeral on every refresh; above max needs "force"
+        int maxLevel = force ? MAX_FORCED_LEVEL : enchant.getMaxLevel();
+        if (level < 1 || level > maxLevel) {
+            player.sendMessage(ChatColor.RED + "Level must be between 1 and " + maxLevel + (force ? "" : " (add \"force\" to go higher)"));
+            return true;
+        }
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() != Material.AIR) {
             if (!force && !enchant.canEnchant(item)) {
                 player.sendMessage(ChatColor.RED + "You cannot apply " + enchantName + " to this item!");
                 return true;
             }
-            new GardensEnchantHandler(item).enchant(enchant, level, force);
+            try {
+                new GardensEnchantHandler(item).enchant(enchant, level, force);
+            } catch (IllegalArgumentException e) {
+                player.sendMessage(ChatColor.RED + "Could not apply " + enchantName + ": " + e.getMessage());
+                return true;
+            }
             player.sendMessage(ChatColor.GREEN + "Added " + enchantName + " to your item");
         }
         else {
