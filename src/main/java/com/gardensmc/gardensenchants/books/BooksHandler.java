@@ -10,7 +10,6 @@ import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import com.gardensmc.gardensenchants.utils.RomanNumber;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import de.tr7zw.nbtapi.NBT;
-import de.tr7zw.nbtapi.iface.ReadWriteItemNBT;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.key.Key;
@@ -148,27 +147,6 @@ public class BooksHandler {
         var enchantment = enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size()));
         var level = ThreadLocalRandom.current().nextInt(1, enchantment.getMaxLevel() + 1);
         return new EnchantmentInstance(enchantment, level);
-    }
-
-    public void applyRestoration(BookInstance bookInstance, int amount) {
-        NBT.modify(bookInstance.book(), nbt -> {
-            increaseRestorationCount(nbt, amount);
-        });
-        // refresh bookInstance
-        bookInstance = getBookInstance(bookInstance.book());
-        if (bookInstance == null) {
-            throw new RuntimeException("Failed to refresh book instance after changing destructionBase chance!");
-        }
-        refreshLore(bookInstance);
-    }
-
-    private void increaseRestorationCount(ReadWriteItemNBT nbt, int amount) {
-        var bookNBT = nbt.getCompound(BOOK_NBT_KEY);
-        if (bookNBT == null) {
-            return;
-        }
-        var restorations = bookNBT.getInteger(RESTORATIONS_KEY);
-        bookNBT.setInteger(RESTORATIONS_KEY, restorations + amount);
     }
 
     private void refreshLore(BookInstance bookInstance) {
