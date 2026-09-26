@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants.command;
 
 import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.utils.ItemUtils;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -30,7 +31,7 @@ public class MobHeadCommand implements TabExecutor {
                 player.sendMessage(ChatColor.RED + "Could not find a mob head for: " + type);
             }
             else {
-                player.getInventory().addItem(head);
+                PlayerUtil.giveItem(player, head);
                 player.sendMessage(ChatColor.GREEN + "Received " + type + " head!");
             }
         }

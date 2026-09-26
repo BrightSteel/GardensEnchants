@@ -89,9 +89,12 @@ public class EnchantingMenu extends Menu {
     }
 
     private boolean onClose() {
-        var bookItem = bookStorage.getItem(viewer, STORAGE_SLOT);
+        // empty the slot before handing the item back: the "view books" button calls this while
+        // the gui is still open for another tick, and a second click could otherwise take a copy
+        var bookItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
         if (bookItem != null) {
-            viewer.getInventory().addItem(bookItem);
+            bookStorage.setStorageItem(viewer, STORAGE_SLOT, null);
+            PlayerUtil.giveItem(viewer, bookItem);
         }
         return true;
     }
