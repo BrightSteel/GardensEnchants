@@ -7,6 +7,7 @@ import com.gardensmc.gardensenchants.utils.FoodMath;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -103,6 +104,11 @@ public class PlayerListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerKillEntity(EntityDeathEvent e) {
+        if (e instanceof PlayerDeathEvent) {
+            // PvP: the victim's drops stay on the ground. Taking them here ignored keepInventory,
+            // so a later keepInventory handler (e.g. GPFlags) left the victim a copy.
+            return;
+        }
         var damager = e.getDamageSource().getCausingEntity();
         if (damager instanceof Player player) {
             var tool = PlayerUtil.getHeldItem(player);
@@ -253,6 +259,10 @@ public class PlayerListener implements Listener {
 
     private boolean canBeRepaired(ItemStack itemStack) {
         if (itemStack == null) {
+            return false;
+        }
+        // like vanilla mending, only items with Mending are repaired by the xp
+        if (!itemStack.containsEnchantment(Enchantment.MENDING)) {
             return false;
         }
         var meta = itemStack.getItemMeta();
