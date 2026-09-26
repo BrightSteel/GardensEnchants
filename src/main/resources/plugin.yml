@@ -9,8 +9,8 @@ commands:
     usage: /<command>
     permission: gardens.getbook
   givebook:
-    description: Give enchanting book
-    usage: /<command>
+    description: Give a player an enchant book
+    usage: /<command> <player> <enchant> [level]
     permission: gardens.givebook
   enchant:
     description: Enchant item you are holding
