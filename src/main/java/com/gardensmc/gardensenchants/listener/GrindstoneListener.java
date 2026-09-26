@@ -12,6 +12,9 @@ import org.bukkit.inventory.GrindstoneInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class GrindstoneListener implements Listener {
 
     @EventHandler
@@ -29,13 +32,19 @@ public class GrindstoneListener implements Listener {
         if (result != null) {
             var enchantHandler = new GardensEnchantHandler(result);
             if (enchantHandler.hasEnchantNBT()) {
-                enchantHandler.clearEnchants(true);
+                // curses stay, as in vanilla: a grindstone isn't a way to get rid of Binding or Vanishing
+                var curses = result.getEnchantments().entrySet().stream()
+                        .filter(entry -> entry.getKey().isCursed())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                enchantHandler.clearEnchants(false);
+                result.addUnsafeEnchantments(curses);
                 if (!isEmpty(inv.getUpperItem()) && !isEmpty(inv.getLowerItem())) {
                     var slots1 = new GardensEnchantHandler(inv.getUpperItem()).getSlots();
                     var slots2 = new GardensEnchantHandler(inv.getLowerItem()).getSlots();
                     // take larger of two slots
                     enchantHandler.setSlots(Math.max(slots1, slots2));
                 }
+                enchantHandler.refreshLore();
                 e.setResult(result);
             }
         }
