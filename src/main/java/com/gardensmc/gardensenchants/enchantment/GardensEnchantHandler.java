@@ -27,6 +27,7 @@ public class GardensEnchantHandler {
     private static final String SLOTS_KEY = "slots";
     private static final String CUSTOM_LORE_KEY = "customLore";
     public static final int DEFAULT_SLOTS = 4;
+    private static final String SLOTS_LORE_PREFIX = "Enchant Slots: ";
 
     public boolean isEnchantable(GardensEnchantment enchantment) {
         if (!enchantment.canEnchant(item)) {
@@ -66,6 +67,7 @@ public class GardensEnchantHandler {
     }
 
     public void upgradeEnchantments() {
+        adoptExistingLore();
         getUpgradeableEnchantments().forEach(this::upgradeEnchant);
         applyPostEnchantChanges();
     }
@@ -75,11 +77,13 @@ public class GardensEnchantHandler {
     }
 
     public void enchant(GardensEnchantment enchantment, int level, boolean isForce) {
+        adoptExistingLore();
         enchantment.applyEnchantment(item, level, isForce);
         applyPostEnchantChanges();
     }
 
     public void enchantAll(List<EnchantmentInstance> enchantments) {
+        adoptExistingLore();
         enchantments.forEach(enchantmentInstance -> {
             var enchantment = enchantmentInstance.getEnchantment();
             enchantment.applyEnchantment(item, enchantmentInstance.getLevel(), false);
@@ -88,7 +92,7 @@ public class GardensEnchantHandler {
     }
 
     public void applyPostEnchantChanges() {
-//        storeCustomLore();
+        adoptExistingLore();
         var meta = item.getItemMeta();
         meta.setEnchantmentGlintOverride(true);
         meta.addItemFlags(
@@ -104,22 +108,46 @@ public class GardensEnchantHandler {
         return NBT.get(item, nbt -> (boolean) nbt.hasTag(ITEM_NBT_KEY));
     }
 
-    private void storeCustomLore() {
-        var customLore = item.getItemMeta().lore();
-        if (customLore == null || customLore.isEmpty()) {
-            return;
+    /**
+     * The first time this handler manages an item's lore, keep what's already there (other plugins'
+     * lore, /lore lines) as custom lore instead of overwriting it. Items enchanted before this fix
+     * may carry our generated lore without the NBT compound, so anything from the "Enchant Slots"
+     * line on is dropped rather than kept twice.
+     */
+    private void adoptExistingLore() {
+        if (hasEnchantNBT()) {
+            return; // lore is already generated here, custom lines live in NBT
         }
-        if (!hasEnchantNBT()) {
-            setCustomLore(customLore.stream().map(MessageUtil::toMiniMessage).toList());
+        var lore = item.getItemMeta().lore();
+        List<String> existing = new ArrayList<>();
+        if (lore != null) {
+            for (var line : lore) {
+                if (MessageUtil.toPlainText(line).startsWith(SLOTS_LORE_PREFIX)) {
+                    // drop the blank line we put above the slots line too
+                    if (!existing.isEmpty() && existing.getLast().isEmpty()) {
+                        existing.removeLast();
+                    }
+                    break;
+                }
+                existing.add(MessageUtil.toMiniMessage(line));
+            }
         }
+        NBT.modify(item, nbt -> {
+            var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
+            if (!existing.isEmpty()) {
+                itemNBT.getStringList(CUSTOM_LORE_KEY).addAll(existing);
+            }
+        });
     }
 
     public void removeEnchant(GardensEnchantment enchantment) {
+        adoptExistingLore();
         enchantment.removeEnchantment(item);
         refreshLore();
     }
 
     public void clearEnchants(boolean isRefreshLore) {
+        adoptExistingLore();
         // remove vanilla enchants
         item.removeEnchantments();
         // remove custom enchants
@@ -140,6 +168,7 @@ public class GardensEnchantHandler {
     }
 
     public void refreshLore() {
+        adoptExistingLore();
         var meta = item.getItemMeta();
         meta.lore(getLore());
         item.setItemMeta(meta);
@@ -173,7 +202,7 @@ public class GardensEnchantHandler {
         }
         lore.add(Component.empty());
         lore.add(Component.text()
-                .content("Enchant Slots: ")
+                .content(SLOTS_LORE_PREFIX)
                 .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false)
                 .append(Component
@@ -319,6 +348,7 @@ public class GardensEnchantHandler {
     }
 
     public void incrementSlots() {
+        adoptExistingLore();
         NBT.modify(item, nbt -> {
             var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
             var slots = itemNBT.getOrDefault(SLOTS_KEY, DEFAULT_SLOTS);
@@ -328,6 +358,7 @@ public class GardensEnchantHandler {
     }
 
     public void setSlots(int slots) {
+        adoptExistingLore();
         NBT.modify(item, nbt -> {
             var itemNBT = nbt.getOrCreateCompound(ITEM_NBT_KEY);
             itemNBT.setInteger(SLOTS_KEY, slots);
