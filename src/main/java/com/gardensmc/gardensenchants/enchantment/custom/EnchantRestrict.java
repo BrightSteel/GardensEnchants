@@ -79,6 +79,17 @@ public class EnchantRestrict {
         return children.stream().anyMatch(enchantRestrict -> enchantRestrict.isEnchantable(itemStack));
     }
 
+    /**
+     * One sample item per leaf type this restrict covers, used to check that an enchant really
+     * applies to the type (restricts alone don't know e.g. that fortune can't go on a sword).
+     */
+    public List<ItemStack> getSampleItems() {
+        if (isLeaf()) {
+            return permittedMaterials.isEmpty() ? List.of() : List.of(new ItemStack(permittedMaterials.getFirst()));
+        }
+        return children.stream().flatMap(child -> child.getSampleItems().stream()).toList();
+    }
+
     public List<Character> iconRepresentation() {
         return icons;
     }

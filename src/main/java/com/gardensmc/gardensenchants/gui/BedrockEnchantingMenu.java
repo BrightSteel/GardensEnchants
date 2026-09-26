@@ -5,7 +5,9 @@ import com.gardensmc.gardensenchants.books.BookInstance;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
+import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
+import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -17,7 +19,7 @@ import org.geysermc.cumulus.util.FormImage;
 import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.util.List;
-import java.util.Objects;
+import java.util.logging.Level;
 
 /**
  * Geyser/Bedrock equivalent of the Java {@link EnchantingMenu}. Bedrock players can't render the
@@ -70,10 +72,27 @@ public class BedrockEnchantingMenu {
         }
 
         var type = TypedBooksHandler.getTypeFromBook(held);
-        List<BookInstance> options = new EnchantEntryHandler(viewer.getUniqueId(), type)
-                .getEnchantmentInstances()
-                .stream()
-                .filter(Objects::nonNull)
+        // load off the main thread, then build the form back on it (it reads inventory, xp and money)
+        new EnchantEntryHandler(viewer.getUniqueId(), type).getOffers().whenComplete((offers, throwable) -> {
+            if (!GardensEnchants.plugin.isEnabled()) {
+                return;
+            }
+            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> {
+                if (!viewer.isOnline()) {
+                    return;
+                }
+                if (throwable != null) {
+                    GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Failed to load enchant offers", throwable);
+                    message(viewer, "<red>No enchantments are available right now. Try again later!");
+                    return;
+                }
+                sendForm(viewer, type, offers);
+            });
+        });
+    }
+
+    private static void sendForm(Player viewer, String type, List<EnchantmentInstance> offers) {
+        List<BookInstance> options = offers.stream()
                 .map(BooksHandler.INSTANCE::buildBook)
                 .toList();
         if (options.isEmpty()) {
@@ -106,18 +125,24 @@ public class BedrockEnchantingMenu {
             if (idx < 0 || idx >= options.size()) {
                 return;
             }
-            var chosen = options.get(idx);
             // The form response fires off the main thread; inventory + economy mutations must be sync.
-            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, chosen));
+            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, idx, offers.get(idx), options.get(idx)));
         });
         FloodgateApi.getInstance().sendForm(viewer.getUniqueId(), builder.build());
     }
 
-    private static void purchase(Player viewer, String type, BookInstance bookInstance) {
+    private static void purchase(Player viewer, String type, int index, EnchantmentInstance offer, BookInstance bookInstance) {
         // Re-check the held item — it may have changed while the form was open.
         var held = viewer.getInventory().getItemInMainHand();
-        if (!isEnchantableBook(held)) {
+        if (!isEnchantableBook(held) || !type.equals(TypedBooksHandler.getTypeFromBook(held))) {
             message(viewer, "<red>You're no longer holding a book to enchant!");
+            return;
+        }
+        // The form may be stale (a second form, or a slow response after buying): only sell the
+        // offer if it is still the current roll, so each roll can be bought once.
+        var entryHandler = new EnchantEntryHandler(viewer.getUniqueId(), type);
+        if (!entryHandler.isCurrentOffer(index, offer)) {
+            message(viewer, "<red>These enchantments have changed. Use the table again to see the new ones!");
             return;
         }
         var enchantment = bookInstance.enchantment();
@@ -139,12 +164,10 @@ public class BedrockEnchantingMenu {
             viewer.getInventory().setItemInMainHand(bookInstance.book());
         } else {
             held.setAmount(held.getAmount() - 1);
-            var leftover = viewer.getInventory().addItem(bookInstance.book());
-            leftover.values().forEach(item ->
-                    viewer.getWorld().dropItemNaturally(viewer.getLocation(), item));
+            PlayerUtil.giveItem(viewer, bookInstance.book());
         }
         // Regenerate the options for next time, matching the Java menu's behaviour on purchase.
-        new EnchantEntryHandler(viewer.getUniqueId(), type).resetEnchantEntry();
+        entryHandler.reroll();
         message(viewer, "<green>Enchanted your book with <white>" + enchantment.getDisplayName() + "<green>!");
     }
 

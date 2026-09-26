@@ -2,6 +2,7 @@ package com.gardensmc.gardensenchants;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.cache.OnlinePlayerCache;
 import com.gardensmc.gardensenchants.command.*;
 import com.gardensmc.gardensenchants.database.EnchantTable;
@@ -60,6 +61,7 @@ public class GardensEnchants extends JavaPlugin {
         loadVanillaOverrides();
         loadRelics();
         GardensEnchantments.INSTANCE.registerEnchantments();
+        BooksHandler.INSTANCE.buildTablePools();
         Listeners.registerListeners();
         PlayerSchedules.scheduleAll();
         protocolManager = ProtocolLibrary.getProtocolManager();

@@ -33,22 +33,15 @@ public final class EnchantTable implements Table {
         }
     }
 
-    public void removeEnchantEntry(String uuid, String type) {
-        String update = "DELETE FROM enchant WHERE uuid = ? AND type = ?";
+    /**
+     * Inserts or replaces the stored offers for this player and type.
+     */
+    public void saveEnchantEntry(String uuid, String type, EnchantJsonEntry enchantJson) {
+        String update = "INSERT INTO enchant (uuid, type, enchants) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE enchants = VALUES(enchants)";
         try {
-            DatabaseConnector.INSTANCE.executeUpdate(update, uuid, type);
+            DatabaseConnector.INSTANCE.executeUpdate(update, uuid, type, enchantJson.toJson());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public EnchantEntry createEnchantEntry(String uuid, String type, EnchantJsonEntry enchantJson) {
-        String update = "INSERT INTO enchant (uuid, type, enchants) VALUES (?, ?, ?)";
-        try {
-           DatabaseConnector.INSTANCE.executeUpdate(update, uuid, type, enchantJson.toJson());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return new EnchantEntry(enchantJson);
     }
 }
