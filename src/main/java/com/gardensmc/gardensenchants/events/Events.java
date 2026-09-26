@@ -183,6 +183,9 @@ public class Events implements Listener {
                         Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
                             // run with delay so player can visually see the second hit and hear it
                             if (!livingEntity.isDead()) {
+                                // the target is still invulnerable from the first hit, which made
+                                // vanilla discard this one; clear it so the second hit lands
+                                livingEntity.setNoDamageTicks(0);
                                 livingEntity.damage(e.getDamage(), player);
                                 livingEntity.getLocation().getWorld().playSound(livingEntity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1, 1);
                             }
