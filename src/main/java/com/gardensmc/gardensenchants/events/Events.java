@@ -34,6 +34,8 @@ public class Events implements Listener {
 
     // how many blocks Timber expands from; the number actually broken is capped by AreaBreaker
     private static final int MAX_TIMBER_COUNT = 40;
+    // the helmet's night vision is applied with Integer.MAX_VALUE ticks; potions last minutes
+    private static final int HELMET_EFFECT_MIN_DURATION = 1_000_000;
     private static final BlockFace[] AREA_FACES = new BlockFace[]{
             BlockFace.NORTH,
             BlockFace.EAST,
@@ -58,7 +60,9 @@ public class Events implements Listener {
         // handle old item changes first to remove effects
         if (oldItem.getType() != Material.AIR) {
             if (slot == EquipmentSlot.FEET) {
-                if (player.getWalkSpeed() > 0.2f) {
+                // only undo the speed Speedy set, so other speed changes (e.g. /speed) are kept
+                if (SPEEDY.hasEnchantment(oldItem)
+                        && player.getWalkSpeed() == getSpeedyWalkSpeed(SPEEDY.getEnchantmentLevel(oldItem))) {
                     player.setWalkSpeed(0.2f);
                 }
 //                if (player.getAllowFlight() && !e.getPlayer().hasPermission("gardens.fly.anywhere")) {
@@ -76,7 +80,11 @@ public class Events implements Listener {
             }
             else if (slot == EquipmentSlot.HEAD) {
                 if (CustomEnchantments.NIGHT_VISION.hasEnchantment(oldItem)) {
-                    player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                    // only remove the endless effect the helmet gave, not night vision from a potion
+                    var effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
+                    if (effect != null && (effect.isInfinite() || effect.getDuration() > HELMET_EFFECT_MIN_DURATION)) {
+                        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                    }
                 }
             }
         }
@@ -86,8 +94,7 @@ public class Events implements Listener {
             if (slot == EquipmentSlot.FEET) {
                 if (SPEEDY.hasEnchantment(newItem)) {
                     int lvl = SPEEDY.getEnchantmentLevel(newItem);
-                    float newSpeed = 0.2f + (lvl * 0.025f);
-                    player.setWalkSpeed(newSpeed);
+                    player.setWalkSpeed(getSpeedyWalkSpeed(lvl));
                 }
 //                if (CustomEnchantments.WINGED_BOOTS.hasEnchantment(newItem)) {
 //                    NBTItem nbtItem = new NBTItem(e.getNewArmorPiece());
@@ -105,6 +112,10 @@ public class Events implements Listener {
                 }
             }
         }
+    }
+
+    private static float getSpeedyWalkSpeed(int level) {
+        return 0.2f + (level * 0.025f);
     }
 
     @EventHandler

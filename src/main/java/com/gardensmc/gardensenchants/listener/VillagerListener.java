@@ -94,7 +94,6 @@ public class VillagerListener implements Listener {
                     enchantEntry.getValue()
             )).book();
         }
-        System.out.println("Returning book w/o enchantment meta, maybe ran twice");
         return vanillaBook; // shouldn't happen
     }
 }

@@ -120,7 +120,8 @@ public class GardensEnchants extends JavaPlugin {
                 handleJumpBoost(player);
             }
         }
-        if (player.getHealth() <= 1.0) {
+        // 1 heart = 2 health, matching the lore ("1 heart or lower"); it used to be half a heart
+        if (player.getHealth() <= 2.0) {
             var boots = player.getInventory().getBoots();
             if (boots != null && boots.getType() != Material.AIR) {
                 var speedLvl = CustomEnchantments.ESCAPE_ARTIST.getEnchantmentLevel(boots);
