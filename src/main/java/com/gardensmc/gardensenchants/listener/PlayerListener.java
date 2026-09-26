@@ -27,7 +27,9 @@ import java.util.stream.Stream;
 
 public class PlayerListener implements Listener {
 
-    private static final Set<EntityTargetEvent.TargetReason> allowedReasons = Set.of(
+    // the ways a mob notices a player on its own - the only targeting Cloak hides you from. A mob you hit, or a
+    // pet sent after you, still comes for you.
+    private static final Set<EntityTargetEvent.TargetReason> NATURAL_TARGET_REASONS = Set.of(
             EntityTargetEvent.TargetReason.CLOSEST_ENTITY,
             EntityTargetEvent.TargetReason.CLOSEST_PLAYER,
             EntityTargetEvent.TargetReason.RANDOM_TARGET,
@@ -86,6 +88,9 @@ public class PlayerListener implements Listener {
             return;
         }
         if (e.getEntity().getType() == EntityType.ENDERMAN) {
+            return;
+        }
+        if (!NATURAL_TARGET_REASONS.contains(e.getReason())) {
             return;
         }
         if (shouldCancelTarget(player)) {
