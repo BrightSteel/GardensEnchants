@@ -568,6 +568,10 @@ public class Events implements Listener {
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.ENCHANTING_TABLE) {
             e.setCancelled(true);
             var player = e.getPlayer();
+            if (!GardensEnchants.isTableAvailable()) {
+                player.sendMessage(ChatColor.RED + "The enchanting table is unavailable right now.");
+                return;
+            }
             if (BedrockEnchantingMenu.isBedrockPlayer(player)) {
                 // Bedrock clients can't render the Java menu; require a held book and use a Geyser form.
                 BedrockEnchantingMenu.open(player);

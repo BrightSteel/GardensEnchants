@@ -1,5 +1,6 @@
 package com.gardensmc.gardensenchants.command;
 
+import com.gardensmc.gardensenchants.GardensEnchants;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
@@ -26,7 +27,9 @@ public class EnchantCommand implements TabExecutor {
         }
 
         if (args.length < 1) {
-            if (player.hasPermission("gardens.enchant.open")) {
+            if (!GardensEnchants.isTableAvailable()) {
+                player.sendMessage(ChatColor.RED + "The enchanting table is unavailable right now.");
+            } else if (player.hasPermission("gardens.enchant.open")) {
                 new EnchantingMenu(player, true).open();
             } else {
                 player.sendMessage(ChatColor.RED + "No permission to use this command");
