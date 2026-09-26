@@ -8,13 +8,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import javax.annotation.Nullable;
+import java.util.Set;
 import java.util.UUID;
 
 public class ItemUtils {
+
+    private static YamlConfiguration mobHeads;
 
     public static ItemStack getHead(String name, String base64Skin) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
@@ -59,19 +63,32 @@ public class ItemUtils {
         return getCustomItem("blank");
     }
 
+    /**
+     * Loads mob_heads.yml (copying the bundled default on first run). Heads used to be read from
+     * config.yml, which has no mob_heads section, so Skull Stealer and /mobhead never found one.
+     */
+    public static void loadMobHeads() {
+        mobHeads = GardensEnchants.plugin.loadConfig("mob_heads.yml");
+    }
+
+    public static Set<String> getMobHeadTypes() {
+        return mobHeads == null ? Set.of() : mobHeads.getKeys(false);
+    }
+
     @Nullable
     public static ItemStack getMobHead(String entity_type) {
-        ConfigurationSection section = GardensEnchants.plugin.getConfig().getConfigurationSection("mob_heads");
+        if (mobHeads == null) {
+            return null;
+        }
+        ConfigurationSection section = mobHeads.getConfigurationSection(entity_type);
         if (section != null) {
-            ConfigurationSection section1 = section.getConfigurationSection(entity_type);
-            if (section1 != null) {
-                String name = section1.getString("name");
-                String base64 = section1.getString("base64");
+            String name = section.getString("name");
+            String base64 = section.getString("base64");
+            if (name != null && base64 != null) {
                 return ItemUtils.getHead(name, base64);
             }
         }
         return null;
     }
-
 
 }

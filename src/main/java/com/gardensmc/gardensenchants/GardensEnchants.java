@@ -14,6 +14,7 @@ import com.gardensmc.gardensenchants.listener.Listeners;
 import com.gardensmc.gardensenchants.listener.PlayerListener;
 import com.gardensmc.gardensenchants.relic.Relic;
 import com.gardensmc.gardensenchants.relic.RelicHandler;
+import com.gardensmc.gardensenchants.utils.ItemUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -60,6 +61,7 @@ public class GardensEnchants extends JavaPlugin {
         saveDefaultConfig();
         loadVanillaOverrides();
         loadRelics();
+        ItemUtils.loadMobHeads();
         GardensEnchantments.INSTANCE.registerEnchantments();
         BooksHandler.INSTANCE.buildTablePools();
         Listeners.registerListeners();
