@@ -19,6 +19,10 @@ public class Listeners {
         if (GardensEnchants.plugin.getServer().getPluginManager().getPlugin("QuickShop-Hikari") != null) {
             register(new QuickShopListener());
         }
+        // only Bedrock players (through Geyser/Floodgate) need the anvil workaround
+        if (GardensEnchants.plugin.getServer().getPluginManager().getPlugin("floodgate") != null) {
+            register(new BedrockAnvilListener());
+        }
     }
 
     private static void register(Listener listener) {
