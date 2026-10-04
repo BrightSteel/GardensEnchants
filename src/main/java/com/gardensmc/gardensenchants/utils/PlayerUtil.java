@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.FluidCollisionMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -28,11 +29,10 @@ public class PlayerUtil {
      * @return the BlockFace of the targeted block, or null if the targeted block is non-occluding.
      */
     public static BlockFace getBlockFaceLooking(Player player) {
-        List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(null, 100);
-        if (lastTwoTargetBlocks.size() != 2 || !lastTwoTargetBlocks.get(1).getType().isOccluding()) return null;
-        Block targetBlock = lastTwoTargetBlocks.get(1);
-        Block adjacentBlock = lastTwoTargetBlocks.get(0);
-        return targetBlock.getFace(adjacentBlock);
+        // fluids are ignored so standing in or looking through water still finds the solid block
+        var hit = player.rayTraceBlocks(100, FluidCollisionMode.NEVER);
+        if (hit == null || hit.getHitBlock() == null || !hit.getHitBlock().getType().isOccluding()) return null;
+        return hit.getHitBlockFace();
     }
 
     public static void giveItems(Player player, Collection<ItemStack> items) {
