@@ -21,6 +21,13 @@ public enum EnchantRarity {
     private final int tableXpCost;
     private final DestructionLevel destructionLevel;
 
+    /**
+     * Whether the table only sells this rarity when surrounded by a full bookshelf setup.
+     */
+    public boolean needsFullBookSetup() {
+        return compareTo(EPIC) >= 0;
+    }
+
     // helper method for component usage
     public TextColor getTextColor() {
         return TextColor.color(color);

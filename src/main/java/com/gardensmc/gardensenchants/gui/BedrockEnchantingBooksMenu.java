@@ -47,8 +47,8 @@ public class BedrockEnchantingBooksMenu {
     private BedrockEnchantingBooksMenu() {
     }
 
-    public static void open(Player viewer) {
-        sendPage(viewer, 0);
+    public static void open(Player viewer, boolean isFullBookSetup) {
+        sendPage(viewer, 0, isFullBookSetup);
     }
 
     /** All enchantments ordered by rarity then id, matching the Java {@link EnchantingBooksMenu}. */
@@ -60,7 +60,7 @@ public class BedrockEnchantingBooksMenu {
                 .toList();
     }
 
-    private static void sendPage(Player viewer, int page) {
+    private static void sendPage(Player viewer, int page, boolean isFullBookSetup) {
         var all = allEnchantments();
         int totalPages = Math.max(1, (int) Math.ceil(all.size() / (double) SLOTS));
         int p = Math.max(0, Math.min(page, totalPages - 1));
@@ -91,12 +91,12 @@ public class BedrockEnchantingBooksMenu {
         builder.validResultHandler(response -> {
             int idx = response.clickedButtonId();
             if (idx == SLOTS && hasPrev) {
-                sendPage(viewer, p - 1);
+                sendPage(viewer, p - 1, isFullBookSetup);
             } else if (idx == SLOTS + 1 && hasNext) {
-                sendPage(viewer, p + 1);
+                sendPage(viewer, p + 1, isFullBookSetup);
             } else if (idx == SLOTS + 2) {
                 // form responses arrive off the main thread; open() reads the inventory, xp and money
-                Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> BedrockEnchantingMenu.open(viewer));
+                Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> BedrockEnchantingMenu.open(viewer, isFullBookSetup));
             }
         });
         FloodgateApi.getInstance().sendForm(viewer.getUniqueId(), builder.build());

@@ -449,6 +449,9 @@ public class Events implements Listener {
         }
     }
 
+    // vanilla's maximum bookshelf power; a table this surrounded can sell Epic and Legendary offers
+    private static final int FULL_BOOKSHELVES = 15;
+
     @EventHandler(ignoreCancelled = true)
     public void onPlayerOpenEnchanting(PlayerInteractEvent e) {
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock() != null && e.getClickedBlock().getType() == Material.ENCHANTING_TABLE) {
@@ -460,32 +463,36 @@ public class Events implements Listener {
             }
             if (BedrockEnchantingMenu.isBedrockPlayer(player)) {
                 // Bedrock clients can't render the Java menu; require a held book and use a Geyser form.
-                BedrockEnchantingMenu.open(player);
+                BedrockEnchantingMenu.open(player, isFullBookSetup(e.getClickedBlock()));
             } else {
                 new EnchantingMenu(player, isFullBookSetup(e.getClickedBlock())).open();
             }
         }
     }
 
+    /**
+     * Whether the table has the most bookshelf power vanilla allows (15 shelves), using vanilla's rule:
+     * a shelf two blocks out, on the table's level or one up, with the block between it and the table
+     * clear (air or anything else replaceable).
+     */
     private boolean isFullBookSetup(Block enchantingTableBlock) {
-        var numBookShelves = 0;
+        int shelves = 0;
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
-                for (int y = 0; y < 3; y++) {
-                    if (Math.abs(x) < 2 && Math.abs(z) < 2) {
-                        continue;
-                    }
-                    var block = enchantingTableBlock.getRelative(x, y, z);
-                    if (block.getType() == Material.BOOKSHELF) {
-                        numBookShelves++;
-                    }
-                    if (numBookShelves == 15) {
-                        break;
+                if (Math.abs(x) != 2 && Math.abs(z) != 2) {
+                    continue;
+                }
+                for (int y = 0; y <= 1; y++) {
+                    var shelf = enchantingTableBlock.getRelative(x, y, z).getType();
+                    var between = enchantingTableBlock.getRelative(x / 2, y, z / 2).getType();
+                    if (Tag.ENCHANTMENT_POWER_PROVIDER.isTagged(shelf) && Tag.ENCHANTMENT_POWER_TRANSMITTER.isTagged(between)
+                            && ++shelves >= FULL_BOOKSHELVES) {
+                        return true;
                     }
                 }
             }
         }
-        return numBookShelves == 15;
+        return false;
     }
 
     @EventHandler(ignoreCancelled = true)

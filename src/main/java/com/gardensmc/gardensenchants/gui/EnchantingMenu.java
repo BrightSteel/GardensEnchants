@@ -43,6 +43,7 @@ public class EnchantingMenu extends Menu {
             " i gggggh"
     };
     private static final int STORAGE_SLOT = 1;
+    static final String NEEDS_BOOKSHELVES = "<red>Epic and Legendary enchants need 15 bookshelves around the table!";
     // ignores a re-roll click this soon after the last one, so a double click doesn't pay twice
     private static final long REROLL_COOLDOWN_MS = 500;
     private GuiStorageElement bookStorage;
@@ -240,6 +241,10 @@ public class EnchantingMenu extends Menu {
             return;
         }
         var enchantment = bookInstance.enchantment();
+        if (isLocked(enchantment)) {
+            viewer.sendMessage(MiniMessage.miniMessage().deserialize(NEEDS_BOOKSHELVES));
+            return;
+        }
         if (storageItem.getType() == Material.BOOK) {
             // book -> becomes the corresponding enchant book, left in the slot
             if (!canPurchase(enchantment) || !chargePlayer(enchantment)) {
@@ -325,6 +330,11 @@ public class EnchantingMenu extends Menu {
                 .map(BookInstance::enchantment);
     }
 
+    // Epic+ offers are shown everywhere, but only sold at a fully surrounded table (or /enchant)
+    private boolean isLocked(GardensEnchantment enchantment) {
+        return !isFullBookSetup && enchantment.getRarity().needsFullBookSetup();
+    }
+
     private boolean canPurchase(GardensEnchantment enchantment) {
         return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && viewer.getLevel() >= enchantment.getTableCostInXp();
     }
@@ -381,6 +391,9 @@ public class EnchantingMenu extends Menu {
         var cost = bookInstance.enchantment().getTableCost();
         lore.add(toComponent((viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + bookInstance.enchantment().getTableCostInXp() + " <white><font:gardens:default>\u011F"));
         lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + bookInstance.enchantment().getTableCost() + " <white><font:gardens:default>\u0120"));
+        if (isLocked(bookInstance.enchantment())) {
+            lore.add(toComponent("<red>Needs 15 bookshelves around the table"));
+        }
         book.editMeta(meta -> meta.lore(lore));
         return book;
     }

@@ -64,7 +64,7 @@ public class BedrockEnchantingMenu {
         }
     }
 
-    public static void open(Player viewer) {
+    public static void open(Player viewer, boolean isFullBookSetup) {
         var held = viewer.getInventory().getItemInMainHand();
         if (!isEnchantableBook(held)) {
             message(viewer, "<red>Hold an unenchanted book to enchant at the table!");
@@ -86,12 +86,12 @@ public class BedrockEnchantingMenu {
                     message(viewer, "<red>No enchantments are available right now. Try again later!");
                     return;
                 }
-                sendForm(viewer, type, offers);
+                sendForm(viewer, type, offers, isFullBookSetup);
             });
         });
     }
 
-    private static void sendForm(Player viewer, String type, List<EnchantmentInstance> offers) {
+    private static void sendForm(Player viewer, String type, List<EnchantmentInstance> offers, boolean isFullBookSetup) {
         List<BookInstance> options = offers.stream()
                 .map(BooksHandler.INSTANCE::buildBook)
                 .toList();
@@ -109,7 +109,7 @@ public class BedrockEnchantingMenu {
         for (int i = 0; i < SLOTS; i++) {
             if (i < options.size()) {
                 var option = options.get(i);
-                builder.button(buttonText(viewer, option), FormImage.Type.PATH, bookIconPath(option.enchantment()));
+                builder.button(buttonText(viewer, option, isFullBookSetup), FormImage.Type.PATH, bookIconPath(option.enchantment()));
             } else {
                 builder.button("");
             }
@@ -119,19 +119,19 @@ public class BedrockEnchantingMenu {
         builder.validResultHandler(response -> {
             int idx = response.clickedButtonId();
             if (idx == BOOKS_BUTTON_INDEX) {
-                BedrockEnchantingBooksMenu.open(viewer);
+                BedrockEnchantingBooksMenu.open(viewer, isFullBookSetup);
                 return;
             }
             if (idx < 0 || idx >= options.size()) {
                 return;
             }
             // The form response fires off the main thread; inventory + economy mutations must be sync.
-            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, idx, offers.get(idx), options.get(idx)));
+            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, idx, offers.get(idx), options.get(idx), isFullBookSetup));
         });
         FloodgateApi.getInstance().sendForm(viewer.getUniqueId(), builder.build());
     }
 
-    private static void purchase(Player viewer, String type, int index, EnchantmentInstance offer, BookInstance bookInstance) {
+    private static void purchase(Player viewer, String type, int index, EnchantmentInstance offer, BookInstance bookInstance, boolean isFullBookSetup) {
         // Re-check the held item — it may have changed while the form was open.
         var held = viewer.getInventory().getItemInMainHand();
         if (!isEnchantableBook(held) || !type.equals(TypedBooksHandler.getTypeFromBook(held))) {
@@ -146,6 +146,10 @@ public class BedrockEnchantingMenu {
             return;
         }
         var enchantment = bookInstance.enchantment();
+        if (!isFullBookSetup && enchantment.getRarity().needsFullBookSetup()) {
+            message(viewer, EnchantingMenu.NEEDS_BOOKSHELVES);
+            return;
+        }
         // Check each cost separately so the player knows exactly what they're short on.
         int cost = enchantment.getTableCost();
         if (!GardensEnchants.econ.has(viewer, cost)) {
@@ -195,7 +199,7 @@ public class BedrockEnchantingMenu {
      * Two-line button label: the coloured enchantment name (reused from the built book so it matches
      * the Java menu exactly), then a cost line whose XP / money segments turn red when unaffordable.
      */
-    private static String buttonText(Player viewer, BookInstance bookInstance) {
+    private static String buttonText(Player viewer, BookInstance bookInstance, boolean isFullBookSetup) {
         var meta = bookInstance.book().getItemMeta();
         var displayName = meta != null ? meta.displayName() : null;
         String name = displayName != null
@@ -203,6 +207,9 @@ public class BedrockEnchantingMenu {
                 : bookInstance.enchantment().getDisplayName();
 
         var enchantment = bookInstance.enchantment();
+        if (!isFullBookSetup && enchantment.getRarity().needsFullBookSetup()) {
+            return name + "\n§cNeeds 15 bookshelves";
+        }
         int xpCost = enchantment.getTableCostInXp();
         int cost = enchantment.getTableCost();
         boolean canAffordXp = viewer.getLevel() >= xpCost;
