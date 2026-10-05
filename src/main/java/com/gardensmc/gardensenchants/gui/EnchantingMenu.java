@@ -23,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static com.gardensmc.gardensenchants.books.BooksHandler.ENCHANT_GENERATE_COUNT;
 
@@ -37,10 +39,12 @@ public class EnchantingMenu extends Menu {
 
     private static final String[] layout = new String[] {
             "ab cccccd",
-            "   eeeeef",
+            " r eeeeef",
             " i gggggh"
     };
     private static final int STORAGE_SLOT = 1;
+    // ignores a re-roll click this soon after the last one, so a double click doesn't pay twice
+    private static final long REROLL_COOLDOWN_MS = 500;
     private GuiStorageElement bookStorage;
     private final List<DynamicRow> dynamicRows = List.of(
             new DynamicRow('c', 'd'),
@@ -53,6 +57,7 @@ public class EnchantingMenu extends Menu {
     private final boolean isFullBookSetup;
     // bumped on every refresh so late offer loads for an older item are ignored
     private int updateCount;
+    private long lastRerollAt;
 
     public EnchantingMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + BG_DARK, viewer);
@@ -81,6 +86,8 @@ public class EnchantingMenu extends Menu {
         dynamicRows.forEach(dynamicRow -> Arrays
                 .stream(Column.values())
                 .forEach(column -> gui.addElement(getDynamicBookElement(dynamicRow, column))));
+        // re-roll, shown once there are offers to replace
+        gui.addElement(new DynamicGuiElement('r', viewer -> getRerollButton()));
         // books menu
         gui.addElement(new StaticGuiElement(
                 'i',
@@ -252,6 +259,70 @@ public class EnchantingMenu extends Menu {
         }
         entryHandler.reroll();
         runUpdate();
+    }
+
+    private StaticGuiElement getRerollButton() {
+        if (dynamicRows.getFirst().getBookInstance() == null || !storageIsEnchantable()) {
+            return new StaticGuiElement('r', (ItemStack) null);
+        }
+        int cost = getRerollCost();
+        int xpCost = getRerollXpCost();
+        return new StaticGuiElement(
+                'r',
+                GardensFurniture.itemRegistry.buildItem("reroll_button"),
+                click -> {
+                    reroll();
+                    return true;
+                },
+                "<gold>Re-roll Enchantments",
+                (viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + xpCost + " <white><font:gardens:default>\u011F",
+                (GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + cost + " <white><font:gardens:default>\u0120"
+        );
+    }
+
+    /**
+     * Replaces the offers shown for the inserted item with a fresh roll, for the price of the cheapest
+     * offer. Buying any offer also re-rolls, so this is never worse than buying the cheapest.
+     */
+    private void reroll() {
+        var type = getInsertedType();
+        var row = dynamicRows.getFirst();
+        // only the offers the player is looking at, not ones for an item swapped in meanwhile
+        if (type == null || row.getBookInstance() == null || !type.equals(row.getType())) {
+            return;
+        }
+        if (System.currentTimeMillis() - lastRerollAt < REROLL_COOLDOWN_MS) {
+            return;
+        }
+        int cost = getRerollCost();
+        int xpCost = getRerollXpCost();
+        if (!GardensEnchants.econ.has(viewer, cost) || viewer.getLevel() < xpCost) {
+            return;
+        }
+        // the economy refuses zero withdrawals, so a free re-roll skips it
+        if (cost > 0 && !GardensEnchants.econ.withdrawPlayer(viewer, cost).transactionSuccess()) {
+            return;
+        }
+        viewer.setLevel(viewer.getLevel() - xpCost);
+        lastRerollAt = System.currentTimeMillis();
+        new EnchantEntryHandler(viewer.getUniqueId(), type).reroll();
+        viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
+        runUpdate();
+    }
+
+    private int getRerollCost() {
+        return getShownEnchantments().mapToInt(GardensEnchantment::getTableCost).min().orElse(0);
+    }
+
+    private int getRerollXpCost() {
+        return getShownEnchantments().mapToInt(GardensEnchantment::getTableCostInXp).min().orElse(0);
+    }
+
+    private Stream<GardensEnchantment> getShownEnchantments() {
+        return dynamicRows.stream()
+                .map(DynamicRow::getBookInstance)
+                .filter(Objects::nonNull)
+                .map(BookInstance::enchantment);
     }
 
     private boolean canPurchase(GardensEnchantment enchantment) {
