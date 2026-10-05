@@ -40,8 +40,9 @@ dependencies {
     compileOnly("de.tr7zw:item-nbt-api-plugin:2.15.7")
     compileOnly(fileTree("${project.rootDir}/dependencies") { include("*.jar") })
     implementation("de.themoep:inventorygui:1.6.4-SNAPSHOT")
-    implementation("com.zaxxer:HikariCP:5.0.1")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    // downloaded by the server from plugin.yml's libraries instead of shaded, to keep the jar small
+    compileOnly("com.zaxxer:HikariCP:5.0.1")
+    compileOnly("com.github.ben-manes.caffeine:caffeine:3.1.8")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
 //    compileOnly("com.ghostchu:quickshop-api:6.2.0.9-RELEASE-1")
     compileOnly 'org.projectlombok:lombok:1.18.46'
@@ -85,9 +86,6 @@ tasks {
 
     shadowJar {
         relocate("de.themoep", "com.gardensmc.enchants.shaded.inventorygui")
-        relocate("com.zaxxer", "com.gardensmc.enchants.shaded.zaxxer")
-        // the package is com.github.benmanes (the Maven group has the dash)
-        relocate("com.github.benmanes.caffeine", "com.gardensmc.enchants.shaded.caffeine")
     }
 
 }
