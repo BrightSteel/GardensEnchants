@@ -213,7 +213,7 @@ public class BedrockEnchantingMenu {
     }
 
     /** Bedrock pack texture path for an enchant's book icon (matches {@code textures/items/books/<id>.png}). */
-    private static String bookIconPath(GardensEnchantment enchantment) {
+    static String bookIconPath(GardensEnchantment enchantment) {
         return BOOK_ICON_DIR + enchantment.getId();
     }
 

@@ -5,8 +5,13 @@ import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
 import com.gardensmc.gardensenchants.events.GardensEnchantItemEvent;
+import com.gardensmc.gardensenchants.gui.BedrockEnchantingMenu;
+import com.gardensmc.gardensenchants.gui.BedrockExtractionRuneMenu;
+import com.gardensmc.gardensenchants.gui.ExtractionRuneMenu;
 import com.gardensmc.gardensenchants.relic.RelicHandler;
+import com.gardensmc.gardensenchants.rune.ExtractionRune;
 import com.gardensmc.gardensenchants.rune.RuneFactory;
+import com.gardensmc.gardensenchants.utils.AnvilUtil;
 import com.gardensmc.gardensenchants.utils.MessageUtil;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensenchants.utils.ProbabilityUtil;
@@ -22,6 +27,7 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
@@ -71,6 +77,55 @@ public class AnvilListener implements Listener {
         e.getView().setRepairCost(relicHandler.getApplyCost(itemPrimary));
         e.getView().setRepairItemCountCost(1);
         e.setResult(relicHandler.apply(itemPrimary));
+    }
+
+    // HIGH: the rune does nothing in the anvil itself, whatever else the item could combine with
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPrepareAnvilWithExtractionRune(PrepareAnvilEvent e) {
+        AnvilInventory inv = e.getInventory();
+        if (!ExtractionRune.isExtractionRune(inv.getSecondItem())) {
+            return;
+        }
+        e.setResult(null);
+        if (!(e.getView().getPlayer() instanceof Player player) || !ExtractionRune.canExtractFrom(inv.getFirstItem())) {
+            return;
+        }
+        // another inventory can't be opened from inside this event
+        Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> openExtraction(player, inv));
+    }
+
+    // the extraction menu's cost turns red / green with the player's level, like vanilla's
+    @EventHandler
+    public void onLevelChange(PlayerLevelChangeEvent e) {
+        ExtractionRuneMenu.onLevelChange(e.getPlayer());
+    }
+
+    private static void openExtraction(Player player, AnvilInventory inv) {
+        if (player.getOpenInventory().getTopInventory() != inv) {
+            return;
+        }
+        var item = inv.getFirstItem();
+        var rune = inv.getSecondItem();
+        if (!ExtractionRune.isExtractionRune(rune) || !ExtractionRune.canExtractFrom(item)) {
+            return;
+        }
+        item = item.clone();
+        rune = rune.clone();
+        // only a real anvil block wears down, not one opened by a command
+        var anvil = AnvilUtil.getAnvil(inv.getLocation());
+        var anvilLocation = anvil == null ? null : anvil.getLocation();
+        // empty the anvil before it closes, or closing it would hand the items back as well
+        inv.setFirstItem(null);
+        inv.setSecondItem(null);
+        if (BedrockEnchantingMenu.isBedrockPlayer(player)) {
+            // bedrock can't show the menu: the items go back to the player and a form picks the enchant
+            PlayerUtil.giveItems(player, List.of(item, rune));
+            player.closeInventory();
+            var formItem = item;
+            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> BedrockExtractionRuneMenu.open(player, formItem, anvilLocation));
+        } else {
+            new ExtractionRuneMenu(player, item, rune, anvilLocation).open();
+        }
     }
 
     @EventHandler

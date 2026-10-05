@@ -67,6 +67,10 @@ public class VanillaEnchantment extends GardensEnchantment {
         return enchantment.getKey().getKey();
     }
 
+    public boolean isCursed() {
+        return enchantment.isCursed();
+    }
+
     @Override
     public boolean isVisibleInTable() {
         return isVisibleInTable;

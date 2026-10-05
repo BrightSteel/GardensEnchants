@@ -1,0 +1,38 @@
+[
+  {
+    "type": "bitmap",
+    "file": "gardens:font/gui/extraction_rune_menu.png",
+    "ascent": 24,
+    "height": 178,
+    "chars": [
+      "\uE500"
+    ]
+  },
+  {
+    "type": "bitmap",
+    "file": "gardens:font/gui/extraction_rune_menu_cost.png",
+    "ascent": 24,
+    "height": 178,
+    "chars": [
+      "\uE503"
+    ]
+  },
+  {
+    "type": "bitmap",
+    "file": "gardens:font/gui/extraction_rune_up.png",
+    "ascent": -10,
+    "height": 5,
+    "chars": [
+      "\uE501"
+    ]
+  },
+  {
+    "type": "bitmap",
+    "file": "gardens:font/gui/extraction_rune_down.png",
+    "ascent": -47,
+    "height": 5,
+    "chars": [
+      "\uE502"
+    ]
+  }
+]
