@@ -79,7 +79,12 @@ public class EnchantRestrict {
      */
     public List<ItemStack> getSampleItems() {
         if (isLeaf()) {
-            return permittedMaterials.isEmpty() ? List.of() : List.of(new ItemStack(permittedMaterials.getFirst()));
+            if (!permittedMaterials.isEmpty()) {
+                return List.of(new ItemStack(permittedMaterials.getFirst()));
+            }
+            // a type made of GardensFurniture items, like watering cans
+            var sample = permittedCustomIdentifiers.isEmpty() ? null : GardensFurniture.itemRegistry.buildItem(permittedCustomIdentifiers.getFirst());
+            return sample == null ? List.of() : List.of(sample);
         }
         return children.stream().flatMap(child -> child.getSampleItems().stream()).toList();
     }
@@ -125,6 +130,12 @@ public class EnchantRestrict {
 
         public Builder withMaterials(Material... materials) {
             this.permittedMaterials.addAll(Arrays.stream(materials).toList());
+            return this;
+        }
+
+        // GardensFurniture items, by identifier
+        public Builder withCustomIdentifiers(String... identifiers) {
+            this.permittedIdentifiers.addAll(Arrays.asList(identifiers));
             return this;
         }
 

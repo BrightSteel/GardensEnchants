@@ -150,6 +150,36 @@ public class CustomEnchantments {
             .rarity(EnchantRarity.UNCOMMON)
     );
 
+    public static final CustomEnchantment GREEN_THUMB = register("green_thumb", builder -> builder
+            .lore("<gray>Better odds of 2 and 3 star crops", "<gray>when harvesting planter boxes")
+            .enchantRestrict(EnchantRestricts.HOE)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(3)
+    );
+    public static final CustomEnchantment BOUNTIFUL = register("bountiful", builder -> builder
+            .lore("<gray>Chance of an extra crop", "<gray>when harvesting planter boxes")
+            .enchantRestrict(EnchantRestricts.HOE)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(2)
+    );
+    public static final CustomEnchantment WIDE_SPRAY = register("wide_spray", builder -> builder
+            .lore("<gray>Also waters the dry planter boxes", "<gray>around the one you water")
+            .enchantRestrict(EnchantRestricts.WATERING_CAN)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(2)
+    );
+    public static final CustomEnchantment RESERVOIR = register("reservoir", builder -> builder
+            .lore("<gray>Holds an extra charge of water per level")
+            .enchantRestrict(EnchantRestricts.WATERING_CAN)
+            .rarity(EnchantRarity.UNCOMMON)
+            .maxLevel(5)
+    );
+    public static final CustomEnchantment DEEP_SOAK = register("deep_soak", builder -> builder
+            .lore("<gray>Planter boxes you water stay wet", "<gray>for two growth days")
+            .enchantRestrict(EnchantRestricts.WATERING_CAN)
+            .rarity(EnchantRarity.EPIC)
+    );
+
     private static CustomEnchantment register(String id, Consumer<CustomEnchantment.Builder> builder) {
         var enchantmentBuilder = new CustomEnchantment.Builder(id);
         builder.accept(enchantmentBuilder);

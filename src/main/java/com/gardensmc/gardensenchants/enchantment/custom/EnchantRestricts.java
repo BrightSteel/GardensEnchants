@@ -172,6 +172,11 @@ public class EnchantRestricts {
     public static final EnchantRestrict ELYTRA = new EnchantRestrict.Builder("elytra")
             .withMaterial(Material.ELYTRA).withIcon('\uE257').build();
 
+    // GardensCrops' watering can, one item per fill level
+    public static final EnchantRestrict WATERING_CAN = new EnchantRestrict.Builder("watering_can")
+            .withCustomIdentifiers("watering_can_0", "watering_can_1", "watering_can_2", "watering_can_3", "watering_can_4", "watering_can_5")
+            .build();
+
     public static final EnchantRestrict BASIC_TOOLS = new EnchantRestrict.Builder("basic_tools")
             .withChildren(
                     PICKAXE,

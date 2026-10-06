@@ -20,6 +20,10 @@ public class Listeners {
         if (GardensEnchants.plugin.getServer().getPluginManager().getPlugin("QuickShop-Hikari") != null) {
             register(new QuickShopListener());
         }
+        // GardensCrops is optional too: its watering can and harvest enchants hook into its events
+        if (GardensEnchants.plugin.getServer().getPluginManager().getPlugin("GardensCrops") != null) {
+            register(new CropsListener());
+        }
         // only Bedrock players (through Geyser/Floodgate) need the anvil workaround
         if (GardensEnchants.plugin.getServer().getPluginManager().getPlugin("floodgate") != null) {
             register(new BedrockAnvilListener());

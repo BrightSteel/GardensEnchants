@@ -147,6 +147,11 @@ public class AnvilListener implements Listener {
         if (item.getType() == Material.ENCHANTED_BOOK || BooksHandler.INSTANCE.getBookInstance(item) != null) {
             return; // book + book is handled by onCombineBooks
         }
+        if (item.getAmount() != 1) {
+            // one book enchants one item; stackable ones (like empty watering cans) would all get it
+            e.setResult(null);
+            return;
+        }
         var enchantment = bookInstance.enchantment();
         var itemClone = item.clone();
         var enchantmentHandler = new GardensEnchantHandler(itemClone);

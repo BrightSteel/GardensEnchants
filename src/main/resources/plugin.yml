@@ -41,3 +41,4 @@ depend:
 softdepend:
   - floodgate
   - QuickShop-Hikari
+  - GardensCrops
