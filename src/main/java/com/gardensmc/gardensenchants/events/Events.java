@@ -236,12 +236,19 @@ public class Events implements Listener {
             Material.MUSHROOM_STEM,
             Material.BROWN_MUSHROOM_BLOCK,
             Material.RED_MUSHROOM_BLOCK,
-            Material.MANGROVE_ROOTS
+            Material.MANGROVE_ROOTS,
+            // the nether trees' leaves
+            Material.NETHER_WART_BLOCK,
+            Material.WARPED_WART_BLOCK,
+            Material.SHROOMLIGHT
     );
 
     private boolean isTimberable(Block block) {
-        String block_name = block.getType().toString().toUpperCase();
-        var isVanillaBreakable = TIMBER_MATERIALS.contains(block.getType()) || block_name.endsWith("LOG") || block_name.endsWith("LEAVES") || block_name.endsWith("VINE");
+        var type = block.getType();
+        // #logs also covers wood, the nether's stems and hyphae, and stripped ones, which the old name check
+        // (ending in LOG) missed
+        var isVanillaBreakable = TIMBER_MATERIALS.contains(type) || Tag.LOGS.isTagged(type) || Tag.LEAVES.isTagged(type)
+                || type.name().endsWith("VINE");
         if (isVanillaBreakable) {
             return true;
         }
