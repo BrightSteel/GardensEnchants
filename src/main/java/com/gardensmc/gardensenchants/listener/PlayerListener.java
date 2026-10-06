@@ -14,18 +14,25 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerInputEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 public class PlayerListener implements Listener {
+
+    // players holding the jump key, so Rocket Boots launch them from water once per press
+    private final Set<UUID> holdingJump = new HashSet<>();
 
     // the ways a mob notices a player on its own - the only targeting Cloak hides you from. A mob you hit, or a
     // pet sent after you, still comes for you.
@@ -182,6 +189,47 @@ public class PlayerListener implements Listener {
             }
         }
         return amount;
+    }
+
+    /**
+     * Rocket Boots in shallow water. The boots work by giving Jump Boost while sneaking, but a jump from
+     * water is a swim upwards, which ignores Jump Boost - so for a sneaking player standing in water with
+     * their head above it, we make the boosted jump ourselves.
+     */
+    @EventHandler
+    public void onJumpInWater(PlayerInputEvent e) {
+        var player = e.getPlayer();
+        var input = e.getInput();
+        // only on pressing jump: holding it and changing another key fires this again
+        boolean pressed = input.isJump() && holdingJump.add(player.getUniqueId());
+        if (!input.isJump()) {
+            holdingJump.remove(player.getUniqueId());
+        }
+        if (!pressed || !input.isSneak() || !isStandingInShallowWater(player)) {
+            return;
+        }
+        var boots = player.getInventory().getBoots();
+        int level = boots == null ? 0 : CustomEnchantments.ROCKET_BOOTS.getEnchantmentLevel(boots);
+        if (level <= 0) {
+            return;
+        }
+        // vanilla's jump with the boots' Jump Boost (amplifier = level)
+        double jump = 0.42 + 0.1 * (level + 1);
+        var velocity = player.getVelocity();
+        player.setVelocity(velocity.setY(Math.max(velocity.getY(), jump)));
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        holdingJump.remove(e.getPlayer().getUniqueId());
+    }
+
+    // feet in water, head out of it, standing on something
+    private static boolean isStandingInShallowWater(Player player) {
+        if (!player.isInWater() || player.getEyeLocation().getBlock().getType() == Material.WATER) {
+            return false;
+        }
+        return player.isOnGround() || player.getLocation().subtract(0, 0.1, 0).getBlock().getType().isSolid();
     }
 
     private void handleFlutter(Player player) {
