@@ -134,6 +134,22 @@ public class CustomEnchantments {
             .maxLevel(3)
     );
 
+    public static final CustomEnchantment REPLANTER = register("replanter", builder -> builder
+            .lore("<gray>Replants fully grown crops you break")
+            .enchantRestrict(EnchantRestricts.HOE)
+            .rarity(EnchantRarity.UNCOMMON)
+    );
+    public static final CustomEnchantment HARVESTER = register("harvester", builder -> builder
+            .lore("<gray>Harvests the fully grown crops around", "<gray>the one you break, planter boxes too")
+            .enchantRestrict(EnchantRestricts.HOE)
+            .rarity(EnchantRarity.RARE)
+    );
+    public static final CustomEnchantment TILLER = register("tiller", builder -> builder
+            .lore("<gray>Tills a 3x3 area at once")
+            .enchantRestrict(EnchantRestricts.HOE)
+            .rarity(EnchantRarity.UNCOMMON)
+    );
+
     private static CustomEnchantment register(String id, Consumer<CustomEnchantment.Builder> builder) {
         var enchantmentBuilder = new CustomEnchantment.Builder(id);
         builder.accept(enchantmentBuilder);
