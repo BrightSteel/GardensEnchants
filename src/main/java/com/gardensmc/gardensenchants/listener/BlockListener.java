@@ -4,6 +4,7 @@ import com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments;
 import com.gardensmc.gardensenchants.utils.ItemUtil;
 import com.gardensmc.gardensenchants.utils.PlayerUtil;
 import com.gardensmc.gardensfurniture.events.CustomBlockInteractEvent;
+import com.gardensmc.gardensfurniture.events.CustomDropItemEvent;
 import com.gardensmc.gardensfurniture.util.ProtectionUtil;
 import de.tr7zw.nbtapi.NBTItem;
 import org.bukkit.GameMode;
@@ -36,6 +37,17 @@ public class BlockListener implements Listener {
         if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
             e.setCancelled(true);
             PlayerUtil.giveItems(player, e.getItems().stream().map(Item::getItemStack).toList());
+        }
+    }
+
+    // GardensFurniture's custom blocks and furniture drop their items themselves, so they never reach
+    // BlockDropItemEvent; it fires CustomDropItemEvent for them instead
+    @EventHandler(ignoreCancelled = true)
+    public void onCustomDropItem(CustomDropItemEvent e) {
+        var player = e.getPlayer();
+        if (CustomEnchantments.SIPHON.hasEnchantment(PlayerUtil.getHeldItem(player))) {
+            e.setCancelled(true);
+            PlayerUtil.giveItems(player, e.getItems());
         }
     }
 
