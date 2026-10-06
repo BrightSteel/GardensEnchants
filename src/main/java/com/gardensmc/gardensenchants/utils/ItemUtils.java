@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,18 +30,24 @@ public class ItemUtils {
         return head;
     }
 
+    /**
+     * The player's head as just their id and name. The client looks their skin up itself, and leaving out the
+     * signed skin data (which carries a timestamp that changes as Mojang re-signs it) lets every head of the
+     * same player stack.
+     */
     public static ItemStack getHead(UUID uuid) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta skullMeta = (SkullMeta) head.getItemMeta();
         if (skullMeta != null) {
-            skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
+            skullMeta.setPlayerProfile(Bukkit.getServer().createProfile(uuid, Bukkit.getOfflinePlayer(uuid).getName()));
             head.setItemMeta(skullMeta);
         }
         return head;
     }
 
+    // the same id for the same skin, so heads with it stack (a random id made every head unique)
     private static PlayerProfile getProfile(String base64) {
-        PlayerProfile profile = Bukkit.getServer().createProfile(UUID.randomUUID());
+        PlayerProfile profile = Bukkit.getServer().createProfile(UUID.nameUUIDFromBytes(base64.getBytes(StandardCharsets.UTF_8)));
         profile.setProperty(new ProfileProperty("textures", base64));
         return profile;
     }
