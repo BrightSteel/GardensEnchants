@@ -89,6 +89,14 @@ public class EnchantRestrict {
         return children.stream().flatMap(child -> child.getSampleItems().stream()).toList();
     }
 
+    // the concrete item types this covers: itself, or its children's types
+    public List<EnchantRestrict> getLeaves() {
+        if (isLeaf()) {
+            return List.of(this);
+        }
+        return children.stream().flatMap(child -> child.getLeaves().stream()).distinct().toList();
+    }
+
     public List<Character> iconRepresentation() {
         return icons;
     }
