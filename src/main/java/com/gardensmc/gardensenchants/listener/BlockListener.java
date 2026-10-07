@@ -36,7 +36,7 @@ public class BlockListener implements Listener {
         var tool = PlayerUtil.getHeldItem(player);
         if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
             e.setCancelled(true);
-            PlayerUtil.giveItems(player, e.getItems().stream().map(Item::getItemStack).toList());
+            PlayerUtil.giveSiphoned(player, e.getItems().stream().map(Item::getItemStack).toList());
         }
     }
 
@@ -47,7 +47,7 @@ public class BlockListener implements Listener {
         var player = e.getPlayer();
         if (CustomEnchantments.SIPHON.hasEnchantment(PlayerUtil.getHeldItem(player))) {
             e.setCancelled(true);
-            PlayerUtil.giveItems(player, e.getItems());
+            PlayerUtil.giveSiphoned(player, e.getItems());
         }
     }
 
@@ -70,7 +70,7 @@ public class BlockListener implements Listener {
             if (tool != null && tool.containsEnchantment(Enchantment.SILK_TOUCH)) {
                 var drop = new ItemStack(Material.BUDDING_AMETHYST);
                 if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
-                    PlayerUtil.giveItems(e.getPlayer(), List.of(drop));
+                    PlayerUtil.giveSiphoned(e.getPlayer(), List.of(drop));
                 } else {
                     e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), drop);
                 }

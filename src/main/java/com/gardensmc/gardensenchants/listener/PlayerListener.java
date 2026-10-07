@@ -125,7 +125,7 @@ public class PlayerListener implements Listener {
         if (damager instanceof Player player) {
             var tool = PlayerUtil.getHeldItem(player);
             if (CustomEnchantments.SIPHON.hasEnchantment(tool)) {
-                PlayerUtil.giveItems(player, e.getDrops());
+                PlayerUtil.giveSiphoned(player, e.getDrops());
                 var amount = e.getDroppedExp();
                 var expToGive = simulateMending(player, getModifiedExp(player, amount));
                 if (expToGive > 0) {

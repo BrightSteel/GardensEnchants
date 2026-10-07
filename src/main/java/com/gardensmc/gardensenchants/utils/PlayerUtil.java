@@ -42,6 +42,22 @@ public class PlayerUtil {
         leftovers.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
     }
 
+    /**
+     * Siphoned drops: into the inventory, then (when that's full) into the backpack worn in EnderWardrobe's backpack
+     * slot, and only what neither holds dropped at the player's feet.
+     */
+    public static void giveSiphoned(Player player, Collection<ItemStack> items) {
+        if (items.isEmpty()) return;
+        var leftovers = player.getInventory().addItem(items.stream().map(ItemStack::clone).toArray(ItemStack[]::new));
+        if (leftovers.isEmpty()) return;
+        var wardrobe = org.bukkit.Bukkit.getPluginManager().getPlugin("EnderWardrobe") == null ? null
+                : org.bukkit.Bukkit.getServicesManager().load(com.enderbeam.enderwardrobe.api.WardrobeApi.class);
+        for (var item : leftovers.values()) {
+            var rest = wardrobe == null ? item : wardrobe.intoWornBackpack(player, item);
+            if (!rest.isEmpty()) player.getWorld().dropItemNaturally(player.getLocation(), rest);
+        }
+    }
+
     public static void giveItem(Player player, ItemStack item) {
         giveItems(player, List.of(item));
     }
