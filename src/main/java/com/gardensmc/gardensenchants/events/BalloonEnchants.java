@@ -15,16 +15,26 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerInputEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.DRIFT;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.FEATHERWEIGHT;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.TETHERED;
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.UPDRAFT;
 
 /**
  * Enchantments on the balloon a player wears (EnderWardrobe's balloon slot, read through its API):
- * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers.
+ * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers;
+ * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, while jump is
+ * held, lets them down gently.
  */
 public final class BalloonEnchants implements Listener {
 
@@ -33,7 +43,16 @@ public final class BalloonEnchants implements Listener {
     /** Minutes Tethered needs to recover after catching a fall, by level (I, II, III). */
     private static final int[] TETHERED_COOLDOWN_MINUTES = {10, 7, 4};
 
+    /** Upward speed an Updraft jump gives (blocks a tick): about a normal jump's. */
+    private static final double UPDRAFT_BOOST = 0.55;
+    /** The fastest a drifting player falls (blocks a tick). */
+    private static final double DRIFT_FALL = 0.12;
+
     private final WardrobeApi wardrobe;
+    /** Players holding jump. */
+    private final Set<UUID> holdingJump = new HashSet<>();
+    /** Players who've used their Updraft since they last stood on the ground. */
+    private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
     private final NamespacedKey tetheredReadyKey = new NamespacedKey(GardensEnchants.plugin, "tethered_ready_at");
 
@@ -50,6 +69,8 @@ public final class BalloonEnchants implements Listener {
         Bukkit.getPluginManager().registerEvents(listener, GardensEnchants.plugin);
         // Featherweight: checked twice a second, as balloons go on and off
         Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, listener::updateFeatherweight, 20, 10);
+        // Drift and Updraft's reset on landing: every tick
+        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, listener::tickAir, 1, 1);
     }
 
     @Nullable
@@ -71,6 +92,53 @@ public final class BalloonEnchants implements Listener {
                 gravity.addTransientModifier(new AttributeModifier(featherweightKey, amount, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
             }
         }
+    }
+
+    /** In the air on their own: not flying, gliding, riding, swimming or climbing. */
+    private static boolean airborne(Player player) {
+        return !player.isOnGround() && !player.isFlying() && !player.isGliding() && !player.isInsideVehicle()
+                && !player.isSwimming() && !player.isInWater() && !player.isClimbing();
+    }
+
+    @EventHandler
+    public void onInput(PlayerInputEvent e) {
+        var player = e.getPlayer();
+        var id = player.getUniqueId();
+        boolean jump = e.getInput().isJump();
+        boolean pressed = jump && !holdingJump.contains(id);
+        if (jump) holdingJump.add(id);
+        else holdingJump.remove(id);
+        // Updraft: jump pressed in the air, once until they land
+        if (!pressed || !airborne(player) || updraftUsed.contains(id)) return;
+        var balloon = balloon(player);
+        if (balloon == null || !UPDRAFT.hasEnchantment(balloon)) return;
+        updraftUsed.add(id);
+        var velocity = player.getVelocity();
+        player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
+        player.setFallDistance(0);
+        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 6, 0.2, 0.05, 0.2, 0.02);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 0.6f, 1.3f);
+    }
+
+    private void tickAir() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            var id = player.getUniqueId();
+            if (player.isOnGround()) updraftUsed.remove(id);
+            // Drift: holding jump while falling, the fall is capped and does no damage
+            if (!holdingJump.contains(id) || !airborne(player)) continue;
+            var velocity = player.getVelocity();
+            if (velocity.getY() >= -DRIFT_FALL) continue;
+            var balloon = balloon(player);
+            if (balloon == null || !DRIFT.hasEnchantment(balloon)) continue;
+            player.setVelocity(velocity.setY(-DRIFT_FALL));
+            player.setFallDistance(0);
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        holdingJump.remove(e.getPlayer().getUniqueId());
+        updraftUsed.remove(e.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

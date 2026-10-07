@@ -57,6 +57,25 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.LEGENDARY)
             .maxLevel(3));
+    public static final CustomEnchantment UPDRAFT = register("updraft", builder -> builder
+            .lore("<gray>Press jump in the air", "<gray>for one more jump")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment DRIFT = register("drift", builder -> builder
+            .lore("<gray>Hold jump while falling", "<gray>to drift gently down")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .conflictsWith(UPDRAFT)
+            .rarity(EnchantRarity.EPIC));
+    // EnderWardrobe walking sticks (held, either hand; see events/WalkingStickEnchants)
+    public static final CustomEnchantment STEADY = register("steady", builder -> builder
+            .lore("<gray>Resist knockback while you hold it")
+            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(3));
+    public static final CustomEnchantment SHEPHERD = register("shepherd", builder -> builder
+            .lore("<gray>Farm animals follow you", "<gray>while you hold it")
+            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .rarity(EnchantRarity.UNCOMMON));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
             .lore("<gray>Breaks blocks in a 3x3 pattern")
             .rarity(EnchantRarity.LEGENDARY)
