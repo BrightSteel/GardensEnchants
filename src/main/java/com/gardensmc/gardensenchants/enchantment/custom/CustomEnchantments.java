@@ -138,7 +138,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.TOOLS)
             .rarity(EnchantRarity.LEGENDARY));
     public static final CustomEnchantment SPEEDY = register("speedy", builder -> builder
-            .lore("<gray>Grants you a permanent speed boost", "<gray>(boots and a held walking stick add up)")
+            .lore("<gray>Grants you a permanent speed boost", "<gray>(boots and a held staff add up)")
             .enchantRestrict(EnchantRestricts.SPEEDY)
             .rarity(EnchantRarity.LEGENDARY)
             .maxLevel(3));
