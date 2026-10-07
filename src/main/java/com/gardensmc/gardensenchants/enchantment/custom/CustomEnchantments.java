@@ -17,11 +17,11 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.WEAPON));
     public static final CustomEnchantment TIMBER = register( "timber", builder -> builder
             .lore("<gray>Chop down logs or leaves in one swing")
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .enchantRestrict(EnchantRestricts.AXE));
     public static final CustomEnchantment VEIN_MINER = register("vein_miner", builder -> builder
             .lore("<gray>Break entire ore veins")
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment BUBBLE_HEAD = register("bubble_head", builder -> builder
             .lore("<gray>Breathe underwater")
@@ -29,7 +29,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.HELMET));
     public static final CustomEnchantment LIFE_STEAL = register("life_steal", builder -> builder
             .enchantRestrict(EnchantRestricts.WEAPON)
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .lore("<gray>Steals some of target's health on hit")
             .maxLevel(3));
     public static final CustomEnchantment DOUBLE_STRIKE = register("double_strike", builder -> builder
@@ -193,7 +193,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment GRAPPLE = register("grapple", builder -> builder
             .lore("<gray>Reel in a hook caught on a block", "<gray>to pull yourself to it")
             .enchantRestrict(EnchantRestricts.FISHING_ROD)
-            .rarity(EnchantRarity.EPIC));
+            .rarity(EnchantRarity.LEGENDARY));
     public static final CustomEnchantment YANK = register("yank", builder -> builder
             .lore("<gray>Reel in a hooked mob", "<gray>to haul it right over")
             .enchantRestrict(EnchantRestricts.FISHING_ROD)
@@ -219,7 +219,7 @@ public class CustomEnchantments {
             .lore("<gray>Riptide works out of water:", "<gray>right-click to launch, then recharge")
             .enchantRestrict(EnchantRestricts.TRIDENT)
             .conflictsWith(HOMING)
-            .rarity(EnchantRarity.EPIC));
+            .rarity(EnchantRarity.LEGENDARY));
     public static final CustomEnchantment SHOCKWAVE = register("shockwave", builder -> builder
             .lore("<gray>A smash attack throws", "<gray>the mobs around it into the air")
             .enchantRestrict(EnchantRestricts.MACE)
@@ -243,7 +243,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment ROCKET_BOOTS = register("rocket_boots", builder -> builder
             .lore("<gray>Hold shift to gain jump boost")
             .enchantRestrict(EnchantRestricts.BOOTS)
-            .rarity(EnchantRarity.LEGENDARY)
+            .rarity(EnchantRarity.EPIC)
             .maxLevel(4)
     );
     public static final CustomEnchantment ESCAPE_ARTIST = register("escape_artist", builder -> builder
