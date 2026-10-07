@@ -8,6 +8,7 @@ public class Listeners {
 
     public static void registerListeners() {
         register(new Events());
+        com.gardensmc.gardensenchants.events.BalloonEnchants.enable();
         register(new AnvilListener());
         register(new EntityListener());
         register(new VillagerListener());

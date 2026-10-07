@@ -46,6 +46,17 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BOOTS)
             .rarity(EnchantRarity.RARE)
             .maxLevel(5));
+    // EnderWardrobe balloons (worn in its balloon slot; see events/BalloonEnchants)
+    public static final CustomEnchantment FEATHERWEIGHT = register("featherweight", builder -> builder
+            .lore("<gray>Fall slower and jump higher", "<gray>while you wear it")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.EPIC)
+            .maxLevel(3));
+    public static final CustomEnchantment TETHERED = register("tethered", builder -> builder
+            .lore("<gray>Catches a fall that would kill you,", "<gray>then needs time to recover")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.LEGENDARY)
+            .maxLevel(3));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
             .lore("<gray>Breaks blocks in a 3x3 pattern")
             .rarity(EnchantRarity.LEGENDARY)

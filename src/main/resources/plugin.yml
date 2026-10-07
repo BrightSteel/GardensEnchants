@@ -39,6 +39,7 @@ depend:
   - GardensFurniture
   - NBTAPI
 softdepend:
+  - EnderWardrobe
   - floodgate
   - QuickShop-Hikari
   - GardensCrops
