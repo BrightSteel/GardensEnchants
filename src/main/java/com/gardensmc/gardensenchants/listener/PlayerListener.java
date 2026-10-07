@@ -31,31 +31,6 @@ import java.util.stream.Stream;
 
 public class PlayerListener implements Listener {
 
-    /**
-     * Freshens what a player carries when they join: our books get their enchant's current description, and tools
-     * with Silk Spawner show their uses left.
-     */
-    @EventHandler
-    public void onJoinRefresh(org.bukkit.event.player.PlayerJoinEvent e) {
-        var player = e.getPlayer();
-        refresh(player.getInventory());
-        refresh(player.getEnderChest());
-    }
-
-    private static void refresh(org.bukkit.inventory.Inventory inventory) {
-        var contents = inventory.getContents();
-        for (int slot = 0; slot < contents.length; slot++) {
-            var item = contents[slot];
-            if (item == null || item.isEmpty()) continue;
-            boolean changed = com.gardensmc.gardensenchants.books.BooksHandler.INSTANCE.refreshBook(item);
-            if (!changed && CustomEnchantments.SILK_TOUCH_SPAWNER.hasEnchantment(item)) {
-                new com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler(item).refreshLore();
-                changed = true;
-            }
-            if (changed) inventory.setItem(slot, item);
-        }
-    }
-
     // players holding the jump key, so Rocket Boots launch them from water once per press
     private final Set<UUID> holdingJump = new HashSet<>();
 
