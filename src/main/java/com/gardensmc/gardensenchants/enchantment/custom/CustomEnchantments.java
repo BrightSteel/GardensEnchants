@@ -66,6 +66,19 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .conflictsWith(UPDRAFT)
             .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment LIFT = register("lift", builder -> builder
+            .lore("<gray>Hold sneak in the air", "<gray>to rise for a moment")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment BUOYANT = register("buoyant", builder -> builder
+            .lore("<gray>Float up in water;", "<gray>sneak to dive")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.UNCOMMON));
+    public static final CustomEnchantment WEATHERVANE = register("weathervane", builder -> builder
+            .lore("<gray>The wind carries you along", "<gray>in rain and storms")
+            .enchantRestrict(EnchantRestricts.BALLOON)
+            .rarity(EnchantRarity.UNCOMMON)
+            .maxLevel(2));
     // EnderWardrobe walking sticks (held, either hand; see events/WalkingStickEnchants)
     public static final CustomEnchantment STEADY = register("steady", builder -> builder
             .lore("<gray>Resist knockback while you hold it")

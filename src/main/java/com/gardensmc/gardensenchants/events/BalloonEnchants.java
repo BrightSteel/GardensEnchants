@@ -28,13 +28,17 @@ import java.util.UUID;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.DRIFT;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.FEATHERWEIGHT;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.TETHERED;
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.BUOYANT;
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.LIFT;
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.UPDRAFT;
+import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.WEATHERVANE;
 
 /**
  * Enchantments on the balloon a player wears (EnderWardrobe's balloon slot, read through its API):
  * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers;
  * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, while jump is
- * held, lets them down gently.
+ * held, lets them down gently; Lift, sneak held in the air, raises them a moment; Buoyant floats them up in water;
+ * Weathervane has the wind carry them along in rain.
  */
 public final class BalloonEnchants implements Listener {
 
@@ -48,7 +52,19 @@ public final class BalloonEnchants implements Listener {
     /** The fastest a drifting player falls (blocks a tick). */
     private static final double DRIFT_FALL = 0.12;
 
+    /** Lift: sneak held this long in the air starts it; it lasts at most this long; then it needs this long. */
+    private static final int LIFT_HOLD_TICKS = 10, LIFT_MAX_TICKS = 60, LIFT_RECHARGE_TICKS = 400;
+    /** Lift's rise, and Buoyant's (blocks a tick). */
+    private static final double LIFT_RISE = 0.18, BUOYANT_RISE = 0.1;
+    /** Weathervane's push along the way they walk, per level (blocks a tick); doubled in a thunderstorm. */
+    private static final double WIND_PER_LEVEL = 0.012;
+
     private final WardrobeApi wardrobe;
+    /** Ticks each player has held sneak in the air; ticks they've been lifted; the tick their Lift is ready again. */
+    private final java.util.Map<UUID, Integer> sneakHeld = new java.util.HashMap<>();
+    private final java.util.Map<UUID, Integer> lifting = new java.util.HashMap<>();
+    private final java.util.Map<UUID, Long> liftReady = new java.util.HashMap<>();
+    private long ticks;
     /** Players holding jump. */
     private final Set<UUID> holdingJump = new HashSet<>();
     /** Players who've used their Updraft since they last stood on the ground. */
@@ -121,9 +137,13 @@ public final class BalloonEnchants implements Listener {
     }
 
     private void tickAir() {
+        ticks++;
         for (Player player : Bukkit.getOnlinePlayers()) {
             var id = player.getUniqueId();
             if (player.isOnGround()) updraftUsed.remove(id);
+            buoyant(player);
+            weathervane(player);
+            lift(player, id);
             // Drift: holding jump while falling, the fall is capped and does no damage
             if (!holdingJump.contains(id) || !airborne(player)) continue;
             var velocity = player.getVelocity();
@@ -135,10 +155,62 @@ public final class BalloonEnchants implements Listener {
         }
     }
 
+    /** Buoyant: in water, not sneaking (sneak to dive), they float up. */
+    private void buoyant(Player player) {
+        if (!player.isInWater() || player.isSneaking() || player.isInsideVehicle()) return;
+        var velocity = player.getVelocity();
+        if (velocity.getY() >= BUOYANT_RISE) return;
+        var balloon = balloon(player);
+        if (balloon == null || !BUOYANT.hasEnchantment(balloon)) return;
+        player.setVelocity(velocity.setY(BUOYANT_RISE));
+    }
+
+    /** Weathervane: rain (or snow) on them under open sky, the wind pushes them on the way they're walking. */
+    private void weathervane(Player player) {
+        var world = player.getWorld();
+        if (!world.hasStorm() || player.isFlying() || player.isGliding() || player.isInsideVehicle()) return;
+        var at = player.getLocation();
+        if (world.getHighestBlockYAt(at) > at.getY()) return;   // under cover
+        var velocity = player.getVelocity();
+        var horizontal = velocity.clone().setY(0);
+        if (horizontal.lengthSquared() < 0.0004) return;          // standing still
+        var balloon = balloon(player);
+        int level = balloon == null ? 0 : WEATHERVANE.getEnchantmentLevel(balloon);
+        if (level <= 0) return;
+        double push = WIND_PER_LEVEL * level * (world.isThundering() ? 2 : 1);
+        player.setVelocity(velocity.add(horizontal.normalize().multiply(push)));
+    }
+
+    /** Lift: sneak held in the air for a moment raises them, for up to a few seconds; then it recharges. */
+    private void lift(Player player, UUID id) {
+        if (!player.isSneaking() || !airborne(player) || liftReady.getOrDefault(id, 0L) > ticks) {
+            if (lifting.remove(id) != null) liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
+            sneakHeld.remove(id);
+            return;
+        }
+        int held = sneakHeld.merge(id, 1, Integer::sum);
+        if (held < LIFT_HOLD_TICKS) return;
+        var balloon = balloon(player);
+        if (balloon == null || !LIFT.hasEnchantment(balloon)) return;
+        int lifted = lifting.merge(id, 1, Integer::sum);
+        if (lifted > LIFT_MAX_TICKS) {
+            lifting.remove(id);
+            liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
+            return;
+        }
+        var velocity = player.getVelocity();
+        player.setVelocity(velocity.setY(Math.max(velocity.getY(), LIFT_RISE)));
+        player.setFallDistance(0);
+        if (lifted == 1) player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.5f, 1.5f);
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        holdingJump.remove(e.getPlayer().getUniqueId());
-        updraftUsed.remove(e.getPlayer().getUniqueId());
+        var id = e.getPlayer().getUniqueId();
+        holdingJump.remove(id);
+        updraftUsed.remove(id);
+        sneakHeld.remove(id);
+        lifting.remove(id);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
