@@ -177,6 +177,20 @@ public class EnchantRestricts {
             .withCustomIdentifiers("watering_can_0", "watering_can_1", "watering_can_2", "watering_can_3", "watering_can_4", "watering_can_5")
             .build();
 
+    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and walking stick (its own offhand item)
+    public static final EnchantRestrict BALLOON = new EnchantRestrict.Builder("balloon")
+            .withCustomIdentifiers("balloon")
+            .build();
+
+    public static final EnchantRestrict WALKING_STICK = new EnchantRestrict.Builder("walking_stick")
+            .withWardrobeItems("walking_stick")
+            .build();
+
+    // items that wear out but that vanilla doesn't count as damageable, so its Unbreaking and Mending are let on
+    public static final EnchantRestrict WARDROBE = new EnchantRestrict.Builder("wardrobe")
+            .withChildren(BALLOON, WALKING_STICK)
+            .build();
+
     public static final EnchantRestrict BASIC_TOOLS = new EnchantRestrict.Builder("basic_tools")
             .withChildren(
                     PICKAXE,
@@ -218,7 +232,8 @@ public class EnchantRestricts {
                     FISHING_ROD,
                     ELYTRA,
                     SPEAR,
-                    SHIELD
+                    SHIELD,
+                    WARDROBE
             )
             .setIcons(Collections.emptyList())
             .build();

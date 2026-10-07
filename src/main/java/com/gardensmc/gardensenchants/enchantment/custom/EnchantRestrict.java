@@ -5,7 +5,9 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +28,11 @@ public class EnchantRestrict {
 
     private List<EnchantRestrict> children;
 
+    // EnderWardrobe's offhand items (items.yml there), by id: their enderwardrobe:offhand tag
+    private List<String> permittedWardrobeItems;
+
+    private static final NamespacedKey WARDROBE_OFFHAND = new NamespacedKey("enderwardrobe", "offhand");
+
     public EnchantRestrict(String id) {
         this.id = id;
     }
@@ -44,7 +51,7 @@ public class EnchantRestrict {
      * belongs to - i.e. the same type its matching typed book would use.
      */
     public boolean isDirectlyPermitted(ItemStack itemStack) {
-        if (permittedMaterials.contains(itemStack.getType())) {
+        if (permittedMaterials.contains(itemStack.getType()) || isPermittedWardrobeItem(itemStack)) {
             return true;
         }
         if (!permittedCustomIdentifiers.isEmpty() || !permittedCustomIdSuffixes.isEmpty()) {
@@ -58,7 +65,7 @@ public class EnchantRestrict {
     }
 
     public boolean isEnchantable(ItemStack itemStack) {
-        if (permittedMaterials.contains(itemStack.getType())) {
+        if (permittedMaterials.contains(itemStack.getType()) || isPermittedWardrobeItem(itemStack)) {
             return true;
         }
         if (!permittedCustomIdentifiers.isEmpty() || !permittedCustomIdSuffixes.isEmpty()) {
@@ -73,6 +80,14 @@ public class EnchantRestrict {
         return children.stream().anyMatch(enchantRestrict -> enchantRestrict.isEnchantable(itemStack));
     }
 
+    private boolean isPermittedWardrobeItem(ItemStack itemStack) {
+        if (permittedWardrobeItems.isEmpty() || !itemStack.hasItemMeta()) {
+            return false;
+        }
+        var id = itemStack.getItemMeta().getPersistentDataContainer().get(WARDROBE_OFFHAND, PersistentDataType.STRING);
+        return id != null && permittedWardrobeItems.contains(id);
+    }
+
     /**
      * One sample item per leaf type this restrict covers, used to check that an enchant really
      * applies to the type (restricts alone don't know e.g. that fortune can't go on a sword).
@@ -81,6 +96,12 @@ public class EnchantRestrict {
         if (isLeaf()) {
             if (!permittedMaterials.isEmpty()) {
                 return List.of(new ItemStack(permittedMaterials.getFirst()));
+            }
+            if (!permittedWardrobeItems.isEmpty()) {
+                // stands in for the EnderWardrobe item: all that matters here is its tag
+                var sample = new ItemStack(Material.LEATHER_HORSE_ARMOR);
+                sample.editMeta(meta -> meta.getPersistentDataContainer().set(WARDROBE_OFFHAND, PersistentDataType.STRING, permittedWardrobeItems.getFirst()));
+                return List.of(sample);
             }
             // a type made of GardensFurniture items, like watering cans
             var sample = permittedCustomIdentifiers.isEmpty() ? null : GardensFurniture.itemRegistry.buildItem(permittedCustomIdentifiers.getFirst());
@@ -126,6 +147,7 @@ public class EnchantRestrict {
         private List<Character> icons = new ArrayList<>();
 
         private List<EnchantRestrict> children = new ArrayList<>();
+        private final List<String> permittedWardrobeItems = new ArrayList<>();
 
         public Builder(String id) {
             this.id = id;
@@ -144,6 +166,12 @@ public class EnchantRestrict {
         // GardensFurniture items, by identifier
         public Builder withCustomIdentifiers(String... identifiers) {
             this.permittedIdentifiers.addAll(Arrays.asList(identifiers));
+            return this;
+        }
+
+        // EnderWardrobe offhand items, by id
+        public Builder withWardrobeItems(String... ids) {
+            this.permittedWardrobeItems.addAll(Arrays.asList(ids));
             return this;
         }
 
@@ -175,7 +203,8 @@ public class EnchantRestrict {
                     permittedIdentifiers,
                     permittedIdSuffixes,
                     icons,
-                    children
+                    children,
+                    permittedWardrobeItems
             );
             registeredEnchantRestricts.put(id, enchantRestrict);
             return enchantRestrict;
