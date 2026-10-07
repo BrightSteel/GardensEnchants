@@ -25,7 +25,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.PICKAXE));
     public static final CustomEnchantment BUBBLE_HEAD = register("bubble_head", builder -> builder
             .lore("<gray>Breathe underwater")
-            .rarity(EnchantRarity.EPIC)
+            .rarity(EnchantRarity.RARE)
             .enchantRestrict(EnchantRestricts.HELMET));
     public static final CustomEnchantment LIFE_STEAL = register("life_steal", builder -> builder
             .enchantRestrict(EnchantRestricts.WEAPON)
@@ -130,7 +130,7 @@ public class CustomEnchantments {
             .rarity(EnchantRarity.LEGENDARY));
     public static final CustomEnchantment NETHERLING = register("netherling", builder -> builder
             .lore("<gray>Deal extra damage to nether mobs")
-            .rarity(EnchantRarity.EPIC)
+            .rarity(EnchantRarity.UNCOMMON)
             .enchantRestrict(EnchantRestricts.SWORD));
     public static final CustomEnchantment SILK_TOUCH_SPAWNER = register("silk_touch_spawner", builder -> builder
             .lore("<gray>Spawners will drop themselves when mined")
@@ -145,7 +145,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment EXPLOSIVE = register("explosive", builder -> builder
             .lore("<gray>Do explosion damage on hit")
             .enchantRestrict(EnchantRestricts.BOW)
-            .rarity(EnchantRarity.RARE)
+            .rarity(EnchantRarity.EPIC)
             .maxLevel(4));
     public static final CustomEnchantment BARRAGE = register("barrage", builder -> builder
             .lore("<gray>Shoot multiple arrows at the same time")
@@ -168,7 +168,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment FLUTTER = register("flutter", builder -> builder
             .lore("<gray>Hold shift to activate slow falling")
             .enchantRestrict(EnchantRestricts.ELYTRA)
-            .rarity(EnchantRarity.EPIC)
+            .rarity(EnchantRarity.RARE)
     );
     public static final CustomEnchantment PLATED = register("plated", builder -> builder
             .lore("<gray>Armors your elytra like a chestplate:", "<gray>leather, iron, diamond, netherite")
@@ -233,12 +233,12 @@ public class CustomEnchantments {
     public static final CustomEnchantment FLIPPERS = register("flippers", builder -> builder
             .lore("<gray>Gain Dolphin's Grace while swimming")
             .enchantRestrict(EnchantRestricts.BOOTS)
-            .rarity(EnchantRarity.EPIC)
+            .rarity(EnchantRarity.RARE)
     );
     public static final CustomEnchantment SIPHON = register("siphon", builder -> builder
             .lore("<gray>Suck drops and xp straight into your inventory")
             .enchantRestrict(EnchantRestricts.TOOLS)
-            .rarity(EnchantRarity.UNCOMMON)
+            .rarity(EnchantRarity.RARE)
     );
     public static final CustomEnchantment ROCKET_BOOTS = register("rocket_boots", builder -> builder
             .lore("<gray>Hold shift to gain jump boost")
@@ -255,7 +255,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment ORB_BOOST = register("orb_boost", builder -> builder
             .lore("<gray>Gain more exp when collecting orbs")
             .enchantRestrict(EnchantRestricts.CHESTPLATE)
-            .rarity(EnchantRarity.EPIC)
+            .rarity(EnchantRarity.RARE)
             .maxLevel(3)
     );
     public static final CustomEnchantment MUNCHER = register("muncher", builder -> builder

@@ -1,6 +1,202 @@
-unbreaking:
-  rarity: EPIC
-  display: "Unbreaking"
+fire_protection:
   lore:
-    - "<white>Does x y z"
-  bookIdentifier: "unbreaking"
+    - "Reduces damage taken from fire by <dark_gray>8%</dark_gray> per level"
+  enchantRestrict: ARMOR
+  rarity: UNCOMMON
+fortune:
+  rarity: RARE
+  lore:
+    - "Increases number of ores dropped when mining"
+  enchantRestrict: TOOLS
+silk_touch:
+  rarity: RARE
+  lore:
+    - "Causes some blocks to drop themselves instead of their usual"
+    - "drops when mined"
+lure:
+  lore:
+    - "Decreases wait time for bites on the hook"
+  rarity: UNCOMMON
+  enchantRestrict: FISHING_ROD
+luck_of_the_sea:
+  rarity: RARE
+  lore:
+    - "Increases luck while fishing"
+  enchantRestrict: FISHING_ROD
+smite:
+  lore:
+    - "Increases damage dealt to undead mobs"
+  rarity: UNCOMMON
+  enchantRestrict: WEAPON
+bane_of_arthropods:
+  rarity: COMMON
+  enchantRestrict: WEAPON
+  lore:
+    - "Increases damage dealt to anthropods"
+    - "(spiders, bees, silverfish, endermites)"
+looting:
+  lore:
+    - "Cause mobs to drop more items, and increase"
+    - "chances of rare drops"
+  rarity: RARE
+  enchantRestrict: WEAPON
+impaling:
+  lore:
+    - "Deal extra damage against aquatic mobs"
+  rarity: COMMON
+  enchantRestrict: TRIDENT
+piercing:
+  lore:
+    - "Causes arrows to pierce through entities,"
+    - "one for each enchantment level"
+  rarity: UNCOMMON
+  enchantRestrict: CROSS_BOW
+feather_falling:
+  lore:
+    - "Reduces fall damage"
+  rarity: UNCOMMON
+  enchantRestrict: BOOTS
+frost_walker:
+  lore:
+    - "Create frosted ice blocks when walking over water,"
+    - "become immune to campfire and magma block damage"
+  rarity: UNCOMMON
+  enchantRestrict: BOOTS
+blast_protection:
+  lore:
+    - "Reduces damage taken from explosives and fireworks"
+  rarity: UNCOMMON
+  enchantRestrict: ARMOR
+projectile_protection:
+  lore:
+    - "Reduces damage taken from projectiles"
+  rarity: UNCOMMON
+  enchantRestrict: ARMOR
+infinity:
+  lore:
+    - "Prevent regular arrows from being consumed when shot"
+  rarity: RARE
+  enchantRestrict: BOW
+multishot:
+  lore:
+    - "Shoot 3 arrows at the cost of one"
+  rarity: UNCOMMON
+  enchantRestrict: CROSS_BOW
+channeling:
+  lore:
+    - "Summon lightning by impaling a mob (or lightning rod)"
+    - "during a thunderstorm"
+  rarity: RARE
+  enchantRestrict: TRIDENT
+aqua_affinity:
+  lore:
+    - "Increases underwater mining speed"
+  rarity: UNCOMMON
+  enchantRestrict: HELMET
+soul_speed:
+  rarity: RARE
+  enchantRestrict: BOOTS
+swift_sneak:
+  rarity: RARE
+  enchantRestrict: LEGGINGS
+mending:
+  lore:
+    - "Automatically restore item durability using dropped"
+    - "experience"
+  rarity: EPIC
+unbreaking:
+  lore:
+    - "Extends an item's durability"
+  enchantRestrict: ALL
+  rarity: RARE
+efficiency:
+  lore:
+    - "Increases mining speed"
+  enchantRestrict: TOOLS
+  rarity: UNCOMMON
+sharpness:
+  lore:
+    - "Increases melee damage"
+  enchantRestrict: WEAPON
+  rarity: UNCOMMON
+sweeping_edge:
+  lore:
+    - "Increases sweep attack damage"
+  enchantRestrict: SWORD
+fire_aspect:
+  lore:
+    - "Sets target on fire when attacked"
+  enchantRestrict: SWORD
+  rarity: UNCOMMON
+knockback:
+  lore:
+    - "Increases knockback of target when hit"
+  enchantRestrict: SWORD
+loyalty:
+  lore:
+    - "Returns trident to you when thrown"
+  enchantRestrict: TRIDENT
+  rarity: UNCOMMON
+riptide:
+  lore:
+    - "Hurl yourself in the direction you are facing when wet"
+  enchantRestrict: TRIDENT
+  rarity: UNCOMMON
+power:
+  lore:
+    - "Increases damage dealt by arrows"
+  enchantRestrict: BOW
+  rarity: UNCOMMON
+punch:
+  lore:
+    - "Increases knockback dealt by arrows"
+  enchantRestrict: BOW
+flame:
+  lore:
+    - "Shoot flaming arrows"
+  enchantRestrict: BOW
+quick_charge:
+  lore:
+    - "Reduces reload time of crossbow"
+  enchantRestrict: CROSS_BOW
+  rarity: UNCOMMON
+respiration:
+  lore:
+    - "Extends breathing time underwater"
+  enchantRestrict: HELMET
+  rarity: UNCOMMON
+protection:
+  lore:
+    - "Reduces damage taken by most sources"
+  enchantRestrict: ARMOR
+  rarity: UNCOMMON
+depth_strider:
+  lore:
+    - "Increases underwater movement speed"
+  enchantRestrict: BOOTS
+  rarity: UNCOMMON
+thorns:
+  lore:
+    - "Damages attackers when they deal damage to you"
+  enchantRestrict: ARMOR
+  rarity: UNCOMMON
+breach:
+  lore:
+    - "Smash through armor by <dark_gray>15%</dark_gray> per level"
+  enchantRestrict: MACE
+  rarity: UNCOMMON
+density:
+  lore:
+    - "Increases damage dealt per block fallen"
+  enchantRestrict: MACE
+  rarity: UNCOMMON
+wind_burst:
+  lore:
+    - "Launches you back up after a smash attack"
+  enchantRestrict: MACE
+  rarity: RARE
+lunge:
+  lore:
+    - "Lunge forward when you attack with a spear"
+  enchantRestrict: SPEAR
+  rarity: UNCOMMON
