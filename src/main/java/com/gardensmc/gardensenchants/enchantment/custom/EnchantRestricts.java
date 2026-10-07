@@ -177,13 +177,14 @@ public class EnchantRestricts {
             .withCustomIdentifiers("watering_can_0", "watering_can_1", "watering_can_2", "watering_can_3", "watering_can_4", "watering_can_5")
             .build();
 
-    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and walking stick (its own offhand item)
+    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and walking sticks (its own offhand items, a tier each)
     public static final EnchantRestrict BALLOON = new EnchantRestrict.Builder("balloon")
             .withCustomIdentifiers("balloon")
             .build();
 
     public static final EnchantRestrict WALKING_STICK = new EnchantRestrict.Builder("walking_stick")
-            .withWardrobeItems("walking_stick")
+            .withWardrobeItems("wooden_walking_stick", "stone_walking_stick", "copper_walking_stick", "iron_walking_stick",
+                    "golden_walking_stick", "diamond_walking_stick", "netherite_walking_stick")
             .build();
 
     // items that wear out but that vanilla doesn't count as damageable, so its Unbreaking and Mending are let on
