@@ -108,6 +108,15 @@ public class CustomEnchantments {
             .lore("<gray>Farm animals follow you", "<gray>while you hold it")
             .enchantRestrict(EnchantRestricts.WALKING_STICK)
             .rarity(EnchantRarity.UNCOMMON));
+    public static final CustomEnchantment TREKKER = register("trekker", builder -> builder
+            .lore("<gray>Walking, sprinting and jumping", "<gray>make you less hungry while you hold it")
+            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(3));
+    public static final CustomEnchantment MOUNTAINEER = register("mountaineer", builder -> builder
+            .lore("<gray>Step up two blocks without jumping", "<gray>while you hold it")
+            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .rarity(EnchantRarity.EPIC));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
             .lore("<gray>Breaks blocks in a 3x3 pattern")
             .rarity(EnchantRarity.LEGENDARY)
