@@ -241,7 +241,6 @@ public class EnchantingMenu extends Menu {
             return;
         }
         var enchantment = bookInstance.enchantment();
-        int rerollPrice = getRerollCost();
         if (isLocked(enchantment)) {
             viewer.sendMessage(MiniMessage.miniMessage().deserialize(NEEDS_BOOKSHELVES));
             return;
@@ -264,7 +263,6 @@ public class EnchantingMenu extends Menu {
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
         }
         entryHandler.reroll();
-        RerollPricing.INSTANCE.bought(viewer.getUniqueId(), enchantment.getTableCost(bookInstance.level()), rerollPrice);
         runUpdate();
     }
 
@@ -288,8 +286,8 @@ public class EnchantingMenu extends Menu {
     }
 
     /**
-     * Replaces the offers shown for the inserted item with a fresh roll, for the price of the cheapest offer, made
-     * dearer by each re-roll in a row (see {@link RerollPricing}).
+     * Replaces the offers shown for the inserted item with a fresh roll, for the price of the cheapest offer (at least
+     * {@value RerollPricing#MIN_ACORNS} acorns), made dearer by each re-roll in a row (see {@link RerollPricing}).
      */
     private void reroll() {
         var type = getInsertedType();
@@ -312,7 +310,7 @@ public class EnchantingMenu extends Menu {
         }
         viewer.setLevel(viewer.getLevel() - xpCost);
         lastRerollAt = System.currentTimeMillis();
-        RerollPricing.INSTANCE.rerolled(viewer.getUniqueId(), lastRerollAt);
+        RerollPricing.save(viewer, RerollPricing.rerolled(RerollPricing.of(viewer), lastRerollAt));
         new EnchantEntryHandler(viewer.getUniqueId(), type).reroll();
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
         runUpdate();
@@ -320,12 +318,12 @@ public class EnchantingMenu extends Menu {
 
     private int getRerollCost() {
         int base = getShownBooks().mapToInt(book -> book.enchantment().getTableCost(book.level())).min().orElse(0);
-        return RerollPricing.INSTANCE.price(viewer.getUniqueId(), base, System.currentTimeMillis());
+        return RerollPricing.price(base, RerollPricing.MIN_ACORNS, RerollPricing.of(viewer), System.currentTimeMillis());
     }
 
     private int getRerollXpCost() {
         int base = getShownBooks().mapToInt(book -> book.enchantment().getTableCostInXp(book.level())).min().orElse(0);
-        return RerollPricing.INSTANCE.price(viewer.getUniqueId(), base, System.currentTimeMillis());
+        return RerollPricing.price(base, 0, RerollPricing.of(viewer), System.currentTimeMillis());
     }
 
     private Stream<BookInstance> getShownBooks() {

@@ -1,53 +1,64 @@
 package com.gardensmc.gardensenchants.gui;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The table's re-roll gets dearer with each re-roll in a row: a quarter more each time, so browsing stays cheap but
- * hunting one enchant costs real effort. The streak ends after a while without re-rolling, or on buying an offer that
- * cost at least what the next re-roll would (so buying a cheap book just to end it doesn't pay).
+ * hunting one enchant costs real effort. The streak comes down one step for every quarter hour without re-rolling, so
+ * waiting it out takes as long as it took to build. It's kept on the player, so it outlasts logging out and restarts.
  */
-public class RerollPricing {
-
-    public static final RerollPricing INSTANCE = new RerollPricing();
-
-    RerollPricing() {
-    }
+public final class RerollPricing {
 
     /** How much dearer each re-roll in a row is. */
     public static final double STEP = 1.25;
-    /** How long without re-rolling before the price is back to normal. */
-    public static final long RESET_AFTER_MS = 30 * 60 * 1000;
+    /** How long without re-rolling takes the streak down one step. */
+    public static final long DECAY_MS = 15 * 60 * 1000;
+    /** The least a re-roll costs in acorns, however cheap the offers showing. */
+    public static final int MIN_ACORNS = 40;
 
-    private record Streak(int rerolls, long lastAt) {
+    /** A streak: how many re-rolls in a row, and when the last one was. */
+    public record Streak(int rerolls, long lastAt) {
     }
 
-    private final Map<UUID, Streak> streaks = new ConcurrentHashMap<>();
-
-    /** The re-roll price now, from what it costs without a streak. */
-    public int price(UUID player, int base, long now) {
-        return (int) Math.round(base * Math.pow(STEP, rerolls(player, now)));
+    private RerollPricing() {
     }
 
-    /** How many re-rolls in a row the player is on. */
-    public int rerolls(UUID player, long now) {
-        var streak = streaks.get(player);
+    /** How many re-rolls in a row the streak counts for now, after coming down for the time since. */
+    public static int rerolls(@Nullable Streak streak, long now) {
         if (streak == null) return 0;
-        if (now - streak.lastAt() >= RESET_AFTER_MS) {
-            streaks.remove(player, streak);
-            return 0;
-        }
-        return streak.rerolls();
+        long steps = Math.max(0, now - streak.lastAt()) / DECAY_MS;
+        return (int) Math.max(0, streak.rerolls() - steps);
     }
 
-    public void rerolled(UUID player, long now) {
-        streaks.put(player, new Streak(rerolls(player, now) + 1, now));
+    /** The price now, from what it costs without a streak (and at least {@code min}). */
+    public static int price(int base, int min, @Nullable Streak streak, long now) {
+        return (int) Math.round(Math.max(base, min) * Math.pow(STEP, rerolls(streak, now)));
     }
 
-    /** An offer was bought for {@code paid}, when the next re-roll would have cost {@code rerollPrice}. */
-    public void bought(UUID player, int paid, int rerollPrice) {
-        if (paid >= rerollPrice) streaks.remove(player);
+    /** The streak after re-rolling now. */
+    public static Streak rerolled(@Nullable Streak streak, long now) {
+        return new Streak(rerolls(streak, now) + 1, now);
+    }
+
+    // ---- kept on the player ----
+
+    private static final NamespacedKey REROLLS = new NamespacedKey("gardensenchants", "reroll_streak");
+    private static final NamespacedKey LAST_AT = new NamespacedKey("gardensenchants", "reroll_last_at");
+
+    @Nullable
+    public static Streak of(Player player) {
+        var data = player.getPersistentDataContainer();
+        Integer rerolls = data.get(REROLLS, PersistentDataType.INTEGER);
+        Long lastAt = data.get(LAST_AT, PersistentDataType.LONG);
+        return rerolls == null || lastAt == null ? null : new Streak(rerolls, lastAt);
+    }
+
+    public static void save(Player player, Streak streak) {
+        var data = player.getPersistentDataContainer();
+        data.set(REROLLS, PersistentDataType.INTEGER, streak.rerolls());
+        data.set(LAST_AT, PersistentDataType.LONG, streak.lastAt());
     }
 }
