@@ -55,7 +55,7 @@ public class Events implements Listener {
     }
 
     /**
-     * Speedy's level: the boots' plus a walking stick's held in either hand (the higher hand), up to Speedy's max level.
+     * Speedy's level: the boots' plus a staff's held in either hand (the higher hand), up to Speedy's max level.
      * {@code before} stands in old items for the slots that just changed.
      */
     private static int speedyLevel(Player player, java.util.Map<EquipmentSlot, EntityEquipmentChangedEvent.EquipmentChange> before) {
@@ -65,7 +65,7 @@ public class Events implements Listener {
             ItemStack item = change != null ? change.oldItem() : player.getInventory().getItem(slot);
             if (item == null || item.isEmpty() || !SPEEDY.hasEnchantment(item)) continue;
             if (slot == EquipmentSlot.FEET) boots = SPEEDY.getEnchantmentLevel(item);
-            else if (com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts.WALKING_STICK.isEnchantable(item)) stick = Math.max(stick, SPEEDY.getEnchantmentLevel(item));
+            else if (com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts.STAFF.isEnchantable(item)) stick = Math.max(stick, SPEEDY.getEnchantmentLevel(item));
         }
         return Math.min(SPEEDY.getMaxLevel(), boots + stick);
     }

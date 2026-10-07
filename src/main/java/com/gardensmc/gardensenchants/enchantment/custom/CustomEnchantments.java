@@ -98,24 +98,24 @@ public class CustomEnchantments {
             .displayName("Snack Pouch")
             .enchantRestrict(EnchantRestricts.BACKPACK)
             .rarity(EnchantRarity.RARE));
-    // EnderWardrobe walking sticks (held, either hand; see events/WalkingStickEnchants)
+    // EnderWardrobe staffs (held, either hand; see events/StaffEnchants)
     public static final CustomEnchantment STEADY = register("steady", builder -> builder
             .lore("<gray>Resist knockback while you hold it")
-            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .enchantRestrict(EnchantRestricts.STAFF)
             .rarity(EnchantRarity.RARE)
             .maxLevel(3));
     public static final CustomEnchantment SHEPHERD = register("shepherd", builder -> builder
             .lore("<gray>Farm animals follow you", "<gray>while you hold it")
-            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .enchantRestrict(EnchantRestricts.STAFF)
             .rarity(EnchantRarity.UNCOMMON));
     public static final CustomEnchantment TREKKER = register("trekker", builder -> builder
             .lore("<gray>Sprinting and jumping make you", "<gray>less hungry while you hold it")
-            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .enchantRestrict(EnchantRestricts.STAFF)
             .rarity(EnchantRarity.RARE)
             .maxLevel(3));
     public static final CustomEnchantment MOUNTAINEER = register("mountaineer", builder -> builder
             .lore("<gray>Step up two blocks without jumping", "<gray>while you hold it")
-            .enchantRestrict(EnchantRestricts.WALKING_STICK)
+            .enchantRestrict(EnchantRestricts.STAFF)
             .rarity(EnchantRarity.EPIC));
     public static final CustomEnchantment SUPER_BREAKER = register("super_breaker", builder -> builder
             .lore("<gray>Breaks blocks in a 3x3 pattern")

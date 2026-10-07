@@ -177,19 +177,19 @@ public class EnchantRestricts {
             .withCustomIdentifiers("watering_can_0", "watering_can_1", "watering_can_2", "watering_can_3", "watering_can_4", "watering_can_5")
             .build();
 
-    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and walking sticks (its own offhand items, a tier each)
+    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and staffs (its own offhand items, a tier each)
     public static final EnchantRestrict BALLOON = new EnchantRestrict.Builder("balloon")
             .withCustomIdentifiers("balloon")
             .build();
 
-    public static final EnchantRestrict WALKING_STICK = new EnchantRestrict.Builder("walking_stick")
-            .withWardrobeItems("wooden_walking_stick", "stone_walking_stick", "copper_walking_stick", "iron_walking_stick",
-                    "golden_walking_stick", "diamond_walking_stick", "netherite_walking_stick")
+    public static final EnchantRestrict STAFF = new EnchantRestrict.Builder("staff")
+            .withWardrobeItems("wooden_staff", "stone_staff", "copper_staff", "iron_staff",
+                    "golden_staff", "diamond_staff", "netherite_staff")
             .build();
 
-    // Speedy: boots, and a walking stick held (they add up to Speedy's max level; see events/Events)
+    // Speedy: boots, and a staff held (they add up to Speedy's max level; see events/Events)
     public static final EnchantRestrict SPEEDY = new EnchantRestrict.Builder("speedy")
-            .withChildren(BOOTS, WALKING_STICK)
+            .withChildren(BOOTS, STAFF)
             .build();
 
     // backpacks with storage; their enchantments work on the one worn in EnderWardrobe's backpack slot
@@ -199,7 +199,7 @@ public class EnchantRestricts {
 
     // items that wear out but that vanilla doesn't count as damageable, so its Unbreaking and Mending are let on
     public static final EnchantRestrict WARDROBE = new EnchantRestrict.Builder("wardrobe")
-            .withChildren(BALLOON, WALKING_STICK)
+            .withChildren(BALLOON, STAFF)
             .build();
 
     public static final EnchantRestrict BASIC_TOOLS = new EnchantRestrict.Builder("basic_tools")

@@ -9,7 +9,7 @@ public class Listeners {
     public static void registerListeners() {
         register(new Events());
         com.gardensmc.gardensenchants.events.BalloonEnchants.enable();
-        com.gardensmc.gardensenchants.events.WalkingStickEnchants.enable();
+        com.gardensmc.gardensenchants.events.StaffEnchants.enable();
         com.gardensmc.gardensenchants.events.BackpackEnchants.enable();
         com.gardensmc.gardensenchants.events.ElytraEnchants.enable();
         register(new com.gardensmc.gardensenchants.events.ToolEnchants());

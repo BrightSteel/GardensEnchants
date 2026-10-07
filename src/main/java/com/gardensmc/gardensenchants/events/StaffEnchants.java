@@ -23,13 +23,13 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.TREKKER;
 
 /**
- * Enchantments on EnderWardrobe's walking sticks, held in either hand: Steady resists knockback; Shepherd has farm
+ * Enchantments on EnderWardrobe's staffs, held in either hand: Steady resists knockback; Shepherd has farm
  * animals nearby follow, as they'd follow their food; Trekker makes sprinting and jumping cost less hunger
  * (walking costs none to begin with);
  * Mountaineer steps up a block higher (not while sneaking, as the stick's own step); and vanilla's Soul Speed works as
  * it would on boots (vanilla only looks at the feet), though it doesn't wear the stick any faster.
  */
-public final class WalkingStickEnchants implements Listener {
+public final class StaffEnchants implements Listener {
 
     /** Knockback resistance per level of Steady (1 is none at all). */
     private static final double STEADY_PER_LEVEL = 0.2;
@@ -45,21 +45,21 @@ public final class WalkingStickEnchants implements Listener {
     private static final NamespacedKey SOUL_SPEED_KEY = new NamespacedKey(GardensEnchants.plugin, "soul_speed");
     private static final NamespacedKey MOUNTAINEER_KEY = new NamespacedKey(GardensEnchants.plugin, "mountaineer");
 
-    private WalkingStickEnchants() {
+    private StaffEnchants() {
     }
 
     public static void enable() {
-        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, WalkingStickEnchants::tick, 20, 10);
+        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, StaffEnchants::tick, 20, 10);
         // every tick, as vanilla checks what's underfoot
-        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, () -> Bukkit.getOnlinePlayers().forEach(WalkingStickEnchants::soulSpeed), 20, 1);
-        Bukkit.getPluginManager().registerEvents(new WalkingStickEnchants(), GardensEnchants.plugin);
+        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, () -> Bukkit.getOnlinePlayers().forEach(StaffEnchants::soulSpeed), 20, 1);
+        Bukkit.getPluginManager().registerEvents(new StaffEnchants(), GardensEnchants.plugin);
     }
 
-    /** The higher level of the enchantment on a walking stick in either hand, or 0. */
+    /** The higher level of the enchantment on a staff in either hand, or 0. */
     private static int held(Player player, CustomEnchantment enchantment) {
         int level = 0;
         for (ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand()}) {
-            if (item != null && !item.isEmpty() && EnchantRestricts.WALKING_STICK.isEnchantable(item)) {
+            if (item != null && !item.isEmpty() && EnchantRestricts.STAFF.isEnchantable(item)) {
                 level = Math.max(level, enchantment.getEnchantmentLevel(item));
             }
         }
@@ -92,11 +92,11 @@ public final class WalkingStickEnchants implements Listener {
         LAST_AT.remove(e.getPlayer().getUniqueId());
     }
 
-    /** Soul Speed's level on a walking stick in either hand, or 0. */
+    /** Soul Speed's level on a staff in either hand, or 0. */
     private static int heldSoulSpeed(Player player) {
         int level = 0;
         for (ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand()}) {
-            if (item != null && !item.isEmpty() && EnchantRestricts.WALKING_STICK.isEnchantable(item)) {
+            if (item != null && !item.isEmpty() && EnchantRestricts.STAFF.isEnchantable(item)) {
                 level = Math.max(level, item.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.SOUL_SPEED));
             }
         }
