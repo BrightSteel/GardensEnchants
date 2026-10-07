@@ -77,6 +77,10 @@ public class GardensEnchantHandler {
 
     public void enchant(GardensEnchantment enchantment, int level, boolean isForce) {
         adoptExistingLore();
+        if (enchantment == CustomEnchantments.SILK_TOUCH_SPAWNER) {
+            // a new Silk Spawner starts with all its uses
+            com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.clear(item);
+        }
         enchantment.applyEnchantment(item, level, isForce);
         applyPostEnchantChanges();
     }
@@ -206,7 +210,7 @@ public class GardensEnchantHandler {
                         .color(NamedTextColor.GOLD))
                 .build()
         );
-        lore.addAll(enchantments.stream().map(EnchantmentInstance::toLore).toList());
+        lore.addAll(enchantments.stream().map(this::enchantLine).toList());
         var remainingSlots = slots - enchantCount;
         if (remainingSlots > 0) {
             var component = Component
@@ -217,6 +221,16 @@ public class GardensEnchantHandler {
             }
         }
         return lore;
+    }
+
+    /** An enchant's line in the item's lore; Silk Spawner's says how many uses it has left. */
+    private Component enchantLine(EnchantmentInstance instance) {
+        var line = instance.toLore();
+        if (instance.getEnchantment() == CustomEnchantments.SILK_TOUCH_SPAWNER) {
+            int left = com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.left(item);
+            line = line.append(Component.text(" (" + left + (left == 1 ? " use" : " uses") + " left)", NamedTextColor.GRAY));
+        }
+        return line;
     }
 
     /**

@@ -45,6 +45,9 @@ public final class ExtractionRune {
                 .filter(instance -> GardensEnchantments.INSTANCE.getEnchantment(instance.getEnchantment().getId()) != null)
                 // curses stay, as at the grindstone
                 .filter(instance -> !(instance.getEnchantment() instanceof VanillaEnchantment vanilla && vanilla.isCursed()))
+                // a used Silk Spawner stays: on a book it would come back with all its uses
+                .filter(instance -> instance.getEnchantment() != com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantments.SILK_TOUCH_SPAWNER
+                        || com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.left(item) >= com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.USES)
                 .sorted(Comparator.comparing(instance -> instance.getEnchantment().getDisplayName()))
                 .toList();
     }

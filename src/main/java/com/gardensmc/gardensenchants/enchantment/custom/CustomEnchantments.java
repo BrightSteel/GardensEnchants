@@ -133,7 +133,7 @@ public class CustomEnchantments {
             .rarity(EnchantRarity.UNCOMMON)
             .enchantRestrict(EnchantRestricts.SWORD));
     public static final CustomEnchantment SILK_TOUCH_SPAWNER = register("silk_touch_spawner", builder -> builder
-            .lore("<gray>Spawners have a 30% chance", "<gray>to drop themselves when mined")
+            .lore("<gray>Spawners drop themselves when mined;", "<gray>wears off after 4 spawners")
             .displayName("Silk Spawner")
             .enchantRestrict(EnchantRestricts.TOOLS)
             .rarity(EnchantRarity.LEGENDARY));

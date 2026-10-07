@@ -155,6 +155,18 @@ public class BooksHandler {
         return new EnchantmentInstance(enchantment, level);
     }
 
+    /**
+     * Rewrites a book's lore from its enchant as it is now, so books made before a description changed don't keep
+     * the old one. False if it isn't one of our books.
+     */
+    public boolean refreshBook(ItemStack book) {
+        if (book == null || book.getType() != Material.ENCHANTED_BOOK) return false;
+        var instance = getBookInstance(book);
+        if (instance == null) return false;
+        refreshLore(instance);
+        return true;
+    }
+
     private void refreshLore(BookInstance bookInstance) {
         var book = bookInstance.book();
         var meta = book.getItemMeta();
