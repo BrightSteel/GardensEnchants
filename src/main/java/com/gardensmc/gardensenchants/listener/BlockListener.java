@@ -87,6 +87,9 @@ public class BlockListener implements Listener {
         }
     }
 
+    /** The chance (percent) Silk Spawner drops a spawner it breaks. */
+    public static final double SILK_SPAWNER_DROP_CHANCE = 30;
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onSpawnerBreak(BlockBreakEvent e) {
         if (e.getBlock().getType() != Material.SPAWNER) {
@@ -96,7 +99,10 @@ public class BlockListener implements Listener {
             ItemStack tool = e.getPlayer().getInventory().getItemInMainHand();
             if (CustomEnchantments.SILK_TOUCH_SPAWNER.hasEnchantment(tool)) {
                 EntityType spawnedType = spawner.getSpawnedType();
-                if (spawnedType != null) {
+                if (spawnedType != null && !com.gardensmc.gardensenchants.utils.ProbabilityUtil.roll(SILK_SPAWNER_DROP_CHANCE)) {
+                    // most crumble, so a mined spawner isn't free money
+                    e.getPlayer().sendActionBar(net.kyori.adventure.text.Component.text("The spawner crumbled.", net.kyori.adventure.text.format.NamedTextColor.GRAY));
+                } else if (spawnedType != null) {
                     var item = ItemUtil.buildSpawnerItem(spawnedType.getKey().toString());
                     e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
                 }
