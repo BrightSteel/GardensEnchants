@@ -109,7 +109,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.WALKING_STICK)
             .rarity(EnchantRarity.UNCOMMON));
     public static final CustomEnchantment TREKKER = register("trekker", builder -> builder
-            .lore("<gray>Walking, sprinting and jumping", "<gray>make you less hungry while you hold it")
+            .lore("<gray>Sprinting and jumping make you", "<gray>less hungry while you hold it")
             .enchantRestrict(EnchantRestricts.WALKING_STICK)
             .rarity(EnchantRarity.RARE)
             .maxLevel(3));

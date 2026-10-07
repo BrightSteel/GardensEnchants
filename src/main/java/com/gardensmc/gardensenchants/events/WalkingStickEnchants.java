@@ -24,7 +24,8 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 
 /**
  * Enchantments on EnderWardrobe's walking sticks, held in either hand: Steady resists knockback; Shepherd has farm
- * animals nearby follow, as they'd follow their food; Trekker makes walking, sprinting and jumping cost less hunger;
+ * animals nearby follow, as they'd follow their food; Trekker makes sprinting and jumping cost less hunger
+ * (walking costs none to begin with);
  * Mountaineer steps up a block higher (not while sneaking, as the stick's own step); and vanilla's Soul Speed works as
  * it would on boots (vanilla only looks at the feet), though it doesn't wear the stick any faster.
  */
