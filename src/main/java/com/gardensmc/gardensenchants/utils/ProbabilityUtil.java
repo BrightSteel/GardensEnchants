@@ -34,6 +34,21 @@ public class ProbabilityUtil {
         }
     }
 
+    /**
+     * A level from 1 to max, the lower ones likelier: each level's weight is how many levels are at or above it
+     * (max 3: I 50%, II 33%, III 17%; max 5: I 33% down to V 7%).
+     */
+    public static int rollLevel(int max) {
+        if (max <= 1) return 1;
+        int total = max * (max + 1) / 2;
+        int pick = ThreadLocalRandom.current().nextInt(total);
+        for (int level = 1; level <= max; level++) {
+            pick -= max - level + 1;
+            if (pick < 0) return level;
+        }
+        return max;
+    }
+
     public static int getRandomIndex(int length) {
         if (length == 0) return 0;
         return ThreadLocalRandom.current().nextInt(0, length);

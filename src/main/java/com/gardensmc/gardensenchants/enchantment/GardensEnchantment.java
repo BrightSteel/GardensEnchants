@@ -62,12 +62,17 @@ public abstract class GardensEnchantment {
         return base + (base * (level / 2));
     }
 
-    public int getTableCost() {
-        return rarity.getTableCost();
+    /** How much more each level above I costs at the table, as a share of the rarity's price (V costs twice I). */
+    public static final double TABLE_COST_PER_LEVEL = 0.25;
+
+    /** The table's price in acorns at a level: the rarity's, and a quarter of it more for each level above I. */
+    public int getTableCost(int level) {
+        return (int) Math.round(rarity.getTableCost() * (1 + TABLE_COST_PER_LEVEL * (Math.max(1, level) - 1)));
     }
 
-    public int getTableCostInXp() {
-        return rarity.getTableXpCost();
+    /** The table's price in experience levels at a level: the rarity's, and one more for each level above I. */
+    public int getTableCostInXp(int level) {
+        return rarity.getTableXpCost() + Math.max(1, level) - 1;
     }
 
     public String bookIdentifier() {

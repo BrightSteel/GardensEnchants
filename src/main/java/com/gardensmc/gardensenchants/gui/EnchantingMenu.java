@@ -241,13 +241,14 @@ public class EnchantingMenu extends Menu {
             return;
         }
         var enchantment = bookInstance.enchantment();
+        int rerollPrice = getRerollCost();
         if (isLocked(enchantment)) {
             viewer.sendMessage(MiniMessage.miniMessage().deserialize(NEEDS_BOOKSHELVES));
             return;
         }
         if (storageItem.getType() == Material.BOOK) {
             // book -> becomes the corresponding enchant book, left in the slot
-            if (!canPurchase(enchantment) || !chargePlayer(enchantment)) {
+            if (!canPurchase(bookInstance) || !chargePlayer(bookInstance)) {
                 return;
             }
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
@@ -256,13 +257,14 @@ public class EnchantingMenu extends Menu {
             // generates offers (see getInsertedType), so the player grabs the finished tool out.
             var tool = storageItem.clone();
             var enchantHandler = new GardensEnchantHandler(tool);
-            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(enchantment) || !chargePlayer(enchantment)) {
+            if (!enchantHandler.isEnchantable(enchantment) || !canPurchase(bookInstance) || !chargePlayer(bookInstance)) {
                 return;
             }
             enchantHandler.enchant(enchantment, bookInstance.level(), false);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
         }
         entryHandler.reroll();
+        RerollPricing.INSTANCE.bought(viewer.getUniqueId(), enchantment.getTableCost(bookInstance.level()), rerollPrice);
         runUpdate();
     }
 
@@ -286,8 +288,8 @@ public class EnchantingMenu extends Menu {
     }
 
     /**
-     * Replaces the offers shown for the inserted item with a fresh roll, for the price of the cheapest
-     * offer. Buying any offer also re-rolls, so this is never worse than buying the cheapest.
+     * Replaces the offers shown for the inserted item with a fresh roll, for the price of the cheapest offer, made
+     * dearer by each re-roll in a row (see {@link RerollPricing}).
      */
     private void reroll() {
         var type = getInsertedType();
@@ -310,24 +312,26 @@ public class EnchantingMenu extends Menu {
         }
         viewer.setLevel(viewer.getLevel() - xpCost);
         lastRerollAt = System.currentTimeMillis();
+        RerollPricing.INSTANCE.rerolled(viewer.getUniqueId(), lastRerollAt);
         new EnchantEntryHandler(viewer.getUniqueId(), type).reroll();
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
         runUpdate();
     }
 
     private int getRerollCost() {
-        return getShownEnchantments().mapToInt(GardensEnchantment::getTableCost).min().orElse(0);
+        int base = getShownBooks().mapToInt(book -> book.enchantment().getTableCost(book.level())).min().orElse(0);
+        return RerollPricing.INSTANCE.price(viewer.getUniqueId(), base, System.currentTimeMillis());
     }
 
     private int getRerollXpCost() {
-        return getShownEnchantments().mapToInt(GardensEnchantment::getTableCostInXp).min().orElse(0);
+        int base = getShownBooks().mapToInt(book -> book.enchantment().getTableCostInXp(book.level())).min().orElse(0);
+        return RerollPricing.INSTANCE.price(viewer.getUniqueId(), base, System.currentTimeMillis());
     }
 
-    private Stream<GardensEnchantment> getShownEnchantments() {
+    private Stream<BookInstance> getShownBooks() {
         return dynamicRows.stream()
                 .map(DynamicRow::getBookInstance)
-                .filter(Objects::nonNull)
-                .map(BookInstance::enchantment);
+                .filter(Objects::nonNull);
     }
 
     // Epic+ offers are shown everywhere, but only sold at a fully surrounded table (or /enchant)
@@ -335,13 +339,14 @@ public class EnchantingMenu extends Menu {
         return !isFullBookSetup && enchantment.getRarity().needsFullBookSetup();
     }
 
-    private boolean canPurchase(GardensEnchantment enchantment) {
-        return GardensEnchants.econ.has(viewer, enchantment.getTableCost()) && viewer.getLevel() >= enchantment.getTableCostInXp();
+    private boolean canPurchase(BookInstance book) {
+        return GardensEnchants.econ.has(viewer, book.enchantment().getTableCost(book.level()))
+                && viewer.getLevel() >= book.enchantment().getTableCostInXp(book.level());
     }
 
     // false if the economy refused the payment (e.g. the balance changed since canPurchase)
-    private boolean chargePlayer(GardensEnchantment enchantment) {
-        return BedrockEnchantingMenu.chargePlayer(viewer, enchantment);
+    private boolean chargePlayer(BookInstance book) {
+        return BedrockEnchantingMenu.chargePlayer(viewer, book.enchantment(), book.level());
     }
 
     private boolean storageIsEnchantable() {
@@ -387,10 +392,10 @@ public class EnchantingMenu extends Menu {
             book.editMeta(meta -> meta.setItemModel(blankItem.getItemMeta().getItemModel()));
         }
         var lore = book.lore() != null ? book.lore() : new ArrayList<Component>();
-        var xpCost = bookInstance.enchantment().getTableCostInXp();
-        var cost = bookInstance.enchantment().getTableCost();
-        lore.add(toComponent((viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + bookInstance.enchantment().getTableCostInXp() + " <white><font:gardens:default>\u011F"));
-        lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + bookInstance.enchantment().getTableCost() + " <white><font:gardens:default>\u0120"));
+        var xpCost = bookInstance.enchantment().getTableCostInXp(bookInstance.level());
+        var cost = bookInstance.enchantment().getTableCost(bookInstance.level());
+        lore.add(toComponent((viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + xpCost + " <white><font:gardens:default>\u011F"));
+        lore.add(toComponent((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + cost + " <white><font:gardens:default>\u0120"));
         if (isLocked(bookInstance.enchantment())) {
             lore.add(toComponent("<red>Needs 15 bookshelves around the table"));
         }

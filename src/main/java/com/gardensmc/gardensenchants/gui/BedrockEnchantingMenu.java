@@ -151,18 +151,18 @@ public class BedrockEnchantingMenu {
             return;
         }
         // Check each cost separately so the player knows exactly what they're short on.
-        int cost = enchantment.getTableCost();
+        int cost = enchantment.getTableCost(bookInstance.level());
         if (!GardensEnchants.econ.has(viewer, cost)) {
             message(viewer, "<red>You don't have enough acorns! This enchantment costs <white>" + cost + "<red> acorns.");
             return;
         }
-        int xpCost = enchantment.getTableCostInXp();
+        int xpCost = enchantment.getTableCostInXp(bookInstance.level());
         if (viewer.getLevel() < xpCost) {
             message(viewer, "<red>You don't have enough XP! This enchantment costs <white>" + xpCost + "<red> levels.");
             return;
         }
 
-        if (!chargePlayer(viewer, enchantment)) {
+        if (!chargePlayer(viewer, enchantment, bookInstance.level())) {
             message(viewer, "<red>You don't have enough acorns! This enchantment costs <white>" + cost + "<red> acorns.");
             return;
         }
@@ -186,12 +186,12 @@ public class BedrockEnchantingMenu {
      * Takes the table cost. False if the economy refused it (the balance changed since the check), in
      * which case nothing is taken. A free enchant skips the economy, which refuses zero withdrawals.
      */
-    static boolean chargePlayer(Player viewer, GardensEnchantment enchantment) {
-        var cost = enchantment.getTableCost();
+    static boolean chargePlayer(Player viewer, GardensEnchantment enchantment, int level) {
+        var cost = enchantment.getTableCost(level);
         if (cost > 0 && !GardensEnchants.econ.withdrawPlayer(viewer, cost).transactionSuccess()) {
             return false;
         }
-        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp());
+        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp(level));
         return true;
     }
 
@@ -210,8 +210,8 @@ public class BedrockEnchantingMenu {
         if (!isFullBookSetup && enchantment.getRarity().needsFullBookSetup()) {
             return name + "\n§cNeeds 15 bookshelves";
         }
-        int xpCost = enchantment.getTableCostInXp();
-        int cost = enchantment.getTableCost();
+        int xpCost = enchantment.getTableCostInXp(bookInstance.level());
+        int cost = enchantment.getTableCost(bookInstance.level());
         boolean canAffordXp = viewer.getLevel() >= xpCost;
         boolean canAffordMoney = GardensEnchants.econ.has(viewer, cost);
         String costLine = (canAffordXp ? "§a" : "§c") + xpCost + " XP §7· "

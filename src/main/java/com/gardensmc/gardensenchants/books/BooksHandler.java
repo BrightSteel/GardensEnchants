@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -56,10 +58,13 @@ public class BooksHandler {
      */
     public List<EnchantmentInstance> getRandomEnchantments(String type) {
         List<EnchantmentInstance> enchantments = new ArrayList<>();
+        // no enchant twice in one roll; a type with fewer enchants than offers just shows fewer
+        Set<GardensEnchantment> shown = new HashSet<>();
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            var enchantment = getRandomEnchantment(type);
+            var enchantment = getRandomEnchantment(type, shown);
             if (enchantment != null) {
                 enchantments.add(enchantment);
+                shown.add(enchantment.getEnchantment());
             }
         }
         return enchantments;
@@ -132,20 +137,21 @@ public class BooksHandler {
     }
 
     @Nullable
-    private EnchantmentInstance getRandomEnchantment(String type) {
+    private EnchantmentInstance getRandomEnchantment(String type, Set<GardensEnchantment> exclude) {
         if (!tablePools.containsKey(type)) {
             GardensEnchants.plugin.getLogger().log(Level.SEVERE, "Unable to find enchant restrict with id: " + type);
             return null;
         }
         // an empty rarity used to produce a null offer that bricked the table; fall back instead
-        var rarity = OfferRarity.nearestAvailable(ProbabilityUtil.rollRarity(), r -> !getTablePool(type, r).isEmpty());
+        var rarity = OfferRarity.nearestAvailable(ProbabilityUtil.rollRarity(),
+                r -> getTablePool(type, r).stream().anyMatch(enchantment -> !exclude.contains(enchantment)));
         if (rarity == null) {
             GardensEnchants.plugin.getLogger().severe("Could not find any table enchant for type %s!".formatted(type));
             return null;
         }
-        var enchantmentPool = getTablePool(type, rarity);
+        var enchantmentPool = getTablePool(type, rarity).stream().filter(enchantment -> !exclude.contains(enchantment)).toList();
         var enchantment = enchantmentPool.get(ProbabilityUtil.getRandomIndex(enchantmentPool.size()));
-        var level = ThreadLocalRandom.current().nextInt(1, enchantment.getMaxLevel() + 1);
+        var level = ProbabilityUtil.rollLevel(enchantment.getMaxLevel());
         return new EnchantmentInstance(enchantment, level);
     }
 
