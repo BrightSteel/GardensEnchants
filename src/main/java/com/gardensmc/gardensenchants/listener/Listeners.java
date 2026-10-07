@@ -12,6 +12,7 @@ public class Listeners {
         com.gardensmc.gardensenchants.events.WalkingStickEnchants.enable();
         com.gardensmc.gardensenchants.events.BackpackEnchants.enable();
         com.gardensmc.gardensenchants.events.ElytraEnchants.enable();
+        register(new com.gardensmc.gardensenchants.events.ToolEnchants());
         register(new AnvilListener());
         register(new EntityListener());
         register(new VillagerListener());

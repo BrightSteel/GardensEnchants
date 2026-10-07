@@ -175,6 +175,61 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.ELYTRA)
             .rarity(EnchantRarity.EPIC)
             .maxLevel(4));
+    // Overlooked tools: shears, fishing rods, shields, tridents, maces and spears (see events/ToolEnchants)
+    public static final CustomEnchantment SHEPHERDS_BOUNTY = register("shepherds_bounty", builder -> builder
+            .lore("<gray>Shear more wool, and sheep", "<gray>grow it back on their own")
+            .displayName("Shepherd's Bounty")
+            .enchantRestrict(EnchantRestricts.SHEARS)
+            .rarity(EnchantRarity.UNCOMMON)
+            .maxLevel(3));
+    public static final CustomEnchantment TOPIARY = register("topiary", builder -> builder
+            .lore("<gray>Cuts leaves, vines, grass and", "<gray>cobwebs around what you cut")
+            .enchantRestrict(EnchantRestricts.SHEARS)
+            .rarity(EnchantRarity.RARE));
+    public static final CustomEnchantment GENTLE = register("gentle", builder -> builder
+            .lore("<gray>Shear honeycomb from a hive", "<gray>without angering the bees")
+            .enchantRestrict(EnchantRestricts.SHEARS)
+            .rarity(EnchantRarity.UNCOMMON));
+    public static final CustomEnchantment GRAPPLE = register("grapple", builder -> builder
+            .lore("<gray>Reel in a hook caught on a block", "<gray>to pull yourself to it")
+            .enchantRestrict(EnchantRestricts.FISHING_ROD)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment YANK = register("yank", builder -> builder
+            .lore("<gray>Reel in a hooked mob", "<gray>to haul it right over")
+            .enchantRestrict(EnchantRestricts.FISHING_ROD)
+            .rarity(EnchantRarity.UNCOMMON));
+    public static final CustomEnchantment REFLECT = register("reflect", builder -> builder
+            .lore("<gray>Arrows you block fly back", "<gray>at whoever shot them")
+            .enchantRestrict(EnchantRestricts.SHIELD)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment BASH = register("bash", builder -> builder
+            .lore("<gray>Raise it while sneaking to shove", "<gray>back what's in front of you")
+            .enchantRestrict(EnchantRestricts.SHIELD)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(2));
+    public static final CustomEnchantment BULWARK = register("bulwark", builder -> builder
+            .lore("<gray>Hits you block", "<gray>don't push you back")
+            .enchantRestrict(EnchantRestricts.SHIELD)
+            .rarity(EnchantRarity.RARE));
+    public static final CustomEnchantment HOMING = register("homing", builder -> builder
+            .lore("<gray>Thrown, it curves toward", "<gray>the nearest hostile mob")
+            .enchantRestrict(EnchantRestricts.TRIDENT)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment TIDECALLER = register("tidecaller", builder -> builder
+            .lore("<gray>Riptide works out of water:", "<gray>right-click to launch, then recharge")
+            .enchantRestrict(EnchantRestricts.TRIDENT)
+            .conflictsWith(HOMING)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment SHOCKWAVE = register("shockwave", builder -> builder
+            .lore("<gray>A smash attack throws", "<gray>the mobs around it into the air")
+            .enchantRestrict(EnchantRestricts.MACE)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(2));
+    public static final CustomEnchantment IMPALE = register("impale", builder -> builder
+            .lore("<gray>A charged hit pins", "<gray>what it hits in place")
+            .enchantRestrict(EnchantRestricts.SPEAR)
+            .rarity(EnchantRarity.RARE)
+            .maxLevel(2));
     public static final CustomEnchantment FLIPPERS = register("flippers", builder -> builder
             .lore("<gray>Gain Dolphin's Grace while swimming")
             .enchantRestrict(EnchantRestricts.BOOTS)
