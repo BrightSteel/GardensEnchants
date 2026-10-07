@@ -25,7 +25,8 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 /**
  * Enchantments on EnderWardrobe's walking sticks, held in either hand: Steady resists knockback; Shepherd has farm
  * animals nearby follow, as they'd follow their food; Trekker makes walking, sprinting and jumping cost less hunger;
- * Mountaineer steps up a block higher (not while sneaking, as the stick's own step).
+ * Mountaineer steps up a block higher (not while sneaking, as the stick's own step); and vanilla's Soul Speed works as
+ * it would on boots (vanilla only looks at the feet), though it doesn't wear the stick any faster.
  */
 public final class WalkingStickEnchants implements Listener {
 
@@ -40,6 +41,7 @@ public final class WalkingStickEnchants implements Listener {
     private static final double MOUNTAINEER_STEP = 1.0;
 
     private static final NamespacedKey STEADY_KEY = new NamespacedKey(GardensEnchants.plugin, "steady");
+    private static final NamespacedKey SOUL_SPEED_KEY = new NamespacedKey(GardensEnchants.plugin, "soul_speed");
     private static final NamespacedKey MOUNTAINEER_KEY = new NamespacedKey(GardensEnchants.plugin, "mountaineer");
 
     private WalkingStickEnchants() {
@@ -47,6 +49,8 @@ public final class WalkingStickEnchants implements Listener {
 
     public static void enable() {
         Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, WalkingStickEnchants::tick, 20, 10);
+        // every tick, as vanilla checks what's underfoot
+        Bukkit.getScheduler().runTaskTimer(GardensEnchants.plugin, () -> Bukkit.getOnlinePlayers().forEach(WalkingStickEnchants::soulSpeed), 20, 1);
         Bukkit.getPluginManager().registerEvents(new WalkingStickEnchants(), GardensEnchants.plugin);
     }
 
@@ -77,6 +81,55 @@ public final class WalkingStickEnchants implements Listener {
         if (current != null && current.getAmount() == amount) return;
         if (current != null) resistance.removeModifier(STEADY_KEY);
         if (level > 0) resistance.addTransientModifier(new AttributeModifier(STEADY_KEY, amount, AttributeModifier.Operation.ADD_NUMBER));
+    }
+
+    /** Where each player was last tick, to tell whether they're moving (a player's velocity, server-side, isn't). */
+    private static final java.util.Map<java.util.UUID, org.bukkit.Location> LAST_AT = new java.util.HashMap<>();
+
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
+        LAST_AT.remove(e.getPlayer().getUniqueId());
+    }
+
+    /** Soul Speed's level on a walking stick in either hand, or 0. */
+    private static int heldSoulSpeed(Player player) {
+        int level = 0;
+        for (ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand()}) {
+            if (item != null && !item.isEmpty() && EnchantRestricts.WALKING_STICK.isEnchantable(item)) {
+                level = Math.max(level, item.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.SOUL_SPEED));
+            }
+        }
+        return level;
+    }
+
+    /**
+     * Soul Speed as vanilla's on boots: on soul sand or soul soil, no slowing and faster (0.0405, and 0.0105 more a
+     * level after the first), with souls kicked up as you go.
+     */
+    private static void soulSpeed(Player player) {
+        var speed = player.getAttribute(Attribute.MOVEMENT_SPEED);
+        var efficiency = player.getAttribute(Attribute.MOVEMENT_EFFICIENCY);
+        if (speed == null || efficiency == null) return;
+        int level = player.isFlying() || !player.isOnGround() ? 0 : heldSoulSpeed(player);
+        if (level > 0 && !org.bukkit.Tag.SOUL_SPEED_BLOCKS.isTagged(player.getLocation().subtract(0, 0.5, 0).getBlock().getType())) level = 0;
+        double amount = level > 0 ? 0.0405 + 0.0105 * (level - 1) : 0;
+        var current = speed.getModifier(SOUL_SPEED_KEY);
+        if (current == null ? amount != 0 : current.getAmount() != amount) {
+            if (current != null) {
+                speed.removeModifier(SOUL_SPEED_KEY);
+                efficiency.removeModifier(SOUL_SPEED_KEY);
+            }
+            if (amount != 0) {
+                speed.addTransientModifier(new AttributeModifier(SOUL_SPEED_KEY, amount, AttributeModifier.Operation.ADD_NUMBER));
+                efficiency.addTransientModifier(new AttributeModifier(SOUL_SPEED_KEY, 1.0, AttributeModifier.Operation.ADD_NUMBER));
+            }
+        }
+        var at = player.getLocation();
+        var last = LAST_AT.put(player.getUniqueId(), at);
+        boolean moving = last != null && last.getWorld() == at.getWorld() && last.distanceSquared(at) > 1e-4;
+        if (amount != 0 && moving && Math.random() < 0.25) {
+            player.getWorld().spawnParticle(org.bukkit.Particle.SOUL, player.getLocation().add(0, 0.1, 0), 1, 0.3, 0, 0.3, 0.02);
+        }
     }
 
     /** Mountaineer's step, on while it's held and its holder isn't sneaking. */

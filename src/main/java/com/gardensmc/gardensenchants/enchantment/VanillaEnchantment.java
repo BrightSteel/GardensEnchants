@@ -36,12 +36,17 @@ public class VanillaEnchantment extends GardensEnchantment {
     }
 
     /**
-     * Vanilla enchantments that also go on EnderWardrobe items, which wear out though vanilla doesn't know it.
+     * Vanilla enchantments that also go on EnderWardrobe items, and which ones: Unbreaking and Mending on all of them
+     * (they wear out though vanilla doesn't know it), Soul Speed on walking sticks (see events/WalkingStickEnchants).
      */
-    private static final Set<Enchantment> WARDROBE_ENCHANTMENTS = Set.of(Enchantment.UNBREAKING, Enchantment.MENDING);
+    private static final java.util.Map<Enchantment, com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict> WARDROBE_ENCHANTMENTS = java.util.Map.of(
+            Enchantment.UNBREAKING, EnchantRestricts.WARDROBE,
+            Enchantment.MENDING, EnchantRestricts.WARDROBE,
+            Enchantment.SOUL_SPEED, EnchantRestricts.WALKING_STICK);
 
     private boolean isWardrobeOnly(ItemStack itemStack) {
-        return WARDROBE_ENCHANTMENTS.contains(enchantment) && EnchantRestricts.WARDROBE.isEnchantable(itemStack);
+        var restrict = WARDROBE_ENCHANTMENTS.get(enchantment);
+        return restrict != null && restrict.isEnchantable(itemStack);
     }
 
     @Override

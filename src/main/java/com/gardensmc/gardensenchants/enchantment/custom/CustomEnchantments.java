@@ -173,7 +173,7 @@ public class CustomEnchantments {
     public static final CustomEnchantment PLATED = register("plated", builder -> builder
             .lore("<gray>Armors your elytra like a chestplate:", "<gray>leather, iron, diamond, netherite")
             .enchantRestrict(EnchantRestricts.ELYTRA)
-            .rarity(EnchantRarity.LEGENDARY)
+            .rarity(EnchantRarity.EPIC)
             .maxLevel(4));
     public static final CustomEnchantment FLIPPERS = register("flippers", builder -> builder
             .lore("<gray>Gain Dolphin's Grace while swimming")
