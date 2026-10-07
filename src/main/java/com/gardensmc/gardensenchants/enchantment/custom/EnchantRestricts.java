@@ -187,6 +187,11 @@ public class EnchantRestricts {
                     "golden_walking_stick", "diamond_walking_stick", "netherite_walking_stick")
             .build();
 
+    // Speedy: boots, and a walking stick held (they add up to Speedy's max level; see events/Events)
+    public static final EnchantRestrict SPEEDY = new EnchantRestrict.Builder("speedy")
+            .withChildren(BOOTS, WALKING_STICK)
+            .build();
+
     // backpacks with storage; their enchantments work on the one worn in EnderWardrobe's backpack slot
     public static final EnchantRestrict BACKPACK = new EnchantRestrict.Builder("backpack")
             .withBackpacks()

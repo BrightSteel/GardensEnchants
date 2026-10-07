@@ -50,7 +50,31 @@ public class Events implements Listener {
     public void onEquip(EntityEquipmentChangedEvent e) {
         if (e.getEntity() instanceof Player player) {
             e.getEquipmentChanges().forEach(((equipmentSlot, equipmentChange) -> onEquipmentChange(player, equipmentSlot, equipmentChange)));
+            speedy(player, e.getEquipmentChanges());
         }
+    }
+
+    /**
+     * Speedy's level: the boots' plus a walking stick's held in either hand (the higher hand), up to Speedy's max level.
+     * {@code before} stands in old items for the slots that just changed.
+     */
+    private static int speedyLevel(Player player, java.util.Map<EquipmentSlot, EntityEquipmentChangedEvent.EquipmentChange> before) {
+        int boots = 0, stick = 0;
+        for (var slot : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.HAND, EquipmentSlot.OFF_HAND}) {
+            var change = before.get(slot);
+            ItemStack item = change != null ? change.oldItem() : player.getInventory().getItem(slot);
+            if (item == null || item.isEmpty() || !SPEEDY.hasEnchantment(item)) continue;
+            if (slot == EquipmentSlot.FEET) boots = SPEEDY.getEnchantmentLevel(item);
+            else if (com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts.WALKING_STICK.isEnchantable(item)) stick = Math.max(stick, SPEEDY.getEnchantmentLevel(item));
+        }
+        return Math.min(SPEEDY.getMaxLevel(), boots + stick);
+    }
+
+    /** Sets the walk speed for Speedy's level now, unless something else (e.g. /speed) set it since Speedy did. */
+    private static void speedy(Player player, java.util.Map<EquipmentSlot, EntityEquipmentChangedEvent.EquipmentChange> changes) {
+        if (!changes.containsKey(EquipmentSlot.FEET) && !changes.containsKey(EquipmentSlot.HAND) && !changes.containsKey(EquipmentSlot.OFF_HAND)) return;
+        int was = speedyLevel(player, changes), now = speedyLevel(player, java.util.Map.of());
+        if (was != now && player.getWalkSpeed() == getSpeedyWalkSpeed(was)) player.setWalkSpeed(getSpeedyWalkSpeed(now));
     }
 
     private void onEquipmentChange(Player player, EquipmentSlot slot, EntityEquipmentChangedEvent.EquipmentChange change) {
@@ -60,14 +84,7 @@ public class Events implements Listener {
 
         // handle old item changes first to remove effects
         if (oldItem.getType() != Material.AIR) {
-            if (slot == EquipmentSlot.FEET) {
-                // only undo the speed Speedy set, so other speed changes (e.g. /speed) are kept
-                if (SPEEDY.hasEnchantment(oldItem)
-                        && player.getWalkSpeed() == getSpeedyWalkSpeed(SPEEDY.getEnchantmentLevel(oldItem))) {
-                    player.setWalkSpeed(0.2f);
-                }
-            }
-            else if (slot == EquipmentSlot.HEAD) {
+            if (slot == EquipmentSlot.HEAD) {
                 if (CustomEnchantments.NIGHT_VISION.hasEnchantment(oldItem)) {
                     // only remove the endless effect the helmet gave, not night vision from a potion
                     var effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
@@ -80,14 +97,7 @@ public class Events implements Listener {
 
         // handle new item second to add / re-add effect
         if (newItem.getType() != Material.AIR) {
-            if (slot == EquipmentSlot.FEET) {
-                if (SPEEDY.hasEnchantment(newItem)) {
-                    int lvl = SPEEDY.getEnchantmentLevel(newItem);
-                    player.setWalkSpeed(getSpeedyWalkSpeed(lvl));
-                }
-
-            }
-            else if (slot == EquipmentSlot.HEAD) {
+            if (slot == EquipmentSlot.HEAD) {
                 if (CustomEnchantments.NIGHT_VISION.hasEnchantment(newItem)) {
                     player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 1, false, false, true));
                 }
