@@ -31,6 +31,9 @@ public class EnchantRestrict {
     // EnderWardrobe's offhand items (items.yml there), by id: their enderwardrobe:offhand tag
     private List<String> permittedWardrobeItems;
 
+    // backpacks with storage, as EnderWardrobe tells them apart
+    private boolean permitsBackpacks;
+
     private static final NamespacedKey WARDROBE_OFFHAND = new NamespacedKey("enderwardrobe", "offhand");
 
     public EnchantRestrict(String id) {
@@ -81,11 +84,22 @@ public class EnchantRestrict {
     }
 
     private boolean isPermittedWardrobeItem(ItemStack itemStack) {
+        if (permitsBackpacks && isBackpack(itemStack)) {
+            return true;
+        }
         if (permittedWardrobeItems.isEmpty() || !itemStack.hasItemMeta()) {
             return false;
         }
         var id = itemStack.getItemMeta().getPersistentDataContainer().get(WARDROBE_OFFHAND, PersistentDataType.STRING);
         return id != null && permittedWardrobeItems.contains(id);
+    }
+
+    private static boolean isBackpack(ItemStack itemStack) {
+        if (org.bukkit.Bukkit.getPluginManager().getPlugin("EnderWardrobe") == null) {
+            return false;
+        }
+        var api = org.bukkit.Bukkit.getServicesManager().load(com.enderbeam.enderwardrobe.api.WardrobeApi.class);
+        return api != null && api.backpackRows(itemStack) > 0;
     }
 
     /**
@@ -96,6 +110,10 @@ public class EnchantRestrict {
         if (isLeaf()) {
             if (!permittedMaterials.isEmpty()) {
                 return List.of(new ItemStack(permittedMaterials.getFirst()));
+            }
+            if (permitsBackpacks) {
+                var sample = GardensFurniture.itemRegistry.buildItem("backpack");
+                return sample == null ? List.of() : List.of(sample);
             }
             if (!permittedWardrobeItems.isEmpty()) {
                 // stands in for the EnderWardrobe item: all that matters here is its tag
@@ -148,6 +166,7 @@ public class EnchantRestrict {
 
         private List<EnchantRestrict> children = new ArrayList<>();
         private final List<String> permittedWardrobeItems = new ArrayList<>();
+        private boolean permitsBackpacks;
 
         public Builder(String id) {
             this.id = id;
@@ -166,6 +185,12 @@ public class EnchantRestrict {
         // GardensFurniture items, by identifier
         public Builder withCustomIdentifiers(String... identifiers) {
             this.permittedIdentifiers.addAll(Arrays.asList(identifiers));
+            return this;
+        }
+
+        // backpacks with storage (EnderWardrobe's)
+        public Builder withBackpacks() {
+            this.permitsBackpacks = true;
             return this;
         }
 
@@ -204,7 +229,8 @@ public class EnchantRestrict {
                     permittedIdSuffixes,
                     icons,
                     children,
-                    permittedWardrobeItems
+                    permittedWardrobeItems,
+                    permitsBackpacks
             );
             registeredEnchantRestricts.put(id, enchantRestrict);
             return enchantRestrict;

@@ -187,6 +187,11 @@ public class EnchantRestricts {
                     "golden_walking_stick", "diamond_walking_stick", "netherite_walking_stick")
             .build();
 
+    // backpacks with storage; their enchantments work on the one worn in EnderWardrobe's backpack slot
+    public static final EnchantRestrict BACKPACK = new EnchantRestrict.Builder("backpack")
+            .withBackpacks()
+            .build();
+
     // items that wear out but that vanilla doesn't count as damageable, so its Unbreaking and Mending are let on
     public static final EnchantRestrict WARDROBE = new EnchantRestrict.Builder("wardrobe")
             .withChildren(BALLOON, WALKING_STICK)

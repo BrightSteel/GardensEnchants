@@ -79,6 +79,25 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.UNCOMMON)
             .maxLevel(2));
+    // EnderWardrobe backpacks (the one worn in its backpack slot; see events/BackpackEnchants)
+    public static final CustomEnchantment RESTOCK = register("restock", builder -> builder
+            .lore("<gray>Tops your hotbar back up", "<gray>from your backpack")
+            .enchantRestrict(EnchantRestricts.BACKPACK)
+            .rarity(EnchantRarity.RARE));
+    public static final CustomEnchantment QUICK_DEPOSIT = register("quick_deposit", builder -> builder
+            .lore("<gray>Sneak and use a chest to put in", "<gray>what it already holds")
+            .displayName("Quick Deposit")
+            .enchantRestrict(EnchantRestricts.BACKPACK)
+            .rarity(EnchantRarity.UNCOMMON));
+    public static final CustomEnchantment COMPACTOR = register("compactor", builder -> builder
+            .lore("<gray>Packs nines into blocks", "<gray>inside your backpack")
+            .enchantRestrict(EnchantRestricts.BACKPACK)
+            .rarity(EnchantRarity.EPIC));
+    public static final CustomEnchantment SNACK_POUCH = register("snack_pouch", builder -> builder
+            .lore("<gray>Eats from your backpack", "<gray>when you get hungry")
+            .displayName("Snack Pouch")
+            .enchantRestrict(EnchantRestricts.BACKPACK)
+            .rarity(EnchantRarity.RARE));
     // EnderWardrobe walking sticks (held, either hand; see events/WalkingStickEnchants)
     public static final CustomEnchantment STEADY = register("steady", builder -> builder
             .lore("<gray>Resist knockback while you hold it")
