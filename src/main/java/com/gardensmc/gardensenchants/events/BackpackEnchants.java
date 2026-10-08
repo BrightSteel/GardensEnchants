@@ -183,8 +183,12 @@ public final class BackpackEnchants implements Listener {
 
     // ---- Quick Deposit ----
 
-    /** Sneaking, empty-handed, using a container they may open: what it already holds goes in from the backpack. */
-    @EventHandler(priority = EventPriority.MONITOR)
+    /**
+     * Sneaking, empty-handed, using a container they may open: what it already holds goes in from the backpack, and
+     * the container doesn't open (it's a quick deposit; without sneaking it opens as ever). Last but for watchers, so
+     * a claim plugin has said whether they may use it.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onUseContainer(PlayerInteractEvent e) {
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK || e.getHand() != EquipmentSlot.HAND || e.getClickedBlock() == null) return;
         if (e.useInteractedBlock() == Event.Result.DENY) return;   // a claim, or anything else, says no
@@ -193,6 +197,8 @@ public final class BackpackEnchants implements Listener {
         if (!(e.getClickedBlock().getState() instanceof Container container)) return;
         var backpack = worn(player, QUICK_DEPOSIT);
         if (backpack == null) return;
+        e.setUseInteractedBlock(Event.Result.DENY);
+        e.setUseItemInHand(Event.Result.DENY);
         var chest = container.getInventory();
         var slots = slots(backpack);
         int moved = 0;
@@ -211,7 +217,10 @@ public final class BackpackEnchants implements Listener {
             moved += item.getAmount() - left;
             slots.set(i, left == 0 ? null : item.asQuantity(left));
         }
-        if (moved == 0) return;
+        if (moved == 0) {
+            player.sendActionBar(Component.text("Nothing here to deposit from your backpack", NamedTextColor.GRAY));
+            return;
+        }
         if (!save(player, backpack, slots)) {
             GardensEnchants.plugin.getLogger().warning("Quick Deposit couldn't save " + player.getName() + "'s backpack.");
             return;
