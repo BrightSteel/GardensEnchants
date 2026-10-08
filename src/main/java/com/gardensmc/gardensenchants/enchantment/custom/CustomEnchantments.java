@@ -66,9 +66,11 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .conflictsWith(UPDRAFT)
             .rarity(EnchantRarity.EPIC));
+    // Lift, Drift and Updraft are all jump in the air: one to a balloon
     public static final CustomEnchantment LIFT = register("lift", builder -> builder
-            .lore("<gray>Hold sneak in the air", "<gray>to rise for a moment")
+            .lore("<gray>Hold jump in the air", "<gray>to rise for a moment")
             .enchantRestrict(EnchantRestricts.BALLOON)
+            .conflictsWith(DRIFT, UPDRAFT)
             .rarity(EnchantRarity.EPIC));
     public static final CustomEnchantment BUOYANT = register("buoyant", builder -> builder
             .lore("<gray>Float up in water;", "<gray>sneak to dive")

@@ -37,7 +37,7 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
  * Enchantments on the balloon a player wears (EnderWardrobe's balloon slot, read through its API):
  * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers;
  * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, while jump is
- * held, lets them down gently; Lift, sneak held in the air, raises them a moment; Buoyant floats them up in water;
+ * held, lets them down gently; Lift, jump held in the air, raises them a moment; Buoyant floats them up in water;
  * Weathervane has the wind carry them along in rain.
  */
 public final class BalloonEnchants implements Listener {
@@ -52,7 +52,7 @@ public final class BalloonEnchants implements Listener {
     /** The fastest a drifting player falls (blocks a tick). */
     private static final double DRIFT_FALL = 0.12;
 
-    /** Lift: sneak held this long in the air starts it; it lasts at most this long; then it needs this long. */
+    /** Lift: jump held this long in the air starts it; it lasts at most this long; then it needs this long. */
     private static final int LIFT_HOLD_TICKS = 10, LIFT_MAX_TICKS = 60, LIFT_RECHARGE_TICKS = 400;
     /** Lift's rise, and Buoyant's (blocks a tick). */
     private static final double LIFT_RISE = 0.18, BUOYANT_RISE = 0.1;
@@ -60,8 +60,8 @@ public final class BalloonEnchants implements Listener {
     private static final double WIND_PER_LEVEL = 0.012;
 
     private final WardrobeApi wardrobe;
-    /** Ticks each player has held sneak in the air; ticks they've been lifted; the tick their Lift is ready again. */
-    private final java.util.Map<UUID, Integer> sneakHeld = new java.util.HashMap<>();
+    /** Ticks each player has held jump in the air; ticks they've been lifted; the tick their Lift is ready again. */
+    private final java.util.Map<UUID, Integer> jumpHeld = new java.util.HashMap<>();
     private final java.util.Map<UUID, Integer> lifting = new java.util.HashMap<>();
     private final java.util.Map<UUID, Long> liftReady = new java.util.HashMap<>();
     private long ticks;
@@ -181,14 +181,18 @@ public final class BalloonEnchants implements Listener {
         player.setVelocity(velocity.add(horizontal.normalize().multiply(push)));
     }
 
-    /** Lift: sneak held in the air for a moment raises them, for up to a few seconds; then it recharges. */
+    /**
+     * Lift: jump held in the air for a moment raises them, for up to a few seconds; then it recharges. Jump, as the
+     * client reports it pressed and let go: sneaking isn't reported reliably in the air, so Lift used to wait for
+     * the ground.
+     */
     private void lift(Player player, UUID id) {
-        if (!player.isSneaking() || !airborne(player) || liftReady.getOrDefault(id, 0L) > ticks) {
+        if (!holdingJump.contains(id) || !airborne(player) || liftReady.getOrDefault(id, 0L) > ticks) {
             if (lifting.remove(id) != null) liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
-            sneakHeld.remove(id);
+            jumpHeld.remove(id);
             return;
         }
-        int held = sneakHeld.merge(id, 1, Integer::sum);
+        int held = jumpHeld.merge(id, 1, Integer::sum);
         if (held < LIFT_HOLD_TICKS) return;
         var balloon = balloon(player);
         if (balloon == null || !LIFT.hasEnchantment(balloon)) return;
@@ -209,7 +213,7 @@ public final class BalloonEnchants implements Listener {
         var id = e.getPlayer().getUniqueId();
         holdingJump.remove(id);
         updraftUsed.remove(id);
-        sneakHeld.remove(id);
+        jumpHeld.remove(id);
         lifting.remove(id);
     }
 
