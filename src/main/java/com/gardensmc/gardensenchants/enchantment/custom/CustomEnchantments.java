@@ -57,10 +57,12 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.LEGENDARY)
             .maxLevel(3));
+    // a cooldown at I and II (8 and 4 seconds); at III, one every jump
     public static final CustomEnchantment UPDRAFT = register("updraft", builder -> builder
             .lore("<gray>Press jump in the air", "<gray>for one more jump")
             .enchantRestrict(EnchantRestricts.BALLOON)
-            .rarity(EnchantRarity.EPIC));
+            .rarity(EnchantRarity.EPIC)
+            .maxLevel(3));
     public static final CustomEnchantment DRIFT = register("drift", builder -> builder
             .lore("<gray>Hold jump as you start to fall", "<gray>to drift down for a moment")
             .enchantRestrict(EnchantRestricts.BALLOON)

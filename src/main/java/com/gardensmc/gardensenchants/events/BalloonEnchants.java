@@ -52,6 +52,8 @@ public final class BalloonEnchants implements Listener {
 
     /** Upward speed an Updraft jump gives (blocks a tick): about a normal jump's. */
     private static final double UPDRAFT_BOOST = 0.55;
+    /** Updraft's cooldown by level (I, II, III): 8 s, 4 s, and none (just one every jump). */
+    private static final int[] UPDRAFT_COOLDOWN_TICKS = {160, 80, 0};
     /** The fastest a drifting player falls (blocks a tick): about 4 blocks a second. */
     private static final double DRIFT_FALL = 0.2;
     /** Drift starts only within this many blocks of a fall's start (and lasts as long as Lift at its level). */
@@ -86,6 +88,8 @@ public final class BalloonEnchants implements Listener {
     private final Set<UUID> driftArmed = new HashSet<>();
     /** How long each drifting player's Drift lasts, by its level. */
     private final java.util.Map<UUID, Integer> driftLasts = new java.util.HashMap<>();
+    /** The tick each player's Updraft is ready again, after its cooldown (levels I and II). */
+    private final java.util.Map<UUID, Long> updraftReady = new java.util.HashMap<>();
     /** Players who've used their Updraft since they last stood on the ground. */
     private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
@@ -149,10 +153,15 @@ public final class BalloonEnchants implements Listener {
         if (pressed && airborne(player)) driftArmed.add(id);
         else if (!jump) driftArmed.remove(id);
         // Updraft: jump pressed in the air, once until they land
-        if (!pressed || !airborne(player) || updraftUsed.contains(id)) return;
+        if (!pressed || !airborne(player) || updraftUsed.contains(id) || updraftReady.getOrDefault(id, 0L) > ticks) return;
         var balloon = balloon(player);
         if (balloon == null || !UPDRAFT.hasEnchantment(balloon)) return;
         updraftUsed.add(id);
+        int cooldown = UPDRAFT_COOLDOWN_TICKS[Math.max(1, Math.min(UPDRAFT.getEnchantmentLevel(balloon), UPDRAFT_COOLDOWN_TICKS.length)) - 1];
+        if (cooldown > 0) {
+            updraftReady.put(id, ticks + cooldown);
+            showCooldown(player, cooldown);
+        }
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
         player.setFallDistance(0);
@@ -330,6 +339,7 @@ public final class BalloonEnchants implements Listener {
         var id = e.getPlayer().getUniqueId();
         holdingJump.remove(id);
         updraftUsed.remove(id);
+        updraftReady.remove(id);
         driftUsed.remove(id);
         driftArmed.remove(id);
         drifting.remove(id);
