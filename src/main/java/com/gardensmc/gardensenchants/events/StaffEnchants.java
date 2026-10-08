@@ -33,8 +33,10 @@ public final class StaffEnchants implements Listener {
 
     /** Knockback resistance per level of Steady (1 is none at all). */
     private static final double STEADY_PER_LEVEL = 0.2;
-    /** How far Shepherd reaches, how close the animals come, and how fast they walk. */
+    /** How far Shepherd reaches (as far as vanilla's food tempts), how close the animals come, and how fast they walk. */
     private static final double SHEPHERD_RANGE = 10, SHEPHERD_CLOSE = 2.5, SHEPHERD_SPEED = 1.1;
+    /** The animals following each player, to let go of when they stop (put the staff away, leave, go out of range). */
+    private static final java.util.Map<java.util.UUID, java.util.Set<java.util.UUID>> FOLLOWING = new java.util.HashMap<>();
 
     /** Less hunger per level of Trekker. */
     private static final double TREKKER_PER_LEVEL = 0.25;
@@ -70,7 +72,9 @@ public final class StaffEnchants implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             steady(player, held(player, STEADY));
             mountaineer(player, player.isSneaking());
-            if (held(player, SHEPHERD) > 0) shepherd(player);
+            var following = held(player, SHEPHERD) > 0 ? shepherd(player) : java.util.Set.<java.util.UUID>of();
+            letGo(FOLLOWING.remove(player.getUniqueId()), following);
+            if (!following.isEmpty()) FOLLOWING.put(player.getUniqueId(), following);
         }
     }
 
@@ -90,6 +94,7 @@ public final class StaffEnchants implements Listener {
     @EventHandler
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent e) {
         LAST_AT.remove(e.getPlayer().getUniqueId());
+        letGo(FOLLOWING.remove(e.getPlayer().getUniqueId()), java.util.Set.of());
     }
 
     /** Soul Speed's level on a staff in either hand, or 0. */
@@ -168,16 +173,30 @@ public final class StaffEnchants implements Listener {
     }
 
     /** Farm animals in range walk over, as to someone holding their food, and stop a little way off. */
-    private static void shepherd(Player player) {
+    /** Draws farm animals within range toward the player; returns the ones following. */
+    private static java.util.Set<java.util.UUID> shepherd(Player player) {
+        var following = new java.util.HashSet<java.util.UUID>();
         for (var entity : player.getNearbyEntities(SHEPHERD_RANGE, SHEPHERD_RANGE / 2, SHEPHERD_RANGE)) {
             if (!(entity instanceof Animals animal) || entity instanceof Tameable || animal.isLeashed() || animal.isInsideVehicle()) continue;
             double distance = animal.getLocation().distance(player.getLocation());
+            if (distance > SHEPHERD_RANGE) continue; // a sphere, as vanilla's food reaches, not the search's box
+            following.add(animal.getUniqueId());
             if (distance <= SHEPHERD_CLOSE) {
                 animal.getPathfinder().stopPathfinding();
                 animal.lookAt(player);
             } else {
                 animal.getPathfinder().moveTo(player, SHEPHERD_SPEED);
             }
+        }
+        return following;
+    }
+
+    /** Animals that were following and aren't now stop walking over: back to whatever they'd do on their own. */
+    private static void letGo(@org.jetbrains.annotations.Nullable java.util.Set<java.util.UUID> were, java.util.Set<java.util.UUID> now) {
+        if (were == null) return;
+        for (var id : were) {
+            if (now.contains(id)) continue;
+            if (Bukkit.getEntity(id) instanceof Animals animal) animal.getPathfinder().stopPathfinding();
         }
     }
 }
