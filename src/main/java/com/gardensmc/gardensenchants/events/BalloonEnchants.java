@@ -68,6 +68,8 @@ public final class BalloonEnchants implements Listener {
      * Lift goes on, keeping it ahead of its rising wearer.
      */
     private static final double UPDRAFT_TUG = 0.7, LIFT_TUG = 0.8, LIFT_TUG_HOLD = 0.12;
+    /** The same for Drift: softer, as it slows a fall rather than lifting. */
+    private static final double DRIFT_TUG = 0.5, DRIFT_TUG_HOLD = 0.08;
     /** Lift's rise, and Buoyant's (blocks a tick). */
     private static final double LIFT_RISE = 0.18, BUOYANT_RISE = 0.1;
     /** Weathervane's push along the way they walk, per level (blocks a tick); doubled in a thunderstorm. */
@@ -214,6 +216,14 @@ public final class BalloonEnchants implements Listener {
         drifting.put(id, drifted + 1);
         if (velocity.getY() < -DRIFT_FALL) player.setVelocity(velocity.setY(-DRIFT_FALL));
         player.setFallDistance(0);
+        // the balloon holds them up: it rises to the end of its lead as Drift starts and stays there, puffing gently
+        wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, drifted == 0 ? DRIFT_TUG : DRIFT_TUG_HOLD, 0));
+        if (drifted == 0) {
+            puff(player, 5);
+            player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.4f, 1.8f);
+        } else if (drifted % 6 == 0) {
+            puff(player, 1);
+        }
     }
 
     /**
