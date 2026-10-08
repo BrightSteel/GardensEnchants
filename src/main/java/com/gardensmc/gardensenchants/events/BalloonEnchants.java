@@ -95,8 +95,13 @@ public final class BalloonEnchants implements Listener {
     /** Players who've used their Updraft since they last stood on the ground. */
     private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
-    /** The cooldown group balloons are in, so their recharge shows on them. */
-    private static final Key COOLDOWN = Key.key("gardens", "balloon");
+    /**
+     * The cooldown groups balloons are put in, so their recharge shows on them: one per ability (a balloon has one of
+     * Lift and Updraft at most), so one balloon's recharge doesn't show on another's that does something else.
+     */
+    private static final Key LIFT_COOLDOWN = Key.key("gardens", "balloon_lift"),
+            UPDRAFT_COOLDOWN = Key.key("gardens", "balloon_updraft"),
+            TETHERED_COOLDOWN = Key.key("gardens", "balloon_tethered");
     private final NamespacedKey tetheredReadyKey = new NamespacedKey(GardensEnchants.plugin, "tethered_ready_at");
 
     private BalloonEnchants(WardrobeApi wardrobe) {
@@ -228,18 +233,26 @@ public final class BalloonEnchants implements Listener {
 
     /**
      * Shows a balloon's recharge on the balloon itself, as an ender pearl shows its: the cooldown sweep over it in
-     * /wardrobe and GardensCompanion's slot. The balloon is put in {@link #COOLDOWN}'s group the first time; the
-     * longer of two cooldowns (Lift's and Tethered's) shows.
+     * /wardrobe and GardensCompanion's slot. The balloon is put in its group (see {@link #cooldownGroup}) the first time;
+     * the longer of two cooldowns on one balloon (Lift's and Tethered's) shows.
      */
     private void showCooldown(Player player, int ticks) {
         var balloon = balloon(player);
         if (balloon == null) return;
+        var group = cooldownGroup(balloon);
         var cooldown = balloon.getData(DataComponentTypes.USE_COOLDOWN);
-        if (cooldown == null || !COOLDOWN.equals(cooldown.cooldownGroup())) {
-            balloon.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(1).cooldownGroup(COOLDOWN).build());
+        if (cooldown == null || !group.equals(cooldown.cooldownGroup())) {
+            balloon.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(1).cooldownGroup(group).build());
             wardrobe.setWorn(player, "balloon", balloon);
         }
-        player.setCooldown(COOLDOWN, Math.max(ticks, player.getCooldown(COOLDOWN)));
+        player.setCooldown(group, Math.max(ticks, player.getCooldown(group)));
+    }
+
+    /** A balloon's cooldown group: its Lift's or Updraft's, else Tethered's. */
+    private static Key cooldownGroup(ItemStack balloon) {
+        if (LIFT.hasEnchantment(balloon)) return LIFT_COOLDOWN;
+        if (UPDRAFT.hasEnchantment(balloon)) return UPDRAFT_COOLDOWN;
+        return TETHERED_COOLDOWN;
     }
 
     /** Tethered's recovery outlasts a log out: shown again on joining. */
