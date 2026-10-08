@@ -60,7 +60,7 @@ public final class BalloonEnchants implements Listener {
     private static final double DRIFT_START_WITHIN = 3;
 
     /** Lift: jump held this long in the air starts it; then it needs this long. */
-    private static final int LIFT_HOLD_TICKS = 10, LIFT_RECHARGE_TICKS = 400;
+    private static final int LIFT_HOLD_TICKS = 10, LIFT_RECHARGE_TICKS = 160;
     /** How long Lift and Drift last at most, by level (I, II, III): 2, 3 and 4 seconds. */
     private static final int[] LASTS_TICKS = {40, 60, 80};
     /**
