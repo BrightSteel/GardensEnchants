@@ -156,8 +156,9 @@ public final class BalloonEnchants implements Listener {
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
         player.setFallDistance(0);
-        // the balloon jerks up first, as if it pulled them
+        // the balloon jerks up first, as if it pulled them; it's a jump, and wears the balloon like one
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));
+        wardrobe.wearBalloon(player, 1);
         puff(player, 6);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 0.6f, 1.3f);
     }
@@ -194,6 +195,7 @@ public final class BalloonEnchants implements Listener {
             if (balloon == null || !DRIFT.hasEnchantment(balloon)) return;
             driftUsed.add(id);
             driftLasts.put(id, lasts(DRIFT.getEnchantmentLevel(balloon)));
+            wardrobe.wearBalloon(player, 1);
             drifted = 0;
         } else if (!holding || drifted >= driftLasts.getOrDefault(id, LASTS_TICKS[0])) {
             drifting.remove(id);
@@ -303,6 +305,8 @@ public final class BalloonEnchants implements Listener {
         player.setFallDistance(0);
         // the balloon shoots up and stays ahead, its lead taut, puffing as it goes: it's what lifts them
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, lifted == 1 ? LIFT_TUG : LIFT_TUG_HOLD, 0));
+        // one use as it starts, and one for each second after
+        if (lifted % 20 == 1) wardrobe.wearBalloon(player, 1);
         if (lifted == 1) {
             puff(player, 8);
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.5f, 1.5f);
