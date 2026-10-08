@@ -1,6 +1,7 @@
 package com.gardensmc.gardensenchants.gui;
 
 import com.gardensmc.gardensenchants.books.BooksHandler;
+import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantment;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantments;
@@ -19,33 +20,86 @@ import java.util.stream.Collectors;
 
 public class EnchantingBooksMenu extends Menu {
 
+    // a row of item type tabs over the books (1-7, and > for more of them), then the books, then back and next
     public static String[] layout = new String[]{
+            " 1234567>",
             " bbbbbbb ",
             " bbbbbbb ",
             " bbbbbbb ",
             "   p n   "
     };
+    private static final int TABS_PER_PAGE = 7;
 
     private final boolean isFullBookSetup;
+    private final List<GardensEnchantment> enchants;
+    private final List<EnchantTypeTabs.Tab> tabs;
+    private final GuiElementGroup books = new GuiElementGroup('b');
+    private EnchantTypeTabs.Tab selected;
+    private int tabPage;
 
     public EnchantingBooksMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + "\u0121", viewer);
         this.isFullBookSetup = isFullBookSetup;
+        this.enchants = Arrays.stream(EnchantRarity.values())
+                .flatMap(rarity -> GardensEnchantments.INSTANCE.getEnchantments(rarity)
+                        .stream()
+                        .sorted(Comparator.comparing(GardensEnchantment::getId)))
+                .toList();
+        this.tabs = EnchantTypeTabs.available(enchants);
+        this.selected = tabs.getFirst();
         initElements();
     }
 
     private void initElements() {
-        GuiElementGroup grp = new GuiElementGroup('b');
-        Collection<GuiElement> books = Arrays.stream(EnchantRarity.values())
-                .flatMap(rarity -> GardensEnchantments.INSTANCE.getEnchantments(rarity)
-                        .stream()
-                        .sorted(Comparator.comparing(GardensEnchantment::getId)))
-                .map(enchant -> new StaticGuiElement('a', buildBook(enchant)))
-                .collect(Collectors.toList());
-        grp.addElements(books);
-        gui.addElement(grp);
+        fillBooks();
+        gui.addElement(books);
+        for (int i = 0; i < TABS_PER_PAGE; i++) gui.addElement(buildTab(i));
+        gui.addElement(buildMoreTabsButton());
         gui.addElement(buildBackButton(() -> new EnchantingMenu(viewer, isFullBookSetup), "<gold>Back to Enchanting Table"));
         gui.addElement(buildNextButton());
+    }
+
+    /** The books the selected tab shows. */
+    private void fillBooks() {
+        books.clearElements();
+        books.addElements(enchants.stream()
+                .filter(selected::shows)
+                .map(enchant -> (GuiElement) new StaticGuiElement('a', buildBook(enchant)))
+                .toList());
+    }
+
+    /** The tab in a slot of the tab row (0-6), on the tab page shown; empty past the last tab. */
+    private DynamicGuiElement buildTab(int slot) {
+        char at = (char) ('1' + slot);
+        return new DynamicGuiElement(at, () -> {
+            int index = tabPage * TABS_PER_PAGE + slot;
+            if (index >= tabs.size()) return null;
+            var tab = tabs.get(index);
+            boolean isSelected = tab == selected;
+            long count = enchants.stream().filter(tab::shows).count();
+            return new StaticGuiElement(at, EnchantTypeTabs.icon(tab, isSelected), click -> {
+                if (tab != selected) {
+                    selected = tab;
+                    fillBooks();
+                    gui.setPageNumber(viewer, 0);
+                    gui.draw();
+                }
+                return true;
+            }, (isSelected ? "<gold>" : "<yellow>") + tab.name(),
+                    "<gray>" + count + " enchantment" + (count == 1 ? "" : "s"),
+                    isSelected ? "<dark_gray>Showing" : "<dark_gray>Click to show");
+        });
+    }
+
+    /** Shows the next tabs, round to the first again; only there when they don't all fit in the row. */
+    private DynamicGuiElement buildMoreTabsButton() {
+        int pages = (tabs.size() + TABS_PER_PAGE - 1) / TABS_PER_PAGE;
+        return new DynamicGuiElement('>', () -> pages <= 1 ? null
+                : new StaticGuiElement('>', GardensFurniture.itemRegistry.buildItem("next_button"), click -> {
+                    tabPage = (tabPage + 1) % pages;
+                    gui.draw();
+                    return true;
+                }, "<gold>More item types", "<gray>Page " + (tabPage + 1) + " of " + pages));
     }
 
     private ItemStack buildBook(GardensEnchantment enchant) {

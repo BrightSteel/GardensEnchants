@@ -82,15 +82,20 @@ public abstract class GardensEnchantment {
         return getId() + "_book";
     }
 
+    /** The item types (leaf restricts) this enchant really goes on: its restrict's, where a sample item takes it. */
+    public List<EnchantRestrict> getPermittedTypes() {
+        return restrict.getLeaves().stream()
+                .filter(type -> type.getSampleItems().stream().anyMatch(this::canEnchant))
+                .toList();
+    }
+
     /**
      * Icons for the item types this enchant really goes on. A restrict can be broader than vanilla allows
      * (Looting's "weapon" covers axes, which vanilla keeps it off), so types it can't go on are left out.
      */
     public List<Character> getPermittedItemIcons() {
         var types = restrict.getLeaves();
-        var permitted = types.stream()
-                .filter(type -> type.getSampleItems().stream().anyMatch(this::canEnchant))
-                .toList();
+        var permitted = getPermittedTypes();
         if (permitted.size() == types.size()) {
             return restrict.iconRepresentation(); // all of them, keeping any icons set for the group
         }
