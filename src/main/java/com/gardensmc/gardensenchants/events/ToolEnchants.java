@@ -242,25 +242,39 @@ public final class ToolEnchants implements Listener {
     private static final UUID NO_TARGET = new UUID(0, 0);
     /** How far Homing looks, and a trident's gravity a tick, made up for each turn so it flies where it's aimed. */
     private static final double HOMING_RANGE = 10, TRIDENT_GRAVITY = 0.05;
+    /**
+     * How far off its flight a mob may be for Homing to choose it, by level (I, II, III): 20, 30 and 40 degrees either
+     * side, as the cosine (a mob is in the cone when its direction's dot with the heading is at least this).
+     */
+    private static final double[] HOMING_CONE = {Math.cos(Math.toRadians(20)), Math.cos(Math.toRadians(30)), Math.cos(Math.toRadians(40))};
+    /** Each homing trident's cone, by its Homing level. */
+    private final java.util.Map<UUID, Double> homingCone = new java.util.HashMap<>();
 
     @EventHandler(ignoreCancelled = true)
     public void onThrow(ProjectileLaunchEvent e) {
         if (!(e.getEntity() instanceof Trident trident) || !(trident.getShooter() instanceof Player)) return;
         if (!HOMING.hasEnchantment(trident.getItemStack())) return;
         homing.put(trident.getUniqueId(), NO_TARGET);
+        int level = Math.max(1, Math.min(HOMING.getEnchantmentLevel(trident.getItemStack()), HOMING_CONE.length));
+        homingCone.put(trident.getUniqueId(), HOMING_CONE[level - 1]);
         trident.getScheduler().runAtFixedRate(GardensEnchants.plugin, task -> {
             if (!trident.isValid() || trident.isInBlock() || !homing.containsKey(trident.getUniqueId()) || trident.getTicksLived() > 60) {
                 homing.remove(trident.getUniqueId());
+                homingCone.remove(trident.getUniqueId());
                 task.cancel();
                 return;
             }
             steer(trident);
-        }, () -> homing.remove(trident.getUniqueId()), 2, 1);
+        }, () -> {
+            homing.remove(trident.getUniqueId());
+            homingCone.remove(trident.getUniqueId());
+        }, 2, 1);
     }
 
     @EventHandler
     public void onTridentHit(ProjectileHitEvent e) {
         homing.remove(e.getEntity().getUniqueId());
+        homingCone.remove(e.getEntity().getUniqueId());
     }
 
     /**
@@ -284,7 +298,10 @@ public final class ToolEnchants implements Listener {
         trident.setVelocity(turned.setY(turned.getY() + TRIDENT_GRAVITY));
     }
 
-    /** The mob a trident is locked onto, choosing the nearest hostile one ahead of it if it has none (or it's gone). */
+    /**
+     * The mob a trident is locked onto, choosing the nearest hostile one in its cone ahead (narrower at lower levels) if
+     * it has none (or it's gone).
+     */
     @org.jetbrains.annotations.Nullable
     private Mob locked(Trident trident, Vector heading) {
         var id = homing.get(trident.getUniqueId());
@@ -294,11 +311,12 @@ public final class ToolEnchants implements Listener {
         }
         Mob best = null;
         double bestDistance = Double.MAX_VALUE;
+        double cone = homingCone.getOrDefault(trident.getUniqueId(), HOMING_CONE[0]);
         for (Entity entity : trident.getNearbyEntities(HOMING_RANGE, HOMING_RANGE, HOMING_RANGE)) {
             if (!(entity instanceof Mob mob) || !(entity instanceof Enemy) || mob.isDead()) continue;
             Vector to = mob.getLocation().add(0, mob.getHeight() / 2, 0).toVector().subtract(trident.getLocation().toVector());
             double distance = to.length();
-            if (distance < 0.5 || to.clone().normalize().dot(heading) < 0.6 || distance >= bestDistance) continue;
+            if (distance < 0.5 || to.clone().normalize().dot(heading) < cone || distance >= bestDistance) continue;
             best = mob;
             bestDistance = distance;
         }

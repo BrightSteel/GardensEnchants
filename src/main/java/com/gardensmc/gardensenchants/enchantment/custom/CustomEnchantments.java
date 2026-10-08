@@ -218,9 +218,10 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.SHIELD)
             .rarity(EnchantRarity.RARE));
     public static final CustomEnchantment HOMING = register("homing", builder -> builder
-            .lore("<gray>Thrown, it curves toward", "<gray>the nearest hostile mob")
+            .lore("<gray>Thrown, it curves toward", "<gray>a hostile mob you aim near")
             .enchantRestrict(EnchantRestricts.TRIDENT)
-            .rarity(EnchantRarity.EPIC));
+            .rarity(EnchantRarity.EPIC)
+            .maxLevel(3));
     public static final CustomEnchantment TIDECALLER = register("tidecaller", builder -> builder
             .lore("<gray>Riptide works out of water:", "<gray>right-click to launch, then recharge")
             .enchantRestrict(EnchantRestricts.TRIDENT)
