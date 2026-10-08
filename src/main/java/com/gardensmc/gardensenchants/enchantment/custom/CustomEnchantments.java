@@ -57,7 +57,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.LEGENDARY)
             .maxLevel(3));
-    // a cooldown of 6, 3 or 1 seconds by level
+    // a cooldown of 5, 3 or 1 seconds by level
     public static final CustomEnchantment UPDRAFT = register("updraft", builder -> builder
             .lore("<gray>Press jump in the air", "<gray>for one more jump")
             .enchantRestrict(EnchantRestricts.BALLOON)

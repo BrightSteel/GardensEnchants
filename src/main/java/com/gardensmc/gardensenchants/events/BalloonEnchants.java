@@ -52,8 +52,8 @@ public final class BalloonEnchants implements Listener {
 
     /** Upward speed an Updraft jump gives (blocks a tick): about a normal jump's. */
     private static final double UPDRAFT_BOOST = 0.55;
-    /** Updraft's cooldown by level (I, II, III): 6, 3 and 1 seconds (and one a jump at most). */
-    private static final int[] UPDRAFT_COOLDOWN_TICKS = {120, 60, 20};
+    /** Updraft's cooldown by level (I, II, III): 5, 3 and 1 seconds (and one a jump at most). */
+    private static final int[] UPDRAFT_COOLDOWN_TICKS = {100, 60, 20};
     /** The fastest a drifting player falls (blocks a tick): about 4 blocks a second. */
     private static final double DRIFT_FALL = 0.2;
     /** Drift starts only within this many blocks of a fall's start (and lasts as long as Lift at its level). */
