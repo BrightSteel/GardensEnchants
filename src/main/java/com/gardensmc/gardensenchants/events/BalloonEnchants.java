@@ -51,11 +51,13 @@ public final class BalloonEnchants implements Listener {
     private static final double UPDRAFT_BOOST = 0.55;
     /** The fastest a drifting player falls (blocks a tick): about 4 blocks a second. */
     private static final double DRIFT_FALL = 0.2;
-    /** Drift starts only within this many blocks of a fall's start, and lasts at most as long as Lift. */
+    /** Drift starts only within this many blocks of a fall's start (and lasts as long as Lift at its level). */
     private static final double DRIFT_START_WITHIN = 3;
 
-    /** Lift: jump held this long in the air starts it; it lasts at most this long; then it needs this long. */
-    private static final int LIFT_HOLD_TICKS = 10, LIFT_MAX_TICKS = 60, LIFT_RECHARGE_TICKS = 400;
+    /** Lift: jump held this long in the air starts it; then it needs this long. */
+    private static final int LIFT_HOLD_TICKS = 10, LIFT_RECHARGE_TICKS = 400;
+    /** How long Lift and Drift last at most, by level (I, II, III): 2, 3 and 4 seconds. */
+    private static final int[] LASTS_TICKS = {40, 60, 80};
     /**
      * How hard the balloon is yanked up (blocks a tick) when Updraft or Lift starts or Tethered catches, and each tick
      * Lift goes on, keeping it ahead of its rising wearer.
@@ -77,6 +79,8 @@ public final class BalloonEnchants implements Listener {
     /** Ticks each drifting player has drifted; players who've had their Drift this fall. */
     private final java.util.Map<UUID, Integer> drifting = new java.util.HashMap<>();
     private final Set<UUID> driftUsed = new HashSet<>();
+    /** How long each drifting player's Drift lasts, by its level. */
+    private final java.util.Map<UUID, Integer> driftLasts = new java.util.HashMap<>();
     /** Players who've used their Updraft since they last stood on the ground. */
     private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
@@ -156,6 +160,7 @@ public final class BalloonEnchants implements Listener {
                 updraftUsed.remove(id);
                 driftUsed.remove(id);
                 drifting.remove(id);
+                driftLasts.remove(id);
             }
             buoyant(player);
             weathervane(player);
@@ -166,7 +171,7 @@ public final class BalloonEnchants implements Listener {
 
     /**
      * Drift: jump held from early in a fall (its first few blocks) caps the fall and does away with its damage, for at
-     * most as long as Lift lasts. Once a fall: letting go of jump, or running out of time, ends it until they land.
+     * most as long as Lift at the same level. Once a fall: letting go of jump, or running out of time, ends it until they land.
      */
     private void drift(Player player, UUID id) {
         boolean holding = holdingJump.contains(id) && airborne(player);
@@ -177,14 +182,20 @@ public final class BalloonEnchants implements Listener {
             var balloon = balloon(player);
             if (balloon == null || !DRIFT.hasEnchantment(balloon)) return;
             driftUsed.add(id);
+            driftLasts.put(id, lasts(DRIFT.getEnchantmentLevel(balloon)));
             drifted = 0;
-        } else if (!holding || drifted >= LIFT_MAX_TICKS) {
+        } else if (!holding || drifted >= driftLasts.getOrDefault(id, LASTS_TICKS[0])) {
             drifting.remove(id);
             return;
         }
         drifting.put(id, drifted + 1);
         if (velocity.getY() < -DRIFT_FALL) player.setVelocity(velocity.setY(-DRIFT_FALL));
         player.setFallDistance(0);
+    }
+
+    /** How long Lift or Drift at a level lasts, in ticks. */
+    private static int lasts(int level) {
+        return LASTS_TICKS[Math.max(1, Math.min(level, LASTS_TICKS.length)) - 1];
     }
 
     /**
@@ -239,7 +250,7 @@ public final class BalloonEnchants implements Listener {
         var balloon = balloon(player);
         if (balloon == null || !LIFT.hasEnchantment(balloon)) return;
         int lifted = lifting.merge(id, 1, Integer::sum);
-        if (lifted > LIFT_MAX_TICKS) {
+        if (lifted > lasts(LIFT.getEnchantmentLevel(balloon))) {
             lifting.remove(id);
             liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
             return;
@@ -264,6 +275,7 @@ public final class BalloonEnchants implements Listener {
         updraftUsed.remove(id);
         driftUsed.remove(id);
         drifting.remove(id);
+        driftLasts.remove(id);
         jumpHeld.remove(id);
         lifting.remove(id);
     }
