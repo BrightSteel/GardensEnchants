@@ -318,17 +318,20 @@ public final class BalloonEnchants implements Listener {
     }
 
     /**
-     * Lift: jump held in the air for a moment raises them, for up to a few seconds; then it recharges. Jump, as the
+     * Lift: jump held for a moment (on the ground before a jump counts too) raises them in the air, for up to a few seconds; then it recharges. Jump, as the
      * client reports it pressed and let go: sneaking isn't reported reliably in the air, so Lift used to wait for
      * the ground.
      */
     private void lift(Player player, UUID id) {
-        if (!holdingJump.contains(id) || !airborne(player) || liftReady.getOrDefault(id, 0L) > ticks) {
+        boolean holding = holdingJump.contains(id), ready = liftReady.getOrDefault(id, 0L) <= ticks;
+        if (!holding || !airborne(player) || !ready) {
             if (lifting.remove(id) != null) {
                 liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
                 showCooldown(player, LIFT_RECHARGE_TICKS);
             }
-            jumpHeld.remove(id);
+            // jump held on the ground counts too, so holding it through a jump starts Lift as they leave the ground
+            if (holding && ready && player.isOnGround()) jumpHeld.merge(id, 1, Integer::sum);
+            else jumpHeld.remove(id);
             return;
         }
         int held = jumpHeld.merge(id, 1, Integer::sum);
