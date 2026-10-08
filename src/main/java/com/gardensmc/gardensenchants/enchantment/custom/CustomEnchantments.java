@@ -62,7 +62,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.EPIC));
     public static final CustomEnchantment DRIFT = register("drift", builder -> builder
-            .lore("<gray>Hold jump while falling", "<gray>to drift gently down")
+            .lore("<gray>Hold jump as you start to fall", "<gray>to drift down for a moment")
             .enchantRestrict(EnchantRestricts.BALLOON)
             .conflictsWith(UPDRAFT)
             .rarity(EnchantRarity.EPIC));

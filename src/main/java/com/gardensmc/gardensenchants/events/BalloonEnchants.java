@@ -36,8 +36,8 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 /**
  * Enchantments on the balloon a player wears (EnderWardrobe's balloon slot, read through its API):
  * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers;
- * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, while jump is
- * held, lets them down gently; Lift, jump held in the air, raises them a moment; Buoyant floats them up in water;
+ * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, jump held from
+ * early in a fall, lets them down gently for a few seconds; Lift, jump held in the air, raises them a moment; Buoyant floats them up in water;
  * Weathervane has the wind carry them along in rain.
  */
 public final class BalloonEnchants implements Listener {
@@ -51,6 +51,8 @@ public final class BalloonEnchants implements Listener {
     private static final double UPDRAFT_BOOST = 0.55;
     /** The fastest a drifting player falls (blocks a tick): about 4 blocks a second. */
     private static final double DRIFT_FALL = 0.2;
+    /** Drift starts only within this many blocks of a fall's start, and lasts at most as long as Lift. */
+    private static final double DRIFT_START_WITHIN = 3;
 
     /** Lift: jump held this long in the air starts it; it lasts at most this long; then it needs this long. */
     private static final int LIFT_HOLD_TICKS = 10, LIFT_MAX_TICKS = 60, LIFT_RECHARGE_TICKS = 400;
@@ -72,6 +74,9 @@ public final class BalloonEnchants implements Listener {
     private long ticks;
     /** Players holding jump. */
     private final Set<UUID> holdingJump = new HashSet<>();
+    /** Ticks each drifting player has drifted; players who've had their Drift this fall. */
+    private final java.util.Map<UUID, Integer> drifting = new java.util.HashMap<>();
+    private final Set<UUID> driftUsed = new HashSet<>();
     /** Players who've used their Updraft since they last stood on the ground. */
     private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
@@ -147,19 +152,39 @@ public final class BalloonEnchants implements Listener {
         ticks++;
         for (Player player : Bukkit.getOnlinePlayers()) {
             var id = player.getUniqueId();
-            if (player.isOnGround()) updraftUsed.remove(id);
+            if (player.isOnGround()) {
+                updraftUsed.remove(id);
+                driftUsed.remove(id);
+                drifting.remove(id);
+            }
             buoyant(player);
             weathervane(player);
             lift(player, id);
-            // Drift: holding jump while falling, the fall is capped and does no damage
-            if (!holdingJump.contains(id) || !airborne(player)) continue;
-            var velocity = player.getVelocity();
-            if (velocity.getY() >= -DRIFT_FALL) continue;
-            var balloon = balloon(player);
-            if (balloon == null || !DRIFT.hasEnchantment(balloon)) continue;
-            player.setVelocity(velocity.setY(-DRIFT_FALL));
-            player.setFallDistance(0);
+            drift(player, id);
         }
+    }
+
+    /**
+     * Drift: jump held from early in a fall (its first few blocks) caps the fall and does away with its damage, for at
+     * most as long as Lift lasts. Once a fall: letting go of jump, or running out of time, ends it until they land.
+     */
+    private void drift(Player player, UUID id) {
+        boolean holding = holdingJump.contains(id) && airborne(player);
+        var velocity = player.getVelocity();
+        Integer drifted = drifting.get(id);
+        if (drifted == null) {
+            if (!holding || driftUsed.contains(id) || velocity.getY() >= 0 || player.getFallDistance() > DRIFT_START_WITHIN) return;
+            var balloon = balloon(player);
+            if (balloon == null || !DRIFT.hasEnchantment(balloon)) return;
+            driftUsed.add(id);
+            drifted = 0;
+        } else if (!holding || drifted >= LIFT_MAX_TICKS) {
+            drifting.remove(id);
+            return;
+        }
+        drifting.put(id, drifted + 1);
+        if (velocity.getY() < -DRIFT_FALL) player.setVelocity(velocity.setY(-DRIFT_FALL));
+        player.setFallDistance(0);
     }
 
     /**
@@ -237,6 +262,8 @@ public final class BalloonEnchants implements Listener {
         var id = e.getPlayer().getUniqueId();
         holdingJump.remove(id);
         updraftUsed.remove(id);
+        driftUsed.remove(id);
+        drifting.remove(id);
         jumpHeld.remove(id);
         lifting.remove(id);
     }
