@@ -236,16 +236,20 @@ public final class ToolEnchants implements Listener {
 
     // ---- Tridents ----
 
-    /** Tridents thrown with Homing, until they hit something. */
-    private final Set<UUID> homing = new HashSet<>();
+    /** Tridents thrown with Homing, until they hit something, and the mob each has locked onto (once it has one). */
+    private final java.util.Map<UUID, UUID> homing = new java.util.HashMap<>();
+    /** Nothing locked onto yet. */
+    private static final UUID NO_TARGET = new UUID(0, 0);
+    /** How far Homing looks, and a trident's gravity a tick, made up for each turn so it flies where it's aimed. */
+    private static final double HOMING_RANGE = 10, TRIDENT_GRAVITY = 0.05;
 
     @EventHandler(ignoreCancelled = true)
     public void onThrow(ProjectileLaunchEvent e) {
         if (!(e.getEntity() instanceof Trident trident) || !(trident.getShooter() instanceof Player)) return;
         if (!HOMING.hasEnchantment(trident.getItemStack())) return;
-        homing.add(trident.getUniqueId());
+        homing.put(trident.getUniqueId(), NO_TARGET);
         trident.getScheduler().runAtFixedRate(GardensEnchants.plugin, task -> {
-            if (!trident.isValid() || trident.isInBlock() || !homing.contains(trident.getUniqueId()) || trident.getTicksLived() > 60) {
+            if (!trident.isValid() || trident.isInBlock() || !homing.containsKey(trident.getUniqueId()) || trident.getTicksLived() > 60) {
                 homing.remove(trident.getUniqueId());
                 task.cancel();
                 return;
@@ -259,25 +263,47 @@ public final class ToolEnchants implements Listener {
         homing.remove(e.getEntity().getUniqueId());
     }
 
-    /** Turns a homing trident a little toward the nearest hostile mob ahead of it. */
-    private static void steer(Trident trident) {
+    /**
+     * Turns a homing trident toward a hostile mob: the nearest ahead of it, kept once chosen (close up it may no longer
+     * be ahead, and turning to another would miss both). It leads the mob's movement, turns harder the closer it gets
+     * and aims straight at it for the last couple of ticks: a gentle turn alone flies past at a trident's speed.
+     */
+    private void steer(Trident trident) {
         Vector velocity = trident.getVelocity();
         double speed = velocity.length();
         if (speed < 0.3) return;
         Vector heading = velocity.clone().normalize();
-        Vector best = null;
+        var target = locked(trident, heading);
+        if (target == null) return;
+        Vector aimAt = target.getLocation().add(0, target.getHeight() / 2, 0).toVector().add(target.getVelocity());
+        Vector to = aimAt.subtract(trident.getLocation().toVector());
+        double distance = to.length();
+        if (distance < 0.1) return;
+        double turn = distance < speed * 2 ? 1 : Math.max(0.25, Math.min(1, 1.25 - distance / HOMING_RANGE));
+        Vector turned = heading.multiply(1 - turn).add(to.normalize().multiply(turn)).normalize().multiply(speed);
+        trident.setVelocity(turned.setY(turned.getY() + TRIDENT_GRAVITY));
+    }
+
+    /** The mob a trident is locked onto, choosing the nearest hostile one ahead of it if it has none (or it's gone). */
+    @org.jetbrains.annotations.Nullable
+    private Mob locked(Trident trident, Vector heading) {
+        var id = homing.get(trident.getUniqueId());
+        if (id != null && !id.equals(NO_TARGET) && Bukkit.getEntity(id) instanceof Mob mob && !mob.isDead()
+                && mob.getWorld() == trident.getWorld() && mob.getLocation().distance(trident.getLocation()) <= HOMING_RANGE * 1.5) {
+            return mob;
+        }
+        Mob best = null;
         double bestDistance = Double.MAX_VALUE;
-        for (Entity entity : trident.getNearbyEntities(10, 10, 10)) {
+        for (Entity entity : trident.getNearbyEntities(HOMING_RANGE, HOMING_RANGE, HOMING_RANGE)) {
             if (!(entity instanceof Mob mob) || !(entity instanceof Enemy) || mob.isDead()) continue;
             Vector to = mob.getLocation().add(0, mob.getHeight() / 2, 0).toVector().subtract(trident.getLocation().toVector());
             double distance = to.length();
             if (distance < 0.5 || to.clone().normalize().dot(heading) < 0.6 || distance >= bestDistance) continue;
-            best = to;
+            best = mob;
             bestDistance = distance;
         }
-        if (best == null) return;
-        Vector turned = heading.multiply(0.75).add(best.normalize().multiply(0.25)).normalize().multiply(speed);
-        trident.setVelocity(turned);
+        homing.put(trident.getUniqueId(), best == null ? NO_TARGET : best.getUniqueId());
+        return best;
     }
 
     /**
