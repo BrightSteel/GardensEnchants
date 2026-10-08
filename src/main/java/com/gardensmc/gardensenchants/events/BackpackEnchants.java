@@ -44,14 +44,14 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 
 /**
  * Enchantments on the backpack worn in EnderWardrobe's backpack slot (only that one), working on what it holds:
- * Restock tops the hotbar up from it, an item at a time like a hopper; Quick Deposit puts what a container already holds
+ * Restock refills a hotbar stack from it once the stack is used up; Quick Deposit puts what a container already holds
  * into it; Compactor packs nines into their block form; Snack Pouch eats from it when hunger runs low. None touch a
  * backpack while one is open, since that edit would be overwritten when it closes.
  */
 public final class BackpackEnchants implements Listener {
 
-    /** Restock's pace, like a hopper's (ticks), and Compactor's. */
-    private static final int RESTOCK_TICKS = 8, COMPACT_TICKS = 40;
+    /** How often Restock looks for a used-up stack (ticks), and Compactor's pace. */
+    private static final int RESTOCK_TICKS = 4, COMPACT_TICKS = 40;
     /** Snack Pouch eats when food drops to this (of 20), and no more often than this (ms). */
     private static final int SNACK_AT = 6;
     private static final long SNACK_GAP_MS = 2000;
@@ -109,6 +109,19 @@ public final class BackpackEnchants implements Listener {
         return wardrobe.setWorn(player, "backpack", backpack);
     }
 
+    /** Takes up to {@code most} items like {@code like} out of the slots; how many it took. */
+    private static int take(List<ItemStack> slots, ItemStack like, int most) {
+        int taken = 0;
+        for (int i = 0; i < slots.size() && taken < most; i++) {
+            var there = slots.get(i);
+            if (there == null || !there.isSimilar(like)) continue;
+            int n = Math.min(most - taken, there.getAmount());
+            slots.set(i, there.getAmount() > n ? there.asQuantity(there.getAmount() - n) : null);
+            taken += n;
+        }
+        return taken;
+    }
+
     /** Takes one item like `like` out of the slots; whether there was one. */
     private static boolean takeOne(List<ItemStack> slots, ItemStack like) {
         for (int i = 0; i < slots.size(); i++) {
@@ -160,14 +173,13 @@ public final class BackpackEnchants implements Listener {
                 boolean changed = false;
                 for (int slot = 0; slot < 9; slot++) {
                     var here = inventory.getItem(slot);
-                    boolean empty = here == null || here.isEmpty();
+                    if (here != null && !here.isEmpty()) continue;
+                    // used up: it held the last one at the last look (a stack moved away held more, or is still there)
                     var was = last == null ? null : last[slot];
-                    var want = !empty ? here : was != null && was.getAmount() == 1 ? was : null;
-                    if (want == null || want.getMaxStackSize() <= 1) continue;
-                    if (!empty && here.getAmount() >= here.getMaxStackSize()) continue;
-                    if (!takeOne(slots, want)) continue;
-                    if (empty) inventory.setItem(slot, want.asOne());
-                    else here.setAmount(here.getAmount() + 1);
+                    if (was == null || was.getAmount() != 1 || was.getMaxStackSize() <= 1) continue;
+                    int taken = take(slots, was, was.getMaxStackSize());
+                    if (taken == 0) continue;
+                    inventory.setItem(slot, was.asQuantity(taken));
                     changed = true;
                 }
                 if (changed) save(player, backpack, slots);

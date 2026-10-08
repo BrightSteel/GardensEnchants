@@ -87,7 +87,7 @@ public class CustomEnchantments {
             .maxLevel(2));
     // EnderWardrobe backpacks (the one worn in its backpack slot; see events/BackpackEnchants)
     public static final CustomEnchantment RESTOCK = register("restock", builder -> builder
-            .lore("<gray>Tops your hotbar back up", "<gray>from your backpack")
+            .lore("<gray>Refills a hotbar stack from", "<gray>your backpack when it runs out")
             .enchantRestrict(EnchantRestricts.BACKPACK)
             .rarity(EnchantRarity.RARE));
     public static final CustomEnchantment QUICK_DEPOSIT = register("quick_deposit", builder -> builder
