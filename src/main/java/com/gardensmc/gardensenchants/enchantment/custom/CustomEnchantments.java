@@ -91,7 +91,7 @@ public class CustomEnchantments {
             .enchantRestrict(EnchantRestricts.BACKPACK)
             .rarity(EnchantRarity.RARE));
     public static final CustomEnchantment QUICK_DEPOSIT = register("quick_deposit", builder -> builder
-            .lore("<gray>Sneak and use a chest to put in", "<gray>what it already holds")
+            .lore("<gray>Sneak and use a chest to put in", "<gray>what it holds, or all if it's empty")
             .displayName("Quick Deposit")
             .enchantRestrict(EnchantRestricts.BACKPACK)
             .rarity(EnchantRarity.UNCOMMON));

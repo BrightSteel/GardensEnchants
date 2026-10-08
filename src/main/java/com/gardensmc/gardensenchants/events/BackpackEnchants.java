@@ -184,8 +184,9 @@ public final class BackpackEnchants implements Listener {
     // ---- Quick Deposit ----
 
     /**
-     * Sneaking, empty-handed, using a container they may open: what it already holds goes in from the backpack, and
-     * the container doesn't open (it's a quick deposit; without sneaking it opens as ever). Last but for watchers, so
+     * Sneaking, empty-handed, using a container they may open: what it already holds goes in from the backpack, or
+     * into an empty chest, barrel or shulker box everything (somewhere new to empty it into; a furnace or a hopper would
+     * take anything into the wrong slots), and the container doesn't open (it's a quick deposit; without sneaking it opens as ever). Last but for watchers, so
      * a claim plugin has said whether they may use it.
      */
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -202,11 +203,15 @@ public final class BackpackEnchants implements Listener {
         var chest = container.getInventory();
         var slots = slots(backpack);
         int moved = 0;
+        boolean everything = chest.isEmpty() && switch (chest.getType()) {
+            case CHEST, BARREL, SHULKER_BOX -> true;
+            default -> false;
+        };
         for (int i = 0; i < slots.size(); i++) {
             var item = slots.get(i);
             if (item == null) continue;
-            boolean holds = false;
-            for (var there : chest.getContents()) {
+            boolean holds = everything;
+            for (var there : everything ? new ItemStack[0] : chest.getContents()) {
                 if (there != null && there.isSimilar(item)) {
                     holds = true;
                     break;
