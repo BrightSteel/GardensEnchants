@@ -280,8 +280,17 @@ public final class ToolEnchants implements Listener {
         trident.setVelocity(turned);
     }
 
-    /** How long Tidecaller takes to recharge, in ticks. */
-    private static final int TIDECALLER_COOLDOWN = 100;
+    /**
+     * How long Tidecaller takes to recharge (ms), and when each player's is ready. Kept here, not as the trident's item
+     * cooldown: that would stop the trident being used at all, Riptide in water included.
+     */
+    private static final long TIDECALLER_COOLDOWN = 5000;
+    private final java.util.Map<java.util.UUID, Long> tidecallerReady = new java.util.HashMap<>();
+
+    @EventHandler
+    public void onQuitTidecaller(org.bukkit.event.player.PlayerQuitEvent e) {
+        tidecallerReady.remove(e.getPlayer().getUniqueId());
+    }
 
     /** Tidecaller: right-clicking a Riptide trident out of water launches its holder as Riptide would in it. */
     @EventHandler(priority = EventPriority.HIGH)
@@ -291,12 +300,18 @@ public final class ToolEnchants implements Listener {
         ItemStack trident = e.getItem();
         if (trident == null || trident.getType() != Material.TRIDENT || !TIDECALLER.hasEnchantment(trident)) return;
         int riptide = trident.getEnchantmentLevel(Enchantment.RIPTIDE);
-        if (riptide <= 0 || player.isInWaterOrRain() || player.hasCooldown(trident)) return;
+        if (riptide <= 0 || player.isInWaterOrRain()) return;
+        long now = System.currentTimeMillis();
+        if (tidecallerReady.getOrDefault(player.getUniqueId(), 0L) > now) {
+            player.sendActionBar(net.kyori.adventure.text.Component.text("Tidecaller is recharging",
+                    net.kyori.adventure.text.format.NamedTextColor.GRAY));
+            return;
+        }
         // vanilla's push: 3 * (1 + level) / 4 along where you look
         float strength = 3f * (1 + riptide) / 4f;
         player.setVelocity(player.getVelocity().add(player.getLocation().getDirection().multiply(strength)));
         player.startRiptideAttack(20, 8f, trident);
-        player.setCooldown(trident, TIDECALLER_COOLDOWN);
+        tidecallerReady.put(player.getUniqueId(), now + TIDECALLER_COOLDOWN);
         player.damageItemStack(e.getHand() == null ? EquipmentSlot.HAND : e.getHand(), 1);
         Sound sound = riptide >= 3 ? Sound.ITEM_TRIDENT_RIPTIDE_3 : riptide == 2 ? Sound.ITEM_TRIDENT_RIPTIDE_2 : Sound.ITEM_TRIDENT_RIPTIDE_1;
         player.getWorld().playSound(player.getLocation(), sound, 1, 1);
