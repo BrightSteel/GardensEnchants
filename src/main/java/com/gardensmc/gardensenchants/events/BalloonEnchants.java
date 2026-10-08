@@ -6,6 +6,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.UseCooldown;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -36,8 +39,8 @@ import static com.gardensmc.gardensenchants.enchantment.custom.CustomEnchantment
 /**
  * Enchantments on the balloon a player wears (EnderWardrobe's balloon slot, read through its API):
  * Featherweight lowers gravity a little more per level; Tethered catches a fall that would kill, then recovers;
- * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, jump held from
- * early in a fall, lets them down gently for a few seconds; Lift, jump held in the air, raises them a moment; Buoyant floats them up in water;
+ * Updraft gives one more jump in the air (jump is a key the client reports as it's pressed); Drift, jump pressed again
+ * in the air and held, early in a fall, lets them down gently for a few seconds; Lift, jump held in the air, raises them a moment; Buoyant floats them up in water;
  * Weathervane has the wind carry them along in rain.
  */
 public final class BalloonEnchants implements Listener {
@@ -79,11 +82,15 @@ public final class BalloonEnchants implements Listener {
     /** Ticks each drifting player has drifted; players who've had their Drift this fall. */
     private final java.util.Map<UUID, Integer> drifting = new java.util.HashMap<>();
     private final Set<UUID> driftUsed = new HashSet<>();
+    /** Players who pressed jump again in the air and are still holding it: Drift starts once they're falling. */
+    private final Set<UUID> driftArmed = new HashSet<>();
     /** How long each drifting player's Drift lasts, by its level. */
     private final java.util.Map<UUID, Integer> driftLasts = new java.util.HashMap<>();
     /** Players who've used their Updraft since they last stood on the ground. */
     private final Set<UUID> updraftUsed = new HashSet<>();
     private final NamespacedKey featherweightKey = new NamespacedKey(GardensEnchants.plugin, "featherweight");
+    /** The cooldown group balloons are in, so their recharge shows on them. */
+    private static final Key COOLDOWN = Key.key("gardens", "balloon");
     private final NamespacedKey tetheredReadyKey = new NamespacedKey(GardensEnchants.plugin, "tethered_ready_at");
 
     private BalloonEnchants(WardrobeApi wardrobe) {
@@ -138,6 +145,9 @@ public final class BalloonEnchants implements Listener {
         boolean pressed = jump && !holdingJump.contains(id);
         if (jump) holdingJump.add(id);
         else holdingJump.remove(id);
+        // Drift: armed by jump pressed again in the air (a double jump), for as long as it's held
+        if (pressed && airborne(player)) driftArmed.add(id);
+        else if (!jump) driftArmed.remove(id);
         // Updraft: jump pressed in the air, once until they land
         if (!pressed || !airborne(player) || updraftUsed.contains(id)) return;
         var balloon = balloon(player);
@@ -170,7 +180,7 @@ public final class BalloonEnchants implements Listener {
     }
 
     /**
-     * Drift: jump held from early in a fall (its first few blocks) caps the fall and does away with its damage, for at
+     * Drift: jump pressed again in the air and held, from early in a fall (its first few blocks), caps the fall and does away with its damage, for at
      * most as long as Lift at the same level. Once a fall: letting go of jump, or running out of time, ends it until they land.
      */
     private void drift(Player player, UUID id) {
@@ -178,7 +188,8 @@ public final class BalloonEnchants implements Listener {
         var velocity = player.getVelocity();
         Integer drifted = drifting.get(id);
         if (drifted == null) {
-            if (!holding || driftUsed.contains(id) || velocity.getY() >= 0 || player.getFallDistance() > DRIFT_START_WITHIN) return;
+            if (!holding || !driftArmed.contains(id) || driftUsed.contains(id) || velocity.getY() >= 0
+                    || player.getFallDistance() > DRIFT_START_WITHIN) return;
             var balloon = balloon(player);
             if (balloon == null || !DRIFT.hasEnchantment(balloon)) return;
             driftUsed.add(id);
@@ -191,6 +202,34 @@ public final class BalloonEnchants implements Listener {
         drifting.put(id, drifted + 1);
         if (velocity.getY() < -DRIFT_FALL) player.setVelocity(velocity.setY(-DRIFT_FALL));
         player.setFallDistance(0);
+    }
+
+    /**
+     * Shows a balloon's recharge on the balloon itself, as an ender pearl shows its: the cooldown sweep over it in
+     * /wardrobe and GardensCompanion's slot. The balloon is put in {@link #COOLDOWN}'s group the first time; the
+     * longer of two cooldowns (Lift's and Tethered's) shows.
+     */
+    private void showCooldown(Player player, int ticks) {
+        var balloon = balloon(player);
+        if (balloon == null) return;
+        var cooldown = balloon.getData(DataComponentTypes.USE_COOLDOWN);
+        if (cooldown == null || !COOLDOWN.equals(cooldown.cooldownGroup())) {
+            balloon.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(1).cooldownGroup(COOLDOWN).build());
+            wardrobe.setWorn(player, "balloon", balloon);
+        }
+        player.setCooldown(COOLDOWN, Math.max(ticks, player.getCooldown(COOLDOWN)));
+    }
+
+    /** Tethered's recovery outlasts a log out: shown again on joining. */
+    @EventHandler
+    public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+        var player = e.getPlayer();
+        Long readyAt = player.getPersistentDataContainer().get(tetheredReadyKey, PersistentDataType.LONG);
+        long left = readyAt == null ? 0 : readyAt - System.currentTimeMillis();
+        // after EnderWardrobe has loaded what they wear
+        if (left > 0) Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
+            if (player.isOnline()) showCooldown(player, (int) ((readyAt - System.currentTimeMillis()) / 50));
+        }, 60);
     }
 
     /** How long Lift or Drift at a level lasts, in ticks. */
@@ -241,7 +280,10 @@ public final class BalloonEnchants implements Listener {
      */
     private void lift(Player player, UUID id) {
         if (!holdingJump.contains(id) || !airborne(player) || liftReady.getOrDefault(id, 0L) > ticks) {
-            if (lifting.remove(id) != null) liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
+            if (lifting.remove(id) != null) {
+                liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
+                showCooldown(player, LIFT_RECHARGE_TICKS);
+            }
             jumpHeld.remove(id);
             return;
         }
@@ -253,6 +295,7 @@ public final class BalloonEnchants implements Listener {
         if (lifted > lasts(LIFT.getEnchantmentLevel(balloon))) {
             lifting.remove(id);
             liftReady.put(id, ticks + LIFT_RECHARGE_TICKS);
+            showCooldown(player, LIFT_RECHARGE_TICKS);
             return;
         }
         var velocity = player.getVelocity();
@@ -274,6 +317,7 @@ public final class BalloonEnchants implements Listener {
         holdingJump.remove(id);
         updraftUsed.remove(id);
         driftUsed.remove(id);
+        driftArmed.remove(id);
         drifting.remove(id);
         driftLasts.remove(id);
         jumpHeld.remove(id);
@@ -295,6 +339,7 @@ public final class BalloonEnchants implements Listener {
         e.setDamage(Math.max(0, player.getHealth() - 1));
         int minutes = TETHERED_COOLDOWN_MINUTES[Math.min(level, TETHERED_COOLDOWN_MINUTES.length) - 1];
         data.set(tetheredReadyKey, PersistentDataType.LONG, now + minutes * 60_000L);
+        showCooldown(player, minutes * 60 * 20);
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_LEAD_TIED, 1f, 1.4f);
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));
         puff(player, 12);
