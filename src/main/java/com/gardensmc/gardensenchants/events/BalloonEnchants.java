@@ -156,9 +156,10 @@ public final class BalloonEnchants implements Listener {
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
         player.setFallDistance(0);
-        // the balloon jerks up first, as if it pulled them; it's a jump, and wears the balloon like one
+        // the balloon jerks up first, as if it pulled them; it's a jump, and wears the balloon like one (instead of the
+        // jump off the ground before it)
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));
-        wardrobe.wearBalloon(player, 1);
+        useBalloon(player);
         puff(player, 6);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 0.6f, 1.3f);
     }
@@ -195,7 +196,7 @@ public final class BalloonEnchants implements Listener {
             if (balloon == null || !DRIFT.hasEnchantment(balloon)) return;
             driftUsed.add(id);
             driftLasts.put(id, lasts(DRIFT.getEnchantmentLevel(balloon)));
-            wardrobe.wearBalloon(player, 1);
+            useBalloon(player);
             drifted = 0;
         } else if (!holding || drifted >= driftLasts.getOrDefault(id, LASTS_TICKS[0])) {
             drifting.remove(id);
@@ -232,6 +233,15 @@ public final class BalloonEnchants implements Listener {
         if (left > 0) Bukkit.getScheduler().runTaskLater(GardensEnchants.plugin, () -> {
             if (player.isOnline()) showCooldown(player, (int) ((readyAt - System.currentTimeMillis()) / 50));
         }, 60);
+    }
+
+    /**
+     * One use of the balloon for what an enchantment made it do. The jump they're in then costs nothing more: only the
+     * ability is charged, not the jump off the ground before it too.
+     */
+    private void useBalloon(Player player) {
+        wardrobe.waiveJump(player);
+        wardrobe.wearBalloon(player, 1);
     }
 
     /** How long Lift or Drift at a level lasts, in ticks. */
@@ -306,7 +316,7 @@ public final class BalloonEnchants implements Listener {
         // the balloon shoots up and stays ahead, its lead taut, puffing as it goes: it's what lifts them
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, lifted == 1 ? LIFT_TUG : LIFT_TUG_HOLD, 0));
         // one use as it starts, and one for each second after
-        if (lifted % 20 == 1) wardrobe.wearBalloon(player, 1);
+        if (lifted % 20 == 1) useBalloon(player);
         if (lifted == 1) {
             puff(player, 8);
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.5f, 1.5f);
