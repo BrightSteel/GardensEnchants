@@ -12,6 +12,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -20,9 +22,9 @@ import java.util.stream.Collectors;
 
 public class EnchantingBooksMenu extends Menu {
 
-    // a row of item type tabs over the books (1-7, and > for more of them), then the books, then back and next
+    // a row of item type tabs over the books (1-7, with < and > for the others), then the books, then back and next
     public static String[] layout = new String[]{
-            " 1234567>",
+            "<1234567>",
             " bbbbbbb ",
             " bbbbbbb ",
             " bbbbbbb ",
@@ -54,7 +56,8 @@ public class EnchantingBooksMenu extends Menu {
         fillBooks();
         gui.addElement(books);
         for (int i = 0; i < TABS_PER_PAGE; i++) gui.addElement(buildTab(i));
-        gui.addElement(buildMoreTabsButton());
+        gui.addElement(buildTabPageButton('<', -1, "gardens:misc/tab_previous", "<gold>Previous item types"));
+        gui.addElement(buildTabPageButton('>', 1, "gardens:misc/tab_next", "<gold>More item types"));
         gui.addElement(buildBackButton(() -> new EnchantingMenu(viewer, isFullBookSetup), "<gold>Back to Enchanting Table"));
         gui.addElement(buildNextButton());
     }
@@ -91,15 +94,22 @@ public class EnchantingBooksMenu extends Menu {
         });
     }
 
-    /** Shows the next tabs, round to the first again; only there when they don't all fit in the row. */
-    private DynamicGuiElement buildMoreTabsButton() {
+    /**
+     * Pages through the tabs by {@code step}, round from the last to the first and back; only there when they don't
+     * all fit in the row. Drawn as a small triangle in the red beside the row.
+     */
+    private DynamicGuiElement buildTabPageButton(char at, int step, String model, String name) {
         int pages = (tabs.size() + TABS_PER_PAGE - 1) / TABS_PER_PAGE;
-        return new DynamicGuiElement('>', () -> pages <= 1 ? null
-                : new StaticGuiElement('>', GardensFurniture.itemRegistry.buildItem("next_button"), click -> {
-                    tabPage = (tabPage + 1) % pages;
-                    gui.draw();
-                    return true;
-                }, "<gold>More item types", "<gray>Page " + (tabPage + 1) + " of " + pages));
+        return new DynamicGuiElement(at, () -> {
+            if (pages <= 1) return null;
+            var icon = new ItemStack(Material.PAPER);
+            icon.setData(DataComponentTypes.ITEM_MODEL, Key.key(model));
+            return new StaticGuiElement(at, icon, click -> {
+                tabPage = Math.floorMod(tabPage + step, pages);
+                gui.draw();
+                return true;
+            }, name, "<gray>Page " + (tabPage + 1) + " of " + pages);
+        });
     }
 
     private ItemStack buildBook(GardensEnchantment enchant) {
