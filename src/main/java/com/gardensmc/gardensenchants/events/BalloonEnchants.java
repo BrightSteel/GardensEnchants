@@ -49,11 +49,16 @@ public final class BalloonEnchants implements Listener {
 
     /** Upward speed an Updraft jump gives (blocks a tick): about a normal jump's. */
     private static final double UPDRAFT_BOOST = 0.55;
-    /** The fastest a drifting player falls (blocks a tick). */
-    private static final double DRIFT_FALL = 0.12;
+    /** The fastest a drifting player falls (blocks a tick): about 4 blocks a second. */
+    private static final double DRIFT_FALL = 0.2;
 
     /** Lift: jump held this long in the air starts it; it lasts at most this long; then it needs this long. */
     private static final int LIFT_HOLD_TICKS = 10, LIFT_MAX_TICKS = 60, LIFT_RECHARGE_TICKS = 400;
+    /**
+     * How hard the balloon is yanked up (blocks a tick) when Updraft or Lift starts or Tethered catches, and each tick
+     * Lift goes on, keeping it ahead of its rising wearer.
+     */
+    private static final double UPDRAFT_TUG = 0.7, LIFT_TUG = 0.8, LIFT_TUG_HOLD = 0.12;
     /** Lift's rise, and Buoyant's (blocks a tick). */
     private static final double LIFT_RISE = 0.18, BUOYANT_RISE = 0.1;
     /** Weathervane's push along the way they walk, per level (blocks a tick); doubled in a thunderstorm. */
@@ -132,7 +137,9 @@ public final class BalloonEnchants implements Listener {
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
         player.setFallDistance(0);
-        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 6, 0.2, 0.05, 0.2, 0.02);
+        // the balloon jerks up first, as if it pulled them
+        wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));
+        puff(player, 6);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 0.6f, 1.3f);
     }
 
@@ -153,6 +160,16 @@ public final class BalloonEnchants implements Listener {
             player.setVelocity(velocity.setY(-DRIFT_FALL));
             player.setFallDistance(0);
         }
+    }
+
+    /**
+     * Cloud puffs from the balloon (its knot, where the lead ties on), drifting down a little as if blown out of it;
+     * from the player, should it not be drawn.
+     */
+    private void puff(Player player, int count) {
+        var at = wardrobe.balloonAt(player);
+        if (at == null) at = player.getLocation().add(0, 0.2, 0);
+        player.getWorld().spawnParticle(Particle.CLOUD, at, count, 0.15, 0.05, 0.15, 0.03);
     }
 
     /** Buoyant: in water, not sneaking (sneak to dive), they float up. */
@@ -205,7 +222,14 @@ public final class BalloonEnchants implements Listener {
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), LIFT_RISE)));
         player.setFallDistance(0);
-        if (lifted == 1) player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.5f, 1.5f);
+        // the balloon shoots up and stays ahead, its lead taut, puffing as it goes: it's what lifts them
+        wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, lifted == 1 ? LIFT_TUG : LIFT_TUG_HOLD, 0));
+        if (lifted == 1) {
+            puff(player, 8);
+            player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 0.5f, 1.5f);
+        } else if (lifted % 4 == 0) {
+            puff(player, 2);
+        }
     }
 
     @EventHandler
@@ -233,7 +257,8 @@ public final class BalloonEnchants implements Listener {
         int minutes = TETHERED_COOLDOWN_MINUTES[Math.min(level, TETHERED_COOLDOWN_MINUTES.length) - 1];
         data.set(tetheredReadyKey, PersistentDataType.LONG, now + minutes * 60_000L);
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_LEAD_TIED, 1f, 1.4f);
-        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation().add(0, 0.2, 0), 12, 0.3, 0.1, 0.3, 0.02);
+        wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));
+        puff(player, 12);
         player.sendMessage(Component.text("Your balloon caught you! Tethered needs " + minutes + " minutes to recover.", NamedTextColor.YELLOW));
     }
 }
