@@ -144,6 +144,7 @@ public class EnchantingBooksMenu extends Menu {
                             .color(NamedTextColor.GRAY) // default color
                             .build())
                     .toList());
+            lore.addAll(BooksHandler.incompatibleLore(enchant));
             lore.add(Component
                     .text(enchant.getRarity().getTag() + "\u011E")
                     .color(NamedTextColor.WHITE)

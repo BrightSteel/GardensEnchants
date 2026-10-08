@@ -155,6 +155,25 @@ public class BooksHandler {
         return new EnchantmentInstance(enchantment, level);
     }
 
+    /** "Incompatible with:" and the enchantments that can't share an item with this one, a few to a line; none: nothing. */
+    public static List<Component> incompatibleLore(GardensEnchantment enchantment) {
+        var names = enchantment.getIncompatible().stream().map(GardensEnchantment::getDisplayName).toList();
+        if (names.isEmpty()) return List.of();
+        var lines = new ArrayList<Component>();
+        lines.add(Component.text("Incompatible with:", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        var line = new StringBuilder();
+        for (var name : names) {
+            if (!line.isEmpty() && line.length() + name.length() > 32) {
+                lines.add(Component.text(line + ",", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                line.setLength(0);
+            }
+            if (!line.isEmpty()) line.append(", ");
+            line.append(name);
+        }
+        lines.add(Component.text(line.toString(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        return lines;
+    }
+
     private void refreshLore(BookInstance bookInstance) {
         var book = bookInstance.book();
         var meta = book.getItemMeta();
@@ -180,6 +199,7 @@ public class BooksHandler {
                             .color(NamedTextColor.GRAY) // default color
                             .build())
                     .toList());
+            lore.addAll(incompatibleLore(bookInstance.enchantment()));
             var destruction = bookInstance.calculateDestructionChance();
             if (destruction != 0) {
                 lore.add(Component.text()

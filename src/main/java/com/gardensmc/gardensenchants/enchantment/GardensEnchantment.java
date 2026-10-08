@@ -3,7 +3,6 @@ package com.gardensmc.gardensenchants.enchantment;
 import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestrict;
 import com.gardensmc.gardensenchants.enchantment.custom.EnchantRestricts;
 import com.gardensmc.gardensenchants.utils.MessageUtil;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -13,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@AllArgsConstructor
 @NoArgsConstructor
 public abstract class GardensEnchantment {
 
@@ -25,6 +23,15 @@ public abstract class GardensEnchantment {
     protected String bookIdentifier;
     @Getter
     protected EnchantRestrict restrict = EnchantRestricts.ALL;
+
+    protected GardensEnchantment(EnchantRarity rarity, String displayName, List<Component> lore, String bookIdentifier,
+                                 EnchantRestrict restrict) {
+        this.rarity = rarity;
+        this.displayName = displayName;
+        this.lore = lore;
+        this.bookIdentifier = bookIdentifier;
+        this.restrict = restrict;
+    }
 
     public abstract boolean hasEnchantment(ItemStack itemStack);
 
@@ -82,10 +89,34 @@ public abstract class GardensEnchantment {
         return getId() + "_book";
     }
 
+    private volatile List<EnchantRestrict> permittedTypes;
+
     /** The item types (leaf restricts) this enchant really goes on: its restrict's, where a sample item takes it. */
     public List<EnchantRestrict> getPermittedTypes() {
-        return restrict.getLeaves().stream()
-                .filter(type -> type.getSampleItems().stream().anyMatch(this::canEnchant))
+        var known = permittedTypes;
+        if (known != null) return known;
+        var leaves = restrict.getLeaves();
+        var samples = leaves.stream().map(EnchantRestrict::getSampleItems).toList();
+        var types = new java.util.ArrayList<EnchantRestrict>();
+        for (int i = 0; i < leaves.size(); i++) {
+            if (samples.get(i).stream().anyMatch(this::canEnchant)) types.add(leaves.get(i));
+        }
+        // kept once every type had a sample to try (GardensFurniture's items may not be loaded yet at startup)
+        if (samples.stream().noneMatch(List::isEmpty)) permittedTypes = List.copyOf(types);
+        return types;
+    }
+
+    /**
+     * The enchantments that can't go on an item with this one: either says it conflicts with the other, and they go
+     * on at least one of the same item types. By name, for a book's lore.
+     */
+    public List<GardensEnchantment> getIncompatible() {
+        var mine = getPermittedTypes();
+        return GardensEnchantments.INSTANCE.getEnchantments().stream()
+                .filter(other -> !other.getId().equals(getId()))
+                .filter(other -> conflictsWith(other) || other.conflictsWith(this))
+                .filter(other -> other.getPermittedTypes().stream().anyMatch(mine::contains))
+                .sorted(java.util.Comparator.comparing(GardensEnchantment::getDisplayName))
                 .toList();
     }
 
