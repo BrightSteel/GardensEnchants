@@ -94,15 +94,18 @@ public class GardensEnchantHandler {
         applyPostEnchantChanges();
     }
 
+    private static final org.bukkit.NamespacedKey WARDROBE_OFFHAND = new org.bukkit.NamespacedKey("enderwardrobe", "offhand");
+
     public void applyPostEnchantChanges() {
         adoptExistingLore();
+        com.gardensmc.gardensenchants.events.StaffEnchants.syncMountaineer(item);
         var meta = item.getItemMeta();
-        meta.setEnchantmentGlintOverride(true);
-        meta.addItemFlags(
-                ItemFlag.HIDE_ENCHANTS,
-                ItemFlag.HIDE_UNBREAKABLE,
-                ItemFlag.HIDE_ATTRIBUTES
-        );
+        // a glint something turned off (an EnderWardrobe skin hides it) stays off
+        if (!(meta.hasEnchantmentGlintOverride() && !meta.getEnchantmentGlintOverride())) meta.setEnchantmentGlintOverride(true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
+        // an EnderWardrobe offhand item's attributes are what it does ("When held: +0.4 Step Height"): those show
+        if (!meta.getPersistentDataContainer().has(WARDROBE_OFFHAND)) meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        else meta.removeItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.lore(getLore());
         item.setItemMeta(meta);
     }
@@ -146,10 +149,11 @@ public class GardensEnchantHandler {
     public void removeEnchant(GardensEnchantment enchantment) {
         adoptExistingLore();
         enchantment.removeEnchantment(item);
+        com.gardensmc.gardensenchants.events.StaffEnchants.syncMountaineer(item);
         if (getEnchantments().isEmpty()) {
-            // drop the glint we added in applyPostEnchantChanges
+            // drop the glint we added in applyPostEnchantChanges (one turned off, by a skin, stays off)
             var meta = item.getItemMeta();
-            meta.setEnchantmentGlintOverride(null);
+            if (meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride()) meta.setEnchantmentGlintOverride(null);
             item.setItemMeta(meta);
         }
         refreshLore();
@@ -166,9 +170,10 @@ public class GardensEnchantHandler {
                 compound.removeKey(CustomEnchantment.ENCHANTS_KEY);
             }
         });
-        // remove glint override
+        com.gardensmc.gardensenchants.events.StaffEnchants.syncMountaineer(item);
+        // remove the glint override we added (one turned off, by a skin, stays off)
         var meta = item.getItemMeta();
-        meta.setEnchantmentGlintOverride(null);
+        if (meta.hasEnchantmentGlintOverride() && meta.getEnchantmentGlintOverride()) meta.setEnchantmentGlintOverride(null);
         item.setItemMeta(meta);
         // refresh lore
         if (isRefreshLore) {

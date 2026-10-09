@@ -138,15 +138,71 @@ public final class StaffEnchants implements Listener {
         }
     }
 
-    /** Mountaineer's step, on while it's held and its holder isn't sneaking. */
+    /** Marks a staff whose own step height has Mountaineer's in it (so its tooltip says what it does). */
+    private static final NamespacedKey MOUNTAINEER_ON_ITEM = new NamespacedKey(GardensEnchants.plugin, "mountaineer_step");
+
+    /**
+     * Mountaineer's step, on while it's held and its holder isn't sneaking. A staff enchanted since carries it in its
+     * own step height, which counts while it's held: that's taken back off while sneaking. One enchanted before adds
+     * it while held and not sneaking.
+     */
     private static void mountaineer(Player player, boolean sneaking) {
         var step = player.getAttribute(Attribute.STEP_HEIGHT);
         if (step == null) return;
-        boolean on = !sneaking && held(player, MOUNTAINEER) > 0;
-        boolean has = step.getModifier(MOUNTAINEER_KEY) != null;
-        if (on == has) return;
-        if (on) step.addTransientModifier(new AttributeModifier(MOUNTAINEER_KEY, MOUNTAINEER_STEP, AttributeModifier.Operation.ADD_NUMBER));
-        else step.removeModifier(MOUNTAINEER_KEY);
+        double want = 0;
+        var staff = heldWith(player, MOUNTAINEER);
+        if (staff != null) {
+            boolean onItem = staff.getPersistentDataContainer().has(MOUNTAINEER_ON_ITEM);
+            want = onItem ? (sneaking ? -MOUNTAINEER_STEP : 0) : (sneaking ? 0 : MOUNTAINEER_STEP);
+        }
+        var current = step.getModifier(MOUNTAINEER_KEY);
+        if (current == null ? want == 0 : current.getAmount() == want) return;
+        if (current != null) step.removeModifier(MOUNTAINEER_KEY);
+        if (want != 0) step.addTransientModifier(new AttributeModifier(MOUNTAINEER_KEY, want, AttributeModifier.Operation.ADD_NUMBER));
+    }
+
+    // the staff held (either hand) with this enchantment, or null
+    private static ItemStack heldWith(Player player, CustomEnchantment enchantment) {
+        for (ItemStack item : new ItemStack[]{player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand()}) {
+            if (item != null && !item.isEmpty() && EnchantRestricts.STAFF.isEnchantable(item) && enchantment.getEnchantmentLevel(item) > 0) return item;
+        }
+        return null;
+    }
+
+    /**
+     * Puts Mountaineer's step into a staff's own step height when it has the enchantment (or takes it back out when
+     * it hasn't), so the staff's "When held" line is what it does: +0.4 becomes +1.4. Called as it's enchanted.
+     */
+    public static void syncMountaineer(ItemStack item) {
+        if (item == null || item.isEmpty() || !item.hasItemMeta()) return;
+        boolean want = MOUNTAINEER.getEnchantmentLevel(item) > 0;
+        boolean had = item.getPersistentDataContainer().has(MOUNTAINEER_ON_ITEM);
+        double delta = (want ? MOUNTAINEER_STEP : 0) - (had ? MOUNTAINEER_STEP : 0);
+        if (delta == 0) return;
+        var type = io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS;
+        var modifiers = item.getData(type);
+        var builder = io.papermc.paper.datacomponent.item.ItemAttributeModifiers.itemAttributes();
+        boolean done = false;
+        if (modifiers != null) {
+            for (var entry : modifiers.modifiers()) {
+                var m = entry.modifier();
+                if (!done && entry.attribute() == Attribute.STEP_HEIGHT && m.getOperation() == AttributeModifier.Operation.ADD_NUMBER) {
+                    m = new AttributeModifier(m.getKey(), m.getAmount() + delta, m.getOperation(), m.getSlotGroup());
+                    done = true;
+                }
+                builder.addModifier(entry.attribute(), m, entry.getGroup(), entry.display());
+            }
+        }
+        if (!done) {
+            if (delta < 0) return;
+            builder.addModifier(Attribute.STEP_HEIGHT, new AttributeModifier(MOUNTAINEER_KEY, delta,
+                    AttributeModifier.Operation.ADD_NUMBER, org.bukkit.inventory.EquipmentSlotGroup.HAND));
+        }
+        item.setData(type, builder.build());
+        item.editMeta(meta -> {
+            if (want) meta.getPersistentDataContainer().set(MOUNTAINEER_ON_ITEM, org.bukkit.persistence.PersistentDataType.BOOLEAN, true);
+            else meta.getPersistentDataContainer().remove(MOUNTAINEER_ON_ITEM);
+        });
     }
 
     @EventHandler
