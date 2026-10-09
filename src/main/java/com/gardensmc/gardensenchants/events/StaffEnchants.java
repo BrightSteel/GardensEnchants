@@ -171,10 +171,15 @@ public final class StaffEnchants implements Listener {
 
     /**
      * Puts Mountaineer's step into a staff's own step height when it has the enchantment (or takes it back out when
-     * it hasn't), so the staff's "When held" line is what it does: +0.4 becomes +1.4. Called as it's enchanted.
+     * it hasn't), so the staff's "When held" line is what it does: +0.4 becomes +1.4. Called whenever its enchantments
+     * change: enchanting, combining in an anvil, an Extraction Rune, a grindstone.
      */
     public static void syncMountaineer(ItemStack item) {
         if (item == null || item.isEmpty() || !item.hasItemMeta()) return;
+        // an EnderWardrobe staff's attributes are what it does: show them (staffs enchanted before had them hidden)
+        if (item.getPersistentDataContainer().has(new NamespacedKey("enderwardrobe", "offhand"))) {
+            item.editMeta(meta -> meta.removeItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES));
+        }
         boolean want = MOUNTAINEER.getEnchantmentLevel(item) > 0;
         boolean had = item.getPersistentDataContainer().has(MOUNTAINEER_ON_ITEM);
         double delta = (want ? MOUNTAINEER_STEP : 0) - (had ? MOUNTAINEER_STEP : 0);
