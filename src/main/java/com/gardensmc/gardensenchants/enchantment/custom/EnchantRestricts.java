@@ -183,8 +183,9 @@ public class EnchantRestricts {
             .build();
 
     public static final EnchantRestrict STAFF = new EnchantRestrict.Builder("staff")
+            // the staffs first, for the sample a book is checked against; then any offhand item (staffs other plugins add)
             .withWardrobeItems("wooden_staff", "stone_staff", "copper_staff", "iron_staff",
-                    "golden_staff", "diamond_staff", "netherite_staff")
+                    "golden_staff", "diamond_staff", "netherite_staff", EnchantRestrict.ANY_OFFHAND)
             .build();
 
     // Speedy: boots, and a staff held (they add up to Speedy's max level; see events/Events)

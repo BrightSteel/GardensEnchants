@@ -37,6 +37,8 @@ public class EnchantRestrict {
 
     private static final NamespacedKey WARDROBE_OFFHAND = new NamespacedKey("enderwardrobe", "offhand");
     private static final NamespacedKey WARDROBE_ITEM = new NamespacedKey("enderwardrobe", "item");
+    /** In withWardrobeItems: every EnderWardrobe offhand item. */
+    public static final String ANY_OFFHAND = "offhand:*";
 
     public EnchantRestrict(String id) {
         this.id = id;
@@ -93,8 +95,10 @@ public class EnchantRestrict {
             return false;
         }
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        var id = pdc.get(WARDROBE_OFFHAND, PersistentDataType.STRING);
-        if (id == null) id = pdc.get(WARDROBE_ITEM, PersistentDataType.STRING);
+        var offhand = pdc.get(WARDROBE_OFFHAND, PersistentDataType.STRING);
+        // "offhand:*": any EnderWardrobe offhand item, its own or one another plugin added (a staff)
+        if (offhand != null && permittedWardrobeItems.contains(ANY_OFFHAND)) return true;
+        var id = offhand != null ? offhand : pdc.get(WARDROBE_ITEM, PersistentDataType.STRING);
         return id != null && permittedWardrobeItems.contains(id);
     }
 
