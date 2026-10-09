@@ -52,8 +52,8 @@ final class EnchantTypeTabs {
             tab("Fishing Rods", Material.FISHING_ROD, EnchantRestricts.FISHING_ROD),
             tab("Shears", Material.SHEARS, EnchantRestricts.SHEARS),
             new Tab("Staffs", () -> modeled(Material.STICK, "gardens:staff/diamond"), EnchantRestricts.STAFF),
-            new Tab("Balloons", () -> gardensItem("balloon"), EnchantRestricts.BALLOON),
-            new Tab("Backpacks", () -> gardensItem("backpack"), EnchantRestricts.BACKPACK),
+            new Tab("Balloons", () -> EnchantRestrict.wardrobeItem("balloon"), EnchantRestricts.BALLOON),
+            new Tab("Backpacks", () -> EnchantRestrict.wardrobeItem("backpack"), EnchantRestricts.BACKPACK),
             new Tab("Watering Cans", () -> gardensItem("watering_can_5"), EnchantRestricts.WATERING_CAN),
             tab("Books", Material.ENCHANTED_BOOK, EnchantRestricts.ENCHANTED_BOOK));
 

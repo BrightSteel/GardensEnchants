@@ -28,13 +28,15 @@ public class EnchantRestrict {
 
     private List<EnchantRestrict> children;
 
-    // EnderWardrobe's offhand items (items.yml there), by id: their enderwardrobe:offhand tag
+    // EnderWardrobe's own items (items.yml there), by id: their enderwardrobe:offhand tag (staffs) or
+    // enderwardrobe:item tag (backpacks, balloons)
     private List<String> permittedWardrobeItems;
 
     // backpacks with storage, as EnderWardrobe tells them apart
     private boolean permitsBackpacks;
 
     private static final NamespacedKey WARDROBE_OFFHAND = new NamespacedKey("enderwardrobe", "offhand");
+    private static final NamespacedKey WARDROBE_ITEM = new NamespacedKey("enderwardrobe", "item");
 
     public EnchantRestrict(String id) {
         this.id = id;
@@ -90,7 +92,9 @@ public class EnchantRestrict {
         if (permittedWardrobeItems.isEmpty() || !itemStack.hasItemMeta()) {
             return false;
         }
-        var id = itemStack.getItemMeta().getPersistentDataContainer().get(WARDROBE_OFFHAND, PersistentDataType.STRING);
+        var pdc = itemStack.getItemMeta().getPersistentDataContainer();
+        var id = pdc.get(WARDROBE_OFFHAND, PersistentDataType.STRING);
+        if (id == null) id = pdc.get(WARDROBE_ITEM, PersistentDataType.STRING);
         return id != null && permittedWardrobeItems.contains(id);
     }
 
@@ -100,6 +104,14 @@ public class EnchantRestrict {
         }
         var api = org.bukkit.Bukkit.getServicesManager().load(com.enderbeam.enderwardrobe.api.WardrobeApi.class);
         return api != null && api.backpackRows(itemStack) > 0;
+    }
+
+    /** A new EnderWardrobe backpack or balloon by its id, or null without EnderWardrobe. */
+    @org.jetbrains.annotations.Nullable
+    public static ItemStack wardrobeItem(String id) {
+        if (org.bukkit.Bukkit.getPluginManager().getPlugin("EnderWardrobe") == null) return null;
+        var api = org.bukkit.Bukkit.getServicesManager().load(com.enderbeam.enderwardrobe.api.WardrobeApi.class);
+        return api == null ? null : api.wardrobeItem(id);
     }
 
     /**
@@ -112,7 +124,7 @@ public class EnchantRestrict {
                 return List.of(new ItemStack(permittedMaterials.getFirst()));
             }
             if (permitsBackpacks) {
-                var sample = GardensFurniture.itemRegistry.buildItem("backpack");
+                var sample = wardrobeItem("backpack");
                 return sample == null ? List.of() : List.of(sample);
             }
             if (!permittedWardrobeItems.isEmpty()) {

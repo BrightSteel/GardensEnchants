@@ -177,9 +177,9 @@ public class EnchantRestricts {
             .withCustomIdentifiers("watering_can_0", "watering_can_1", "watering_can_2", "watering_can_3", "watering_can_4", "watering_can_5")
             .build();
 
-    // EnderWardrobe's balloon (a GardensFurniture item, skinned or not) and staffs (its own offhand items, a tier each)
+    // EnderWardrobe's balloon and staffs (its own items, a staff a tier each), skinned or not
     public static final EnchantRestrict BALLOON = new EnchantRestrict.Builder("balloon")
-            .withCustomIdentifiers("balloon")
+            .withWardrobeItems("balloon")
             .build();
 
     public static final EnchantRestrict STAFF = new EnchantRestrict.Builder("staff")
