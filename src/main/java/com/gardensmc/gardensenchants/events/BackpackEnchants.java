@@ -52,8 +52,8 @@ public final class BackpackEnchants implements Listener {
 
     /** How often Restock looks for a used-up stack (ticks), and Compactor's pace. */
     private static final int RESTOCK_TICKS = 4, COMPACT_TICKS = 40;
-    /** Snack Pouch eats when food drops to this (of 20), and no more often than this (ms). */
-    private static final int SNACK_AT = 6;
+    /** Snack Pouch eats when food drops to this (of 20: one above where sprinting stops, at 6), and no more often than this (ms). */
+    private static final int SNACK_AT = 7;
     private static final long SNACK_GAP_MS = 2000;
     /** Food Snack Pouch never eats: harmful, teleporting, precious, or leaving a bowl or bottle behind. */
     private static final Set<Material> NOT_SNACKS = Set.of(Material.ROTTEN_FLESH, Material.SPIDER_EYE, Material.POISONOUS_POTATO,
