@@ -59,19 +59,19 @@ public class CustomEnchantments {
             .maxLevel(3));
     // a cooldown of 5, 3 or 1 seconds by level
     public static final CustomEnchantment UPDRAFT = register("updraft", builder -> builder
-            .lore("<gray>Press jump in the air", "<gray>for one more jump")
+            .lore("<gray>Press jump in the air", "<gray>for one more jump", "<dark_gray>Sneak instead with an elytra on")
             .enchantRestrict(EnchantRestricts.BALLOON)
             .rarity(EnchantRarity.EPIC)
             .maxLevel(3));
     public static final CustomEnchantment DRIFT = register("drift", builder -> builder
-            .lore("<gray>Hold jump as you start to fall", "<gray>to drift down for a moment")
+            .lore("<gray>Hold jump as you start to fall", "<gray>to drift down for a moment", "<dark_gray>Sneak instead with an elytra on")
             .enchantRestrict(EnchantRestricts.BALLOON)
             .conflictsWith(UPDRAFT)
             .rarity(EnchantRarity.EPIC)
             .maxLevel(3));
     // Lift, Drift and Updraft are all jump in the air: one to a balloon
     public static final CustomEnchantment LIFT = register("lift", builder -> builder
-            .lore("<gray>Hold jump in the air", "<gray>to rise for a moment")
+            .lore("<gray>Hold jump in the air", "<gray>to rise for a moment", "<dark_gray>Sneak instead with an elytra on")
             .enchantRestrict(EnchantRestricts.BALLOON)
             .conflictsWith(DRIFT, UPDRAFT)
             .rarity(EnchantRarity.EPIC)

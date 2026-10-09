@@ -148,11 +148,18 @@ public final class BalloonEnchants implements Listener {
                 && !player.isSwimming() && !player.isInWater() && !player.isClimbing();
     }
 
+    /** Whether what they wear on their chest glides (an elytra), so jump in the air is the elytra's. */
+    private static boolean glider(Player player) {
+        var chest = player.getInventory().getChestplate();
+        return chest != null && chest.hasData(io.papermc.paper.datacomponent.DataComponentTypes.GLIDER);
+    }
+
     @EventHandler
     public void onInput(PlayerInputEvent e) {
         var player = e.getPlayer();
         var id = player.getUniqueId();
-        boolean jump = e.getInput().isJump();
+        // with an elytra on, jump in the air opens it: there the balloon's key is sneak instead
+        boolean jump = glider(player) ? e.getInput().isSneak() : e.getInput().isJump();
         boolean pressed = jump && !holdingJump.contains(id);
         if (jump) holdingJump.add(id);
         else holdingJump.remove(id);
