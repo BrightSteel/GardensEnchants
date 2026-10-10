@@ -147,6 +147,7 @@ public final class ToolEnchants implements Listener {
         if (distance < 1) return;
         Vector pull = toHook.normalize().multiply(Math.min(1.8, 0.4 + distance * 0.12));
         player.setVelocity(pull.setY(pull.getY() + 0.35));
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         player.setFallDistance(0);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 1, 0.7f);
     }
@@ -355,6 +356,7 @@ public final class ToolEnchants implements Listener {
         float strength = 3f * (1 + riptide) / 4f;
         player.setVelocity(player.getVelocity().add(player.getLocation().getDirection().multiply(strength)));
         player.startRiptideAttack(20, 8f, trident);
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         tidecallerReady.put(player.getUniqueId(), now + TIDECALLER_COOLDOWN);
         player.damageItemStack(e.getHand() == null ? EquipmentSlot.HAND : e.getHand(), 1);
         Sound sound = riptide >= 3 ? Sound.ITEM_TRIDENT_RIPTIDE_3 : riptide == 2 ? Sound.ITEM_TRIDENT_RIPTIDE_2 : Sound.ITEM_TRIDENT_RIPTIDE_1;

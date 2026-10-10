@@ -178,6 +178,7 @@ public final class BalloonEnchants implements Listener {
         }
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), UPDRAFT_BOOST)));
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         player.setFallDistance(0);
         // the balloon jerks up first, as if it pulled them; it's a jump, and wears the balloon like one (instead of the
         // jump off the ground before it)
@@ -226,6 +227,7 @@ public final class BalloonEnchants implements Listener {
             return;
         }
         drifting.put(id, drifted + 1);
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         if (velocity.getY() < -DRIFT_FALL) player.setVelocity(velocity.setY(-DRIFT_FALL));
         player.setFallDistance(0);
         // the balloon holds them up: it rises to the end of its lead as Drift starts and stays there, puffing gently
@@ -322,6 +324,7 @@ public final class BalloonEnchants implements Listener {
         if (level <= 0) return;
         double push = WIND_PER_LEVEL * level * (world.isThundering() ? 2 : 1);
         player.setVelocity(velocity.add(horizontal.normalize().multiply(push)));
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
     }
 
     /**
@@ -354,6 +357,7 @@ public final class BalloonEnchants implements Listener {
         }
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), LIFT_RISE)));
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         player.setFallDistance(0);
         // the balloon shoots up and stays ahead, its lead taut, puffing as it goes: it's what lifts them
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, lifted == 1 ? LIFT_TUG : LIFT_TUG_HOLD, 0));
@@ -396,6 +400,7 @@ public final class BalloonEnchants implements Listener {
         e.setDamage(Math.max(0, player.getHealth() - 1));
         int minutes = TETHERED_COOLDOWN_MINUTES[Math.min(level, TETHERED_COOLDOWN_MINUTES.length) - 1];
         data.set(tetheredReadyKey, PersistentDataType.LONG, now + minutes * 60_000L);
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
         showCooldown(player, minutes * 60 * 20);
         player.getWorld().playSound(player.getLocation(), Sound.ITEM_LEAD_TIED, 1f, 1.4f);
         wardrobe.tugBalloon(player, new org.bukkit.util.Vector(0, UPDRAFT_TUG, 0));

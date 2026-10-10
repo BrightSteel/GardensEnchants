@@ -217,6 +217,7 @@ public class PlayerListener implements Listener {
         double jump = 0.42 + 0.1 * (level + 1);
         var velocity = player.getVelocity();
         player.setVelocity(velocity.setY(Math.max(velocity.getY(), jump)));
+        com.gardensmc.gardensenchants.api.AirTime.allow(player);
     }
 
     @EventHandler
