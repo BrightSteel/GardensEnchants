@@ -126,12 +126,17 @@ public class BedrockEnchantingMenu {
                 return;
             }
             // The form response fires off the main thread; inventory + economy mutations must be sync.
-            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, idx, offers.get(idx), options.get(idx), isFullBookSetup));
+            Bukkit.getScheduler().runTask(GardensEnchants.plugin, () -> purchase(viewer, type, idx, offers.get(idx), options.get(idx), cheapestCost(options), isFullBookSetup));
         });
         FloodgateApi.getInstance().sendForm(viewer.getUniqueId(), builder.build());
     }
 
-    private static void purchase(Player viewer, String type, int index, EnchantmentInstance offer, BookInstance bookInstance, boolean isFullBookSetup) {
+    private static int cheapestCost(List<BookInstance> options) {
+        return options.stream().mapToInt(book -> book.enchantment().getTableCost(book.level())).min().orElse(0);
+    }
+
+    private static void purchase(Player viewer, String type, int index, EnchantmentInstance offer, BookInstance bookInstance,
+                                 int cheapestCost, boolean isFullBookSetup) {
         // Re-check the held item — it may have changed while the form was open.
         var held = viewer.getInventory().getItemInMainHand();
         if (!isEnchantableBook(held) || !type.equals(TypedBooksHandler.getTypeFromBook(held))) {
@@ -148,6 +153,11 @@ public class BedrockEnchantingMenu {
         var enchantment = bookInstance.enchantment();
         if (!isFullBookSetup && enchantment.getRarity().needsFullBookSetup()) {
             message(viewer, EnchantingMenu.NEEDS_BOOKSHELVES);
+            return;
+        }
+        long overheated = TableHeat.remainingMs(viewer.getUniqueId());
+        if (overheated > 0) {
+            message(viewer, TableHeat.message(overheated));
             return;
         }
         // Check each cost separately so the player knows exactly what they're short on.
@@ -173,7 +183,11 @@ public class BedrockEnchantingMenu {
             held.setAmount(held.getAmount() - 1);
             PlayerUtil.giveItem(viewer, bookInstance.book());
         }
-        // Regenerate the options for next time, matching the Java menu's behaviour on purchase.
+        // Regenerate the options for next time, matching the Java menu's behaviour on purchase. Buying the cheapest
+        // is a re-roll in effect (see TableHeat).
+        if (cost <= cheapestCost) {
+            TableHeat.roll(viewer.getUniqueId());
+        }
         entryHandler.reroll();
         message(viewer, "<green>Enchanted your book with <white>" + enchantment.getDisplayName() + "<green>!");
     }

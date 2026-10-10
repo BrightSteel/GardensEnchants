@@ -245,6 +245,11 @@ public class EnchantingMenu extends Menu {
             viewer.sendMessage(MiniMessage.miniMessage().deserialize(NEEDS_BOOKSHELVES));
             return;
         }
+        if (isOverheated()) {
+            return;
+        }
+        // buying the cheapest offer rolls new ones as a re-roll does (and the book grindstones back), so it heats too
+        boolean cheapest = enchantment.getTableCost(bookInstance.level()) <= getRerollCost();
         if (storageItem.getType() == Material.BOOK) {
             // book -> becomes the corresponding enchant book, left in the slot
             if (!canPurchase(bookInstance) || !chargePlayer(bookInstance)) {
@@ -262,8 +267,22 @@ public class EnchantingMenu extends Menu {
             enchantHandler.enchant(enchantment, bookInstance.level(), false);
             bookStorage.setStorageItem(viewer, STORAGE_SLOT, tool);
         }
+        if (cheapest) {
+            TableHeat.roll(viewer.getUniqueId());
+        }
         entryHandler.reroll();
         runUpdate();
+    }
+
+    /** True, and tells the player, when their table is cooling down. */
+    private boolean isOverheated() {
+        long remaining = TableHeat.remainingMs(viewer.getUniqueId());
+        if (remaining <= 0) {
+            return false;
+        }
+        viewer.sendMessage(MiniMessage.miniMessage().deserialize(TableHeat.message(remaining)));
+        viewer.playSound(viewer.getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 0.6f, 1f);
+        return true;
     }
 
     private StaticGuiElement getRerollButton() {
@@ -272,6 +291,19 @@ public class EnchantingMenu extends Menu {
         }
         int cost = getRerollCost();
         int xpCost = getRerollXpCost();
+        var lore = new ArrayList<String>();
+        lore.add("<gold>Re-roll Enchantments");
+        long remaining = TableHeat.remainingMs(viewer.getUniqueId());
+        if (remaining > 0) {
+            long seconds = (remaining + 999) / 1000;
+            lore.add("<red>Cooling down: <white>" + seconds / 60 + ":" + String.format("%02d", seconds % 60));
+        } else {
+            lore.add((viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + xpCost + " <white><font:gardens:default>\u011F");
+            lore.add((GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + cost + " <white><font:gardens:default>\u0120");
+            if (TableHeat.isWarm(viewer.getUniqueId())) {
+                lore.add("<#FFA94D>Your table is getting hot…");
+            }
+        }
         return new StaticGuiElement(
                 'r',
                 GardensFurniture.itemRegistry.buildItem("reroll_button"),
@@ -279,9 +311,7 @@ public class EnchantingMenu extends Menu {
                     reroll();
                     return true;
                 },
-                "<gold>Re-roll Enchantments",
-                (viewer.getLevel() >= xpCost ? "<#B7E45A>" : "<red>") + xpCost + " <white><font:gardens:default>\u011F",
-                (GardensEnchants.econ.has(viewer, cost) ? "<gold>" : "<red>") + cost + " <white><font:gardens:default>\u0120"
+                lore.toArray(String[]::new)
         );
     }
 
@@ -295,7 +325,7 @@ public class EnchantingMenu extends Menu {
         if (type == null || row.getBookInstance() == null || !type.equals(row.getType())) {
             return;
         }
-        if (System.currentTimeMillis() - lastRerollAt < REROLL_COOLDOWN_MS) {
+        if (System.currentTimeMillis() - lastRerollAt < REROLL_COOLDOWN_MS || isOverheated()) {
             return;
         }
         int cost = getRerollCost();
@@ -309,6 +339,7 @@ public class EnchantingMenu extends Menu {
         }
         viewer.setLevel(viewer.getLevel() - xpCost);
         lastRerollAt = System.currentTimeMillis();
+        TableHeat.roll(viewer.getUniqueId());
         new EnchantEntryHandler(viewer.getUniqueId(), type).reroll();
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
         runUpdate();
