@@ -191,7 +191,10 @@ public class BedrockEnchantingMenu {
         if (cost > 0 && !GardensEnchants.econ.withdrawPlayer(viewer, cost).transactionSuccess()) {
             return false;
         }
-        viewer.setLevel(viewer.getLevel() - enchantment.getTableCostInXp(level));
+        int xp = enchantment.getTableCostInXp(level);
+        viewer.setLevel(viewer.getLevel() - xp);
+        org.bukkit.Bukkit.getPluginManager().callEvent(new com.gardensmc.gardensenchants.events.TableSpendEvent(
+                viewer, "enchant", enchantment.getId() + "_" + level, cost, xp));
         return true;
     }
 

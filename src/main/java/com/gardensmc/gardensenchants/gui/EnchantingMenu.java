@@ -309,6 +309,8 @@ public class EnchantingMenu extends Menu {
         }
         viewer.setLevel(viewer.getLevel() - xpCost);
         lastRerollAt = System.currentTimeMillis();
+        Bukkit.getPluginManager().callEvent(new com.gardensmc.gardensenchants.events.TableSpendEvent(
+                viewer, "reroll", type, cost, xpCost));
         new EnchantEntryHandler(viewer.getUniqueId(), type).reroll();
         viewer.playSound(viewer.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1f);
         runUpdate();
