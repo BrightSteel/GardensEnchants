@@ -87,23 +87,6 @@ public class BlockListener implements Listener {
         }
     }
 
-    /** Counts one of Silk Spawner's uses off the tool, taking the enchant off with the last. */
-    private static void useSilkSpawner(org.bukkit.entity.Player player, ItemStack tool) {
-        int left = com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.left(tool) - 1;
-        var handler = new com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler(tool);
-        if (left <= 0) {
-            com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.clear(tool);
-            handler.removeEnchant(CustomEnchantments.SILK_TOUCH_SPAWNER);
-            player.sendActionBar(net.kyori.adventure.text.Component.text("Silk Spawner wore off. Enchant the tool again to mine more spawners.", net.kyori.adventure.text.format.NamedTextColor.GOLD));
-            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 0.8f, 1.2f);
-        } else {
-            com.gardensmc.gardensenchants.enchantment.custom.SilkSpawnerUses.set(tool, left);
-            handler.refreshLore();
-            player.sendActionBar(net.kyori.adventure.text.Component.text("Silk Spawner: " + left + (left == 1 ? " use" : " uses") + " left", net.kyori.adventure.text.format.NamedTextColor.GRAY));
-        }
-        player.getInventory().setItemInMainHand(tool);
-    }
-
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onSpawnerBreak(BlockBreakEvent e) {
         if (e.getBlock().getType() != Material.SPAWNER) {
@@ -116,7 +99,6 @@ public class BlockListener implements Listener {
                 if (spawnedType != null) {
                     var item = ItemUtil.buildSpawnerItem(spawnedType.getKey().toString());
                     e.getPlayer().getWorld().dropItemNaturally(e.getBlock().getLocation(), item);
-                    useSilkSpawner(e.getPlayer(), tool);
                 }
             }
         }

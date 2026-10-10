@@ -19,6 +19,7 @@ public class Listeners {
         register(new LootListener());
         register(new PlayerListener());
         register(new BlockListener());
+        register(new SilkSpawnerCleanup());
         register(new GrindstoneListener());
         register(new FarmingListener());
         // QuickShop is optional; only load the listener (and its QuickShop classes) when it's installed
