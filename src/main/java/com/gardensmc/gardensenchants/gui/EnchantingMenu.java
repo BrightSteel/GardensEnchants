@@ -85,7 +85,7 @@ public class EnchantingMenu extends Menu {
      */
     public boolean addBooks(ItemStack clicked) {
         var stored = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
-        if (stored == null || stored.getType() != Material.BOOK || !stored.isSimilar(clicked)) {
+        if (stored == null || stored.getType() != Material.BOOK || !sameBook(stored, clicked)) {
             return false;
         }
         int room = stored.getMaxStackSize() - stored.getAmount();
@@ -99,6 +99,20 @@ public class EnchantingMenu extends Menu {
         clicked.setAmount(clicked.getAmount() - moved);
         onApplyStorage();
         return true;
+    }
+
+    /**
+     * The same book, but for the mining speed rules GardensFurniture gives items in the hotbar (for its custom blocks),
+     * which would otherwise keep a book from the hotbar from matching the same book from the inventory.
+     */
+    private static boolean sameBook(ItemStack a, ItemStack b) {
+        return withoutTool(a).isSimilar(withoutTool(b));
+    }
+
+    private static ItemStack withoutTool(ItemStack item) {
+        var copy = item.clone();
+        copy.editMeta(meta -> meta.setTool(null));
+        return copy;
     }
 
     public EnchantingMenu(Player viewer, boolean isFullBookSetup) {
