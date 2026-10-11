@@ -53,7 +53,6 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('e', 'f'),
             new DynamicRow('g', 'h')
     );
-    private static final String BG = "\u0116";
     // the offer names' colors: lighter versions of the rarity colors, readable on the menu's tan rows
     private static final Map<EnchantRarity, Integer> OFFER_NAME_COLORS = Map.of(
             EnchantRarity.COMMON, 0xC8C8C8,
@@ -245,17 +244,36 @@ public class EnchantingMenu extends Menu {
                     + "</" + color + "></font>" + FontMappings.getPadding(display);
         }
 
-        return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
+        // the dark menu, with a row's light panel only where its offer can be taken
+        var panels = new StringBuilder();
+        for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
+            if (book[i] != null && canTake(book[i])) {
+                panels.append(getShift(PANEL_X - NAMES_X)).append("<font:gardens:enchant_panel>").append(i + 1)
+                        .append("</font>").append(getShift(-(PANEL_ADVANCE[i] + PANEL_X - NAMES_X)));
+            }
+        }
+        return "<white><font:gardens:default>" + getShift(-8) + BG_DARK + getShift(-193) + panels
+                + sample[0] + sample[1] + sample[2];
     }
 
     /**
      * An offer's name color: its rarity's pastel, dimmed to half brightness (vanilla's own dimming) when it can't be
      * taken: too dear, or it needs the full bookshelf setup.
      */
+    // the light row panels (gardens:enchant_panel "1" to "3" in the pack, cut from the light menu): where the first
+    // starts and the names start, in the menu texture's pixels, and how far each panel advances
+    private static final int PANEL_X = 60, NAMES_X = 64;
+    private static final int[] PANEL_ADVANCE = {111, 110, 110};
+
+    /** Whether the offer can be taken now: affordable, and not needing a fuller bookshelf setup. */
+    private boolean canTake(BookInstance bookInstance) {
+        return !isLocked(bookInstance.enchantment()) && canPurchase(bookInstance);
+    }
+
     private String offerNameColor(@Nullable BookInstance bookInstance) {
         if (bookInstance == null) return "#FFFFFF";
         int color = OFFER_NAME_COLORS.getOrDefault(bookInstance.enchantment().getRarity(), 0xFFFFFF);
-        if (isLocked(bookInstance.enchantment()) || !canPurchase(bookInstance)) {
+        if (!canTake(bookInstance)) {
             color = (color & 0xFEFEFE) >> 1;
         }
         return String.format("#%06X", color);
