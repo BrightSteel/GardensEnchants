@@ -24,6 +24,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
@@ -474,7 +475,33 @@ public class EnchantingMenu extends Menu {
             lore.add(toComponent("<red>Needs 15 bookshelves around the table"));
         }
         book.editMeta(meta -> meta.lore(lore));
+        if (column == Column.BOOK) {
+            showLevelCost(book, xpCost, viewer.getLevel() >= xpCost);
+        }
         return book;
+    }
+
+    // vanilla's enchanting table level colors: the cost when it can be paid, and when it can't
+    private static final int LEVEL_COST_COLOR = 0x80FF20;
+    private static final int LEVEL_COST_COLOR_SHORT = 0x407F10;
+
+    /**
+     * The book's own picture with its level cost in the corner, in vanilla's green (darker when the player hasn't the
+     * levels), through the pack's gardens:enchant_offer item model: the first string picks the book's picture (its item
+     * model), the second the number; the colors are the number's shadow, then the number.
+     */
+    private static void showLevelCost(ItemStack book, int levels, boolean canPay) {
+        var bookModel = book.getItemMeta().getItemModel();
+        int color = canPay ? LEVEL_COST_COLOR : LEVEL_COST_COLOR_SHORT;
+        int shadow = (color & 0xFCFCFC) >> 2; // vanilla's text shadow: a quarter of the color
+        book.setData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA,
+                io.papermc.paper.datacomponent.item.CustomModelData.customModelData()
+                        .addString(bookModel == null ? "" : bookModel.asString())
+                        .addString(String.valueOf(levels))
+                        .addColor(org.bukkit.Color.fromRGB(shadow))
+                        .addColor(org.bukkit.Color.fromRGB(color))
+                        .build());
+        book.editMeta(meta -> meta.setItemModel(NamespacedKey.fromString("gardens:enchant_offer")));
     }
 
     @Getter
