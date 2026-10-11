@@ -54,13 +54,13 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('g', 'h')
     );
     private static final String BG = "\u0116";
-    // the offer names' colors: pastels of the rarity colors, readable on the menu's tan rows
+    // the offer names' colors: lighter versions of the rarity colors, readable on the menu's tan rows
     private static final Map<EnchantRarity, Integer> OFFER_NAME_COLORS = Map.of(
-            EnchantRarity.COMMON, 0xDBDBDB,
-            EnchantRarity.UNCOMMON, 0xB7E8A4,
-            EnchantRarity.RARE, 0xCDDBFE,
-            EnchantRarity.EPIC, 0xE7D3FE,
-            EnchantRarity.LEGENDARY, 0xFCD683
+            EnchantRarity.COMMON, 0xC8C8C8,
+            EnchantRarity.UNCOMMON, 0x96D97C,
+            EnchantRarity.RARE, 0xB2C8FF,
+            EnchantRarity.EPIC, 0xDBBBFF,
+            EnchantRarity.LEGENDARY, 0xFFBD2E
     );
     private static final String BG_DARK = "\u0117";
 
