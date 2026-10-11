@@ -264,15 +264,19 @@ public class EnchantingMenu extends Menu {
             return;
         }
         if (storageItem.getType() == Material.BOOK) {
-            // one book of the stack becomes the enchant book, which goes to the inventory (dropped when it's full);
-            // the rest stay in the slot for the next
             if (!canPurchase(bookInstance) || !chargePlayer(bookInstance)) {
                 return;
             }
-            var rest = storageItem.clone();
-            rest.setAmount(storageItem.getAmount() - 1);
-            bookStorage.setStorageItem(viewer, STORAGE_SLOT, rest.getAmount() > 0 ? rest : null);
-            PlayerUtil.giveItem(viewer, bookInstance.book());
+            if (storageItem.getAmount() == 1) {
+                // a single book becomes the enchant book, left in the slot
+                bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
+            } else {
+                // one of a stack: the enchant book goes to the inventory (dropped when it's full), the rest stay
+                var rest = storageItem.clone();
+                rest.setAmount(storageItem.getAmount() - 1);
+                bookStorage.setStorageItem(viewer, STORAGE_SLOT, rest);
+                PlayerUtil.giveItem(viewer, bookInstance.book());
+            }
         } else {
             // tool -> enchant applied directly and left in the slot. once enchanted it no longer
             // generates offers (see getInsertedType), so the player grabs the finished tool out.
