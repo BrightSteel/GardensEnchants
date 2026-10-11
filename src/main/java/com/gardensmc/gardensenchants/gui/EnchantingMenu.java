@@ -381,8 +381,9 @@ public class EnchantingMenu extends Menu {
         return !new GardensEnchantHandler(item).getEnchantments().isEmpty();
     }
 
-    private ItemStack getBookDisplayItem(BookInstance bookInstance, Column column) {
-        if (!storageIsEnchantable()) {
+    private ItemStack getBookDisplayItem(@Nullable BookInstance bookInstance, Column column) {
+        // no offer in this row (still loading, or the item has fewer enchants than rows): an empty row
+        if (bookInstance == null || !storageIsEnchantable()) {
             return null;
         }
         var book = bookInstance.book().clone();
