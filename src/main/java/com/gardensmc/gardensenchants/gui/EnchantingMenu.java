@@ -55,6 +55,8 @@ public class EnchantingMenu extends Menu {
     private static final String BG = "\u0116";
     // the offer names' color: a pale version of the red banner's gold (the letters in the pack are white)
     private static final String OFFER_NAME_COLOR = "#F8D877";
+    // an offer that can't be taken: the same at half brightness (vanilla's own dimming)
+    private static final String OFFER_NAME_COLOR_DIMMED = "#7C6C3B";
     private static final String BG_DARK = "\u0117";
 
     private final boolean isFullBookSetup;
@@ -185,9 +187,12 @@ public class EnchantingMenu extends Menu {
         String[] sample = new String[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
             String display = FontMappings.sanitize(getDisplayText(book[i]));
+            // dimmed, as vanilla does, when it can't be taken: too dear, or it needs the full bookshelf setup
+            var color = book[i] != null && (isLocked(book[i].enchantment()) || !canPurchase(book[i]))
+                    ? OFFER_NAME_COLOR_DIMMED : OFFER_NAME_COLOR;
             // typed in the row's font, colored here; then shifted back to where the next row starts
-            sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + OFFER_NAME_COLOR + ">" + display
-                    + "</" + OFFER_NAME_COLOR + "></font>" + FontMappings.getPadding(display);
+            sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + color + ">" + display
+                    + "</" + color + "></font>" + FontMappings.getPadding(display);
         }
 
         return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
