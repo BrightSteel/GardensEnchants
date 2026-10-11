@@ -5,6 +5,7 @@ import com.gardensmc.gardensenchants.books.BookInstance;
 import com.gardensmc.gardensenchants.books.BooksHandler;
 import com.gardensmc.gardensenchants.books.TypedBooksHandler;
 import com.gardensmc.gardensenchants.enchantment.EnchantEntryHandler;
+import com.gardensmc.gardensenchants.enchantment.EnchantRarity;
 import com.gardensmc.gardensenchants.enchantment.EnchantmentInstance;
 import com.gardensmc.gardensenchants.enchantment.FontMappings;
 import com.gardensmc.gardensenchants.enchantment.GardensEnchantHandler;
@@ -53,10 +54,14 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('g', 'h')
     );
     private static final String BG = "\u0116";
-    // the offer names' color: a pale version of the red banner's gold (the letters in the pack are white)
-    private static final String OFFER_NAME_COLOR = "#F8D877";
-    // an offer that can't be taken: the same at half brightness (vanilla's own dimming)
-    private static final String OFFER_NAME_COLOR_DIMMED = "#7C6C3B";
+    // the offer names' colors: pastels of the rarity colors, readable on the menu's tan rows
+    private static final Map<EnchantRarity, Integer> OFFER_NAME_COLORS = Map.of(
+            EnchantRarity.COMMON, 0xDBDBDB,
+            EnchantRarity.UNCOMMON, 0xB7E8A4,
+            EnchantRarity.RARE, 0xCDDBFE,
+            EnchantRarity.EPIC, 0xE7D3FE,
+            EnchantRarity.LEGENDARY, 0xFCD683
+    );
     private static final String BG_DARK = "\u0117";
 
     private final boolean isFullBookSetup;
@@ -187,15 +192,26 @@ public class EnchantingMenu extends Menu {
         String[] sample = new String[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
             String display = getDisplayText(book[i]);
-            // dimmed, as vanilla does, when it can't be taken: too dear, or it needs the full bookshelf setup
-            var color = book[i] != null && (isLocked(book[i].enchantment()) || !canPurchase(book[i]))
-                    ? OFFER_NAME_COLOR_DIMMED : OFFER_NAME_COLOR;
+            var color = offerNameColor(book[i]);
             // typed in the row's font, colored here; then shifted back to where the next row starts
             sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + color + ">" + MiniMessage.miniMessage().escapeTags(display)
                     + "</" + color + "></font>" + FontMappings.getPadding(display);
         }
 
         return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
+    }
+
+    /**
+     * An offer's name color: its rarity's pastel, dimmed to half brightness (vanilla's own dimming) when it can't be
+     * taken: too dear, or it needs the full bookshelf setup.
+     */
+    private String offerNameColor(@Nullable BookInstance bookInstance) {
+        if (bookInstance == null) return "#FFFFFF";
+        int color = OFFER_NAME_COLORS.getOrDefault(bookInstance.enchantment().getRarity(), 0xFFFFFF);
+        if (isLocked(bookInstance.enchantment()) || !canPurchase(bookInstance)) {
+            color = (color & 0xFEFEFE) >> 1;
+        }
+        return String.format("#%06X", color);
     }
 
     private String getDisplayText(@Nullable BookInstance bookInstance) {
