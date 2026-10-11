@@ -69,10 +69,43 @@ public class EnchantingMenu extends Menu {
     private int updateCount;
     private long lastRerollAt;
 
+    // open enchanting menus by their gui, for shift-clicking more books onto a stack (see BookStackListener)
+    private static final Map<InventoryGui, EnchantingMenu> OPEN = Collections.synchronizedMap(new WeakHashMap<>());
+
+    /** The enchanting menu showing in this inventory, or null. */
+    @Nullable
+    public static EnchantingMenu of(org.bukkit.inventory.Inventory top) {
+        return top.getHolder() instanceof InventoryGui.Holder holder ? OPEN.get(holder.getGui()) : null;
+    }
+
+    /**
+     * Shift-clicked books go onto the books already in the slot, as many as fit. InventoryGui only shift-clicks into
+     * an empty slot, so with books there it would do nothing. True when they were added (some or all), with
+     * {@code clicked} left holding the rest.
+     */
+    public boolean addBooks(ItemStack clicked) {
+        var stored = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
+        if (stored == null || stored.getType() != Material.BOOK || !stored.isSimilar(clicked)) {
+            return false;
+        }
+        int room = stored.getMaxStackSize() - stored.getAmount();
+        if (room <= 0) {
+            return false;
+        }
+        int moved = Math.min(room, clicked.getAmount());
+        var more = stored.clone();
+        more.setAmount(stored.getAmount() + moved);
+        bookStorage.setStorageItem(viewer, STORAGE_SLOT, more);
+        clicked.setAmount(clicked.getAmount() - moved);
+        onApplyStorage();
+        return true;
+    }
+
     public EnchantingMenu(Player viewer, boolean isFullBookSetup) {
         super(layout, "<white><font:gardens:default>" + getShift(-8) + BG_DARK, viewer);
         this.isFullBookSetup = isFullBookSetup;
         initElements();
+        OPEN.put(gui, this);
     }
 
     private void initElements() {

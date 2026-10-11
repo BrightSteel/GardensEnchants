@@ -19,6 +19,7 @@ public class Listeners {
         register(new LootListener());
         register(new PlayerListener());
         register(new BlockListener());
+        register(new BookStackListener());
         register(new SilkSpawnerCleanup());
         register(new GrindstoneListener());
         register(new FarmingListener());
