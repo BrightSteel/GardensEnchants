@@ -186,12 +186,12 @@ public class EnchantingMenu extends Menu {
 
         String[] sample = new String[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            String display = FontMappings.sanitize(getDisplayText(book[i]));
+            String display = getDisplayText(book[i]);
             // dimmed, as vanilla does, when it can't be taken: too dear, or it needs the full bookshelf setup
             var color = book[i] != null && (isLocked(book[i].enchantment()) || !canPurchase(book[i]))
                     ? OFFER_NAME_COLOR_DIMMED : OFFER_NAME_COLOR;
             // typed in the row's font, colored here; then shifted back to where the next row starts
-            sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + color + ">" + display
+            sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + color + ">" + MiniMessage.miniMessage().escapeTags(display)
                     + "</" + color + "></font>" + FontMappings.getPadding(display);
         }
 
@@ -202,12 +202,7 @@ public class EnchantingMenu extends Menu {
         if (bookInstance == null) {
             return "";
         }
-        var name = bookInstance.enchantment().getDisplayName();
-        int maxLength = 13;
-        if (name.length() <= maxLength) { // can comfortably fit full name and level on screen
-            return name + getLevelText(bookInstance);
-        }
-        return name.substring(0, maxLength) + "...";
+        return FontMappings.fit(bookInstance.enchantment().getDisplayName(), getLevelText(bookInstance));
     }
 
     private String getLevelText(BookInstance bookInstance) {
