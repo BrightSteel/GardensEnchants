@@ -244,13 +244,14 @@ public class EnchantingMenu extends Menu {
                     + "</" + color + "></font>" + FontMappings.getPadding(display);
         }
 
-        // the dark menu, with a row's light panel only where its offer can be taken
+        // the dark menu, with each offer's panel: light where it can be taken, darkened where it can't (its book box
+        // as in the light one); rows without an offer stay dark
         var panels = new StringBuilder();
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            if (book[i] != null && canTake(book[i])) {
-                panels.append(getShift(PANEL_X - NAMES_X)).append("<font:gardens:enchant_panel>").append(i + 1)
-                        .append("</font>").append(getShift(-(PANEL_ADVANCE[i] + PANEL_X - NAMES_X)));
-            }
+            if (book[i] == null) continue;
+            int glyph = canTake(book[i]) ? i + 1 : i + 4;
+            panels.append(getShift(PANEL_X - NAMES_X)).append("<font:gardens:enchant_panel>").append(glyph)
+                    .append("</font>").append(getShift(-(PANEL_ADVANCE[i] + PANEL_X - NAMES_X)));
         }
         return "<white><font:gardens:default>" + getShift(-8) + BG_DARK + getShift(-193) + panels
                 + sample[0] + sample[1] + sample[2];
@@ -260,7 +261,8 @@ public class EnchantingMenu extends Menu {
      * An offer's name color: its rarity's pastel, dimmed to half brightness (vanilla's own dimming) when it can't be
      * taken: too dear, or it needs the full bookshelf setup.
      */
-    // the light row panels (gardens:enchant_panel "1" to "3" in the pack, cut from the light menu): where the first
+    // the row panels (gardens:enchant_panel "1" to "3" in the pack, cut from the light menu; "4" to "6" the same
+    // darkened for offers that can't be taken): where the first
     // starts and the names start, in the menu texture's pixels, and how far each panel advances
     private static final int PANEL_X = 60, NAMES_X = 64;
     private static final int[] PANEL_ADVANCE = {111, 110, 110};
