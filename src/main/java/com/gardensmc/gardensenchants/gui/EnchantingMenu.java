@@ -250,8 +250,14 @@ public class EnchantingMenu extends Menu {
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
             if (book[i] == null) continue;
             int glyph = canTake(book[i]) ? i + 1 : i + 4;
-            panels.append(getShift(PANEL_X - NAMES_X)).append("<font:gardens:enchant_panel>").append(glyph)
-                    .append("</font>").append(getShift(-(PANEL_ADVANCE[i] + PANEL_X - NAMES_X)));
+            panels.append(panel(String.valueOf(glyph), PANEL_ADVANCE[i]));
+        }
+        // the lines between rows: as in the light menu between two offers that can be taken, darkened next to one
+        // that can't (an offer above an empty row keeps its own)
+        for (int i = 0; i < ENCHANT_GENERATE_COUNT - 1; i++) {
+            if (book[i] == null) continue;
+            boolean light = canTake(book[i]) && (book[i + 1] == null || canTake(book[i + 1]));
+            panels.append(panel(light ? SEPARATOR_LIGHT[i] : SEPARATOR_DARK[i], SEPARATOR_ADVANCE));
         }
         return "<white><font:gardens:default>" + getShift(-8) + BG_DARK + getShift(-193) + panels
                 + sample[0] + sample[1] + sample[2];
@@ -266,6 +272,14 @@ public class EnchantingMenu extends Menu {
     // starts and the names start, in the menu texture's pixels, and how far each panel advances
     private static final int PANEL_X = 60, NAMES_X = 64;
     private static final int[] PANEL_ADVANCE = {111, 110, 110};
+    private static final String[] SEPARATOR_LIGHT = {"a", "b"}, SEPARATOR_DARK = {"c", "d"};
+    private static final int SEPARATOR_ADVANCE = 110;
+
+    // a glyph of gardens:enchant_panel drawn where the panels start, then back to where the names start
+    private String panel(String glyph, int advance) {
+        return getShift(PANEL_X - NAMES_X) + "<font:gardens:enchant_panel>" + glyph + "</font>"
+                + getShift(-(advance + PANEL_X - NAMES_X));
+    }
 
     /** Whether the offer can be taken now: affordable, and not needing a fuller bookshelf setup. */
     private boolean canTake(BookInstance bookInstance) {
