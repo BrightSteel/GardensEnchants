@@ -53,8 +53,8 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('g', 'h')
     );
     private static final String BG = "\u0116";
-    // the offer names' color: the light face of the menu's diamond corner gems (the letters in the pack are white)
-    private static final String OFFER_NAME_COLOR = "#4AEDD9";
+    // the offer names' color: lavender (the letters in the pack are white)
+    private static final String OFFER_NAME_COLOR = "#D4C0E8";
     private static final String BG_DARK = "\u0117";
 
     private final boolean isFullBookSetup;
