@@ -53,6 +53,8 @@ public class EnchantingMenu extends Menu {
             new DynamicRow('g', 'h')
     );
     private static final String BG = "\u0116";
+    // the offer names' color (the letters in the pack are white)
+    private static final String OFFER_NAME_COLOR = "#D4C0E8";
     private static final String BG_DARK = "\u0117";
 
     private final boolean isFullBookSetup;
@@ -180,12 +182,12 @@ public class EnchantingMenu extends Menu {
             book[i] = dynamicRows.get(i).getBookInstance();
         }
 
-        HashMap<Character, Character>[] fontMaps = new HashMap[]{FontMappings.INSTANCE.fontMap1, FontMappings.INSTANCE.fontMap2, FontMappings.INSTANCE.fontMap3};
         String[] sample = new String[ENCHANT_GENERATE_COUNT];
         for (int i = 0; i < ENCHANT_GENERATE_COUNT; i++) {
-            String display = getDisplayText(book[i]);
-            String padding = FontMappings.getPadding(display);
-            sample[i] = FontMappings.INSTANCE.replaceAll(display, fontMaps[i]) + padding;
+            String display = FontMappings.sanitize(getDisplayText(book[i]));
+            // typed in the row's font, colored here; then shifted back to where the next row starts
+            sample[i] = "<font:" + FontMappings.rowFont(i + 1) + "><" + OFFER_NAME_COLOR + ">" + display
+                    + "</" + OFFER_NAME_COLOR + "></font>" + FontMappings.getPadding(display);
         }
 
         return "<white><font:gardens:default>" + getShift(-8) + BG + getShift(-193) + sample[0] + sample[1] + sample[2];
