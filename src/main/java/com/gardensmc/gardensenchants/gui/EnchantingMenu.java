@@ -264,11 +264,15 @@ public class EnchantingMenu extends Menu {
             return;
         }
         if (storageItem.getType() == Material.BOOK) {
-            // book -> becomes the corresponding enchant book, left in the slot
+            // one book of the stack becomes the enchant book, which goes to the inventory (dropped when it's full);
+            // the rest stay in the slot for the next
             if (!canPurchase(bookInstance) || !chargePlayer(bookInstance)) {
                 return;
             }
-            bookStorage.setStorageItem(viewer, STORAGE_SLOT, bookInstance.book());
+            var rest = storageItem.clone();
+            rest.setAmount(storageItem.getAmount() - 1);
+            bookStorage.setStorageItem(viewer, STORAGE_SLOT, rest.getAmount() > 0 ? rest : null);
+            PlayerUtil.giveItem(viewer, bookInstance.book());
         } else {
             // tool -> enchant applied directly and left in the slot. once enchanted it no longer
             // generates offers (see getInsertedType), so the player grabs the finished tool out.
@@ -375,11 +379,15 @@ public class EnchantingMenu extends Menu {
     @Nullable
     private String getInsertedType() {
         var storageItem = bookStorage.getStorageItem(viewer, STORAGE_SLOT);
-        if (storageItem == null || storageItem.getAmount() != 1) {
+        if (storageItem == null) {
             return null;
         }
         if (storageItem.getType() == Material.BOOK) {
+            // a stack is enchanted a book at a time
             return TypedBooksHandler.getTypeFromBook(storageItem);
+        }
+        if (storageItem.getAmount() != 1) {
+            return null;
         }
         if (storageItem.getType() == Material.ENCHANTED_BOOK) {
             // vanilla/enchanted books aren't enchantable tools here
