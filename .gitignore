@@ -17,3 +17,14 @@ build/
 .idea/
 *.iml
 .DS_Store
+
+# Never commit these
+.gradle/
+build/
+target/
+*.class
+*.iml
+.idea/
+.DS_Store
+dependencies/*.jar
+*.mcpack
